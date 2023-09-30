@@ -12,6 +12,8 @@ library(ggplot2)
 library(data.table)
 library(here)
 library(rmarkdown)
+
+
 ```
 
 Read config file
@@ -20,10 +22,19 @@ Read config file
 config <- jsonlite::read_json(here("config.json"))
 ```
 
-Reading in phenotype parameters here but it will just be easier to distribute the spreadsheet with the pipeline.
+Reading in phenotype parameters here
+ - update this to read in a spreadsheet list of phenotypes
+ then create a list of phenotypes (here just BMI and LDL but needs to be updated based on the spreadsheet)
 
 ```{r}
-# df <- googlesheets4::read_sheet("https://docs.google.com/spreadsheets/d/1LtsAujOKq5BK55A2BarJ_dHxOJI_4RQGwIu-ysoJxbI/edit?usp=sharing")
+#df <- c('bmi', 'ldl')
+
+df <- read.csv(file.path(config$phenotype_input_dir, "phenotype_list.csv"))
+```
+
+
+```{r}
+phenotypes <- df["pheno_id"]
 ```
 
 
@@ -31,15 +42,33 @@ Reading in phenotype parameters here but it will just be easier to distribute th
 
 Read covariates file
 
+
 ```{r}
 cs <- list()
 covs <- fread(file.path(config$phenotype_input_dir, "covs.txt"))
-str(covs %>% dplyr::select(-id))
+
+names(covs)
 ```
 
-To do: check columns
+### PC's distribution
+
+Check that the PC's have an appropriate distribution. 
+
+Mean of each PC
+```{r}
+covs %>%  
+     summarise_at(c("pc1", "pc2", "pc3", "pc4", "pc5", "pc6", "pc7", "pc8", "pc9", "pc10"), mean)
+```
+
+Std. Dev. of each PC
+```{r}
+covs %>%  
+     summarise_at(c("pc1", "pc2", "pc3", "pc4", "pc5", "pc6", "pc7", "pc8", "pc9", "pc10"), sd)
+```
+
 
 ### YOB distribution
+
 
 ```{r}
 hist(covs$yob, breaks=length(unique(round(covs$yob))))
@@ -53,12 +82,14 @@ cs$yob_summary
 Decade of birth
 
 ```{r}
-covs$deob <- cut(covs$yob-1800, breaks=seq(0,300, by=10))
+covs$deob <- cut(covs$yob, breaks=seq(1900,2030, by=10))
 cs$deob_summary <- table(covs$deob)
 cs$deob_summary
 ```
 
 To do: check values are sensible
+
+make this display the results properly - maybe divide by 10 to lose last zero. Could turn it into a date type variable. 
 
 ### Sex
 
@@ -66,6 +97,7 @@ To do: check values are sensible
 cs$sex_table <- table(covs$sex)
 cs$sex_table
 ```
+
 
 ```{r}
 cs$sex_yob <- covs %>% 
@@ -130,7 +162,7 @@ read_phenotype_data <- function(phecode, input_dir) {
     }
 
     # Cut into age bins
-    phen$agebin <- cut(phen$age, breaks=c(0:19, seq(20, 120, by=5)))
+    phen$agebin <- cut(phen$age+1, breaks=c(0:19, seq(20, 120, by=5)))
     return(phen)
 }
 
@@ -146,9 +178,22 @@ plot_phen_traj <- function(phen, phecode) {
     labs(title=phecode)
 }
 
-detect_outliers <- function() {
-
+detect_outliers <- function(phen, phecode) {
+    min <- df %>% 
+      filter(pheno_id == phecode) %>%
+      select('min')
+    min <- as.vector(min)
+    max <- df %>%
+      filter(pheno_id == phecode) %>%
+      select('max')
+    max <- as.vector(max)
+    
+    outliers <- phen %>% 
+      filter(!between(phen$value, min, max)) %>% 
+      select('value')
+    
 }
+
 
 summarise_phen <- function(phen, covs) {
     dat <- inner_join(phen, covs, by="id")
@@ -170,52 +215,27 @@ summarise_phen <- function(phen, covs) {
 ```
 
 
-### BMI
+##Continuous Phenotypes
 
 ```{r}
-phecode <- "bmi"
+for(i in 1:length(phenotypes$pheno_id)){
+    phecode <- phenotypes[i,1]
+   print(phecode)
+
 phen <- read_phenotype_data(phecode, config$phenotype_input_dir)
-```
 
-```{r eval=!is.null(phen)}
-str(phen %>% dplyr::select(-id))
-```
+outliers <- detect_outliers(phen, phecode)
+print('outliers:')
+print(length(outliers$value))
 
-```{r eval=!is.null(phen)}
-plot_phen_all(phen, phecode)
-```
+print(plot_phen_all(phen, phecode))
 
-```{r eval=!is.null(phen)}
-plot_phen_traj(phen, phecode)
-```
+print(plot_phen_traj(phen, phecode))
 
-```{r eval=!is.null(phen)}
 cs[[phecode]] <- summarise_phen(phen, covs)
 cs[[phecode]]
-```
 
-### LDL
-
-```{r}
-phecode <- "ldl"
-phen <- read_phenotype_data(phecode, config$phenotype_input_dir)
-```
-
-```{r eval=!is.null(phen)}
-str(phen %>% dplyr::select(-id))
-```
-
-```{r eval=!is.null(phen)}
-plot_phen_all(phen, phecode)
-```
-
-```{r eval=!is.null(phen)}
-plot_phen_traj(phen, phecode)
-```
-
-```{r eval=!is.null(phen)}
-cs[[phecode]] <- summarise_phen(phen, covs)
-cs[[phecode]]
+}
 ```
 
 
@@ -226,6 +246,7 @@ dir.create(config$results_dir, recursive=T)
 saveRDS(cs, file=file.path(config$results_dir, "phenotype_summaries.rds"))
 ```
 ---
+
 
 ## Run details
 
