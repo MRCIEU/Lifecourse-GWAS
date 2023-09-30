@@ -1,10 +1,11 @@
 {
     "cohort_name": "test",
-    "analyst_name": "Gibran Hemani",
-    "analyst_email": "g.hemani@bristol.ac.uk",
-    "phenotype_input_dir": "/Users/gh13047/repo/Lifecourse-example-data/phenotype/",
-    "genotype_input_dir": "/Users/gh13047/repo/Lifecourse-example-data/genotype/",
-    "phenotype_processed_dir": "/Users/gh13047/repo/Lifecourse-example-data/phenotype-processed/",
-    "genotype_processed_dir": "/Users/gh13047/repo/Lifecourse-example-data/genotype-processed/",
-    "results_dir": "/Users/gh13047/repo/Lifecourse-example-data/results"
+    "analyst_name": "Eleanor Sanderson",
+    "analyst_email": "eleanor.sanderson@bristol.ac.uk",
+    "phenotype_input_dir": "~/Library/CloudStorage/OneDrive-UniversityofBristol/aProjects/aCurrent/Lifecourse/code/Lifecourse-example-data/phenotype",
+    "genotype_input_dir": "~/Library/CloudStorage/OneDrive-UniversityofBristol/aProjects/aCurrent/Lifecourse/code/Lifecourse-example-data/genotype",
+    "phenotype_processed_dir": "~/Library/CloudStorage/OneDrive-UniversityofBristol/aProjects/aCurrent/Lifecourse/code/Lifecourse-example-data/phenotype-processed",
+    "genotype_processed_dir": "~/Library/CloudStorage/OneDrive-UniversityofBristol/aProjects/aCurrent/Lifecourse/code/Lifecourse-example-data/genotype-processed",
+    "results_dir": "~/Library/CloudStorage/OneDrive-UniversityofBristol/aProjects/aCurrent/Lifecourse/code/August23/results"
 }
+

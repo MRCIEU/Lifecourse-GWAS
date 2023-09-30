@@ -13,6 +13,7 @@ library(data.table)
 library(here)
 library(rmarkdown)
 
+
 ```
 
 Read config file
@@ -26,12 +27,14 @@ Reading in phenotype parameters here
  then create a list of phenotypes (here just BMI and LDL but needs to be updated based on the spreadsheet)
 
 ```{r}
-# df <- googlesheets4::read_sheet("https://docs.google.com/spreadsheets/d/1LtsAujOKq5BK55A2BarJ_dHxOJI_4RQGwIu-ysoJxbI/edit?usp=sharing")
+#df <- c('bmi', 'ldl')
+
+df <- read.csv(file.path(config$phenotype_input_dir, "phenotype_list.csv"))
 ```
 
 
 ```{r}
-phenotypes <- c("bmi", "ldl")
+phenotypes <- df["pheno_id"]
 ```
 
 
@@ -159,7 +162,7 @@ read_phenotype_data <- function(phecode, input_dir) {
     }
 
     # Cut into age bins
-    phen$agebin <- cut(phen$age, breaks=c(0:19, seq(20, 120, by=5)))
+    phen$agebin <- cut(phen$age+1, breaks=c(0:19, seq(20, 120, by=5)))
     return(phen)
 }
 
@@ -175,11 +178,20 @@ plot_phen_traj <- function(phen, phecode) {
     labs(title=phecode)
 }
 
-detect_outliers_cont <- function(phen, phecode) {
-    mn <- mean(phen$phecode)
-    stdev <- sd(phen$phecode)
-    outlier_def <- phecode <= mn-5*stdev | phecode >= mn+5*stdev     ###not sure if this line will work
-    cs$outliers <- filter(phen, outlier_def)
+detect_outliers <- function(phen, phecode) {
+    min <- df %>% 
+      filter(pheno_id == phecode) %>%
+      select('min')
+    min <- as.vector(min)
+    max <- df %>%
+      filter(pheno_id == phecode) %>%
+      select('max')
+    max <- as.vector(max)
+    
+    outliers <- phen %>% 
+      filter(!between(phen$value, min, max)) %>% 
+      select('value')
+    
 }
 
 
@@ -206,17 +218,19 @@ summarise_phen <- function(phen, covs) {
 ##Continuous Phenotypes
 
 ```{r}
-for(i in 1:length(phenotypes)){
-    phecode <- phenotypes[i]
-    phecode
+for(i in 1:length(phenotypes$pheno_id)){
+    phecode <- phenotypes[i,1]
+   print(phecode)
 
 phen <- read_phenotype_data(phecode, config$phenotype_input_dir)
 
-detect_outliers_cont(phen, phecode)
+outliers <- detect_outliers(phen, phecode)
+print('outliers:')
+print(length(outliers$value))
 
-plot_phen_all(phen, phecode)
+print(plot_phen_all(phen, phecode))
 
-plot_phen_traj(phen, phecode)
+print(plot_phen_traj(phen, phecode))
 
 cs[[phecode]] <- summarise_phen(phen, covs)
 cs[[phecode]]
@@ -232,6 +246,7 @@ dir.create(config$results_dir, recursive=T)
 saveRDS(cs, file=file.path(config$results_dir, "phenotype_summaries.rds"))
 ```
 ---
+
 
 ## Run details
 
