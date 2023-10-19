@@ -23,6 +23,50 @@ Rscript resources/render.r resources/phenotypes/organise_phenotypes.rmd
 ```
 
 
+## Input data into the pipeline
+
+- Genotypes
+    - plink format
+    - per chromosome e.g. `<input_dir>/<prefix>1`, `<input_dir>/<prefix>2`, ..., `<input_dir>/<prefix>X`
+    - Cleaned
+        - MAF > ??
+        - HWE > ??
+        - Imputed to 1000 genomes or above
+        - Info scores > ??
+    - variant IDs - challenges: rsid is a positional identifier, how to handle multiple variants at one position, how to handle indels
+        - chr:pos_a1_a2
+            - a1 = first alphabetical
+            - a2 = second alphabetical
+    
+
+## Note about variant IDs
+
+dataset 1
+A = 0.49
+G = 0.51
+default: 1:10000_A_G
+lexical: 1:10000_A_G
+
+
+dataset2
+A = 0.51
+G = 0.49
+
+
+wrong
+AA = 0
+AG = 1
+GG = 2
+
+default: 1:10000_G_A
+lexical: 1:10000_A_G
+
+AA = 2
+AG = 1
+GG = 0
+
+
+
 ## Developers
 
 To setup the environment do this:
