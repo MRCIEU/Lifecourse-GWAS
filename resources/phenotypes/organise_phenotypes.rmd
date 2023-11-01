@@ -80,16 +80,14 @@ cs$yob_summary
 ```
 
 Decade of birth
+Note: the final 0 is removed from decade of birth so 1920 is shown as 192 etc. 
 
 ```{r}
-covs$deob <- cut(covs$yob, breaks=seq(1900,2030, by=10))
+covs$deob <- cut(covs$yob/10, breaks=seq(190,203, by=1))
 cs$deob_summary <- table(covs$deob)
 cs$deob_summary
 ```
 
-To do: check values are sensible
-
-make this display the results properly - maybe divide by 10 to lose last zero. Could turn it into a date type variable. 
 
 ### Sex
 
@@ -108,8 +106,6 @@ cs$sex_yob <- covs %>%
     )
 cs$sex_yob
 ```
-
-To do: check values are 1 / 2
 
 ### Ancestry
 
@@ -195,6 +191,22 @@ detect_outliers <- function(phen, phecode) {
 }
 
 
+remove_outliers <- function(phen, phecode) {
+    min <- df %>% 
+      filter(pheno_id == phecode) %>%
+      select('min')
+    min <- as.vector(min)
+    max <- df %>%
+      filter(pheno_id == phecode) %>%
+      select('max')
+    max <- as.vector(max)
+    
+    outlier_rm <- phen %>% 
+      filter(between(phen$value, min, max)) 
+    
+}
+
+
 summarise_phen <- function(phen, covs) {
     dat <- inner_join(phen, covs, by="id")
     dat %>% 
@@ -235,6 +247,9 @@ print(plot_phen_traj(phen, phecode))
 cs[[phecode]] <- summarise_phen(phen, covs)
 cs[[phecode]]
 
+
+assign(paste(phecode,"outlier_rm",sep="_"), remove_outliers(phen, phecode))
+
 }
 ```
 
@@ -247,7 +262,16 @@ saveRDS(cs, file=file.path(config$results_dir, "phenotype_summaries.rds"))
 ```
 ---
 
+## Save outlier removed files
+```{r}
+for(i in 1:length(phenotypes$pheno_id)){
+    phecode <- phenotypes[i,1]
+     print(phecode)
+     
+   saveRDS(paste(phecode,"outlier_rm",sep="_"), file=file.path(config$results_dir, paste(phecode,"outlier_rm.rds",sep="_")))
+}
 
+```
 ## Run details
 
 Get git version
