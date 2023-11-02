@@ -9,8 +9,20 @@
 
 ## Setup environment
 
+Setup your directory locations. Copy the `config-template.json` to a new file called `config.json`, then edit it to have the paths to genotype / phenotype data locations as required
+
+```
+cp config-template.json config.json
+```
+
+Then don't commit `config.json` as this will be visible to everyone otherwise.
+
+### Installing R packages
+
 In R:
+
 ```r
+install.packages("renv")
 renv::restore()
 ```
 
