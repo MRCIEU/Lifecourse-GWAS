@@ -18,6 +18,30 @@
 ######
 ##################################################################################################################################
 
+
+# Inputs:
+
+# - Cleaned genotype data
+# - King reference files
+
+# Processes:
+
+# - Identify ancestries (KING)
+# - Keep set of ancestries with N > threshold 
+# - Generate sparse GRM per ancestry 
+# - Generate PCs per ancestry
+
+# Outputs:
+
+# - ID list for each ancestry
+#   - /output/ancestries/<ancestry>_id.txt
+# - Sparse GRM for each ancestry
+#   - /output/grm/<ancestry>.*
+# - PCs for each ancestry
+#   - /output/pcs/<ancestry>.eigenvec
+
+
+
 ##[should I add a section of code to create plink binary files? These are required to run the below - [studyfile].bed etc] 
 # https://zzz.bwh.harvard.edu/plink/data.shtml#bed
 
