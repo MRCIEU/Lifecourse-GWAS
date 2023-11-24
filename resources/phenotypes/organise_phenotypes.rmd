@@ -4,6 +4,37 @@ date: "`r Sys.Date()`"
 output: html_document
 ---
 
+TO DO:
+
+- update remove outliers code
+- tidy up code to make html readable
+- make sure input and output files match other parts of pipeline
+- update envronment output
+
+
+
+Files needed to input into this:
+ - environment
+ - ancestry - currently id and ancestry from ancestry file
+ - genetic covariates (id, PC's)
+ - phenotype file (id, age, phenotype value)
+ - phenotype covariates (id,  year of birth, sex)
+ 
+This all may need to be updated based on the output from the genetic processing
+
+Files output from this file:
+ - in phenotype processed folder: file for each GWAS with naming convention 'phenotype'_'ancestry'_('agebin']_pheno_dat.rds
+ - in results folder: file of summary data for each phenotype with naming convention 'phenotype'_summary.rds
+
+
+Other notes:
+
+What format does sex need to be in? - currently specified at the begninning to be added to the enviroment file
+Currently drops anything with NA rather than being specific to the variables of interest
+Age is assumed to be in years
+
+
+
 ```{r}
 library(git2r)
 library(dplyr)
@@ -12,266 +43,189 @@ library(ggplot2)
 library(data.table)
 library(here)
 library(rmarkdown)
-
-
 ```
 
 Read config file
 
+-- this has changed to .env
+will need to change to Sys.getenv everywhere that config$ appears. 
+
 ```{r}
 config <- jsonlite::read_json(here("config.json"))
+
+nmin <- 500
+male <- 1
+female <- 2
 ```
 
-Reading in phenotype parameters here
- - update this to read in a spreadsheet list of phenotypes
- then create a list of phenotypes (here just BMI and LDL but needs to be updated based on the spreadsheet)
+#set up output directories
+```{r}
+dir.create(config$results_dir, recursive=T)
+dir.create(config$phenotype_processed_dir, recursive=T)
+```
+
+# Source R functions file
 
 ```{r}
-#df <- c('bmi', 'ldl')
+source(file.path(config$code_dir, "phenotype_functions.R"))
+```
+# Data input
 
+Read in phenotype names and outlier removal parameters
+
+```{r}
 df <- read.csv(file.path(config$phenotype_input_dir, "phenotype_list.csv"))
-```
+names(df)
 
-
-```{r}
 phenotypes <- df["pheno_id"]
 ```
 
+## Ancestry 
+read in ancestry file
+
+```{r}
+ancestry <- fread(file.path(config$genotype_input_dir, "ancestry.txt"))
+names(df)
+```
 
 ## Covariates
-
-Read covariates file
-
+read in PC's file
 
 ```{r}
+gen_covs <- fread(file.path(config$genotype_input_dir, "gen_covariates.txt"))
+names(gen_covs)
+```
+
+## Currently assuming that sex appears in the phenotype covariates file
+
+```{r}
+phen_covs <- fread(file.path(config$phenotype_input_dir, "pheno_covariates.txt"))
+names(phen_covs)
+```
+
+
+# Summarise data
+Now run by phenotype 
+
+Steps (for each phenotype):
+ - merge together files and remove NA's
+ - summarise age and ancestry distribution
+ - and overall phenotype by age
+ - break up file by age/ancestry - decide whether to keep based on min sample size in config - report sample sizes for groups being dropped
+ - remove outliers 
+ - summarise phenotype, dec.o.b and sex
+ - save files by age and ancestry
+
+note currently just for BMI but will need to loop over all phenotypes
+
+```{r}
+
+for(i in 1:length(phenotypes$pheno_id)){
+  phecode <- phenotypes[i,1]
+  print(phecode)
+
 cs <- list()
-covs <- fread(file.path(config$phenotype_input_dir, "covs.txt"))
 
-names(covs)
-```
-
-### PC's distribution
-
-Check that the PC's have an appropriate distribution. 
-
-Mean of each PC
-```{r}
-covs %>%  
-     summarise_at(c("pc1", "pc2", "pc3", "pc4", "pc5", "pc6", "pc7", "pc8", "pc9", "pc10"), mean)
-```
-
-Std. Dev. of each PC
-```{r}
-covs %>%  
-     summarise_at(c("pc1", "pc2", "pc3", "pc4", "pc5", "pc6", "pc7", "pc8", "pc9", "pc10"), sd)
-```
+phen <- read_phenotype_data(phecode, config$phenotype_input_dir) 
 
 
-### YOB distribution
+if(!is.null(phen)){ 
+  
+  
+dat <- phen %>%
+  left_join(phen_covs, by = "id") %>% 
+  left_join(gen_covs, by = "id") %>%
+  left_join(ancestry, by = "id") %>%
+  na.exclude
 
+##age and ancestry distribution
+hist(dat$age, breaks=length(unique(round(dat$age))))
+cs$age_summary <- summary(dat$age)
+cs$ancestry <- table(dat$ancestry)
+cs$ancestry
 
-```{r}
-hist(covs$yob, breaks=length(unique(round(covs$yob))))
-```
+ancestry_list <- unique(dat$ancestry) 
+for(a in 1:length(ancestry_list)){
+  a_group <- ancestry_list[a]
+  print(a_group)
+  dat_temp <- subset(dat, dat$ancestry == a_group)
+  print(plot_phen_all(dat_temp, phecode))
+  print(plot_phen_traj(dat_temp, phecode))
+}
 
-```{r}
-cs$yob_summary <- summary(covs$yob)
-cs$yob_summary
-```
+rm(dat_temp)
 
-Decade of birth
-Note: the final 0 is removed from decade of birth so 1920 is shown as 192 etc. 
-
-```{r}
-covs$deob <- cut(covs$yob/10, breaks=seq(190,203, by=1))
-cs$deob_summary <- table(covs$deob)
+#decade of birth - currently across all data rather than by GWAS sample
+dat$deob <- cut(dat$yob/10, breaks=seq(190,203, by=1))
+cs$deob_summary <- table(dat$deob)
 cs$deob_summary
-```
 
+hist(dat$yob, breaks=length(unique(round(dat$yob))))
 
-### Sex
-
-```{r}
-cs$sex_table <- table(covs$sex)
+#sex for the whole sample, and tablulated by year of birth
+cs$sex_table <- table(dat$sex)
 cs$sex_table
-```
 
-
-```{r}
-cs$sex_yob <- covs %>% 
+cs$sex_yob <- dat %>% 
     group_by(sex) %>% 
     summarise(
         yob_mean = mean(yob, na.rm=T), 
         yob_sd = sd(yob, na.rm=T)
     )
 cs$sex_yob
-```
 
-### Ancestry
 
-```{r}
-cs$ancestry_table <- table(covs$ancestry)
-cs$ancestry_table
-```
+#counts of sample size in each age group
+cats <- dat %>% group_by(agebin, ancestry) %>%
+  summarize(n())
+colnames(cats) <- c("agebin", "ancestry", "n")
 
-```{r}
-cs$ancestry_yob <- covs %>% 
-    group_by(ancestry) %>% 
-    summarise(
-        yob_mean = mean(yob, na.rm=T), 
-        yob_sd = sd(yob, na.rm=T)
-    )
-cs$ancestry_yob
-```
+cs$categories <- cats 
 
-```{r}
-cs$ancestry_sex <- covs %>% 
-    group_by(ancestry) %>% 
-    summarise(
-        sex_mean = mean(sex, na.rm=T), 
-        sex_sd = sd(sex, na.rm=T)
-    )
-cs$ancestry_sex
-```
+cats <- filter(cats, n >= nmin)
+analysis_data <- inner_join(dat, cats, by = c("agebin", "ancestry"))
 
----
+ancestry_list_filtered <- unique(analysis_data$ancestry)
+age_list_filtered <- unique(analysis_data$agebin)
 
-## Phenotypes
+summary_output <- tibble()
 
-```{r}
-read_phenotype_data <- function(phecode, input_dir) {
-    # Check if phenotype is present
-    filename <- file.path(input_dir, paste0(phecode, ".txt"))
-    if(!file.exists(filename)) {
-        message(phecode, " not present")
-        return(NULL)
-    }
-
-    # Read in phenotype
-    phen <- data.table::fread(filename)
-
-    # Check columns are there as expected
-    column_names <- c("id", "age", "value")
-    if(!all(column_names %in% names(phen))) {
-        print(head(phen))
-        stop("expect 'id', 'age' and 'value' columns to be present")
-    }
-
-    # Cut into age bins
-    phen$agebin <- cut(phen$age+1, breaks=c(0:19, seq(20, 120, by=5)))
-    return(phen)
+for(k in 1:length(ancestry_list_filtered)){
+  for(l in 1:length(age_list_filtered)){
+  
+  anc_group <- ancestry_list_filtered[k]
+  age_group <- age_list_filtered[l]
+  
+  pheno_out <- filter(analysis_data, (agebin == age_group) & (ancestry == anc_group))
+  outliers <- detect_outliers(pheno_out, phecode)
+  
+  pheno_out <- remove_outliers(pheno_out, phecode)
+  
+  saveRDS('pheno_out', file=file.path(config$phenotype_processed_dir, paste(phecode, paste(anc_group, paste(age_group,"pheno_dat.rds",sep="_"), sep="_"), sep = "_")))            
+  sumstats <- summarise_phen(pheno_out, age_group, anc_group, male, female)
+  summary_output <- rbind(summary_output,cbind(anc_group, age_group, length(outliers$value), sumstats))
+  
+  }
+ 
 }
+    cs$sums <- summary_output
 
-plot_phen_all <- function(phen, phecode) {
-    ggplot(phen, aes(x=agebin, y=value)) +
-    geom_boxplot() +
-    labs(title=phecode)
+saveRDS(cs, file=file.path(config$results_dir, paste(phecode,"summary.rds",sep="_")))
 }
-
-plot_phen_traj <- function(phen, phecode) {
-    ggplot(phen, aes(x=agebin, y=value, group=id)) +
-    geom_line(aes(group=id), alpha=0.2) +
-    labs(title=phecode)
-}
-
-detect_outliers <- function(phen, phecode) {
-    min <- df %>% 
-      filter(pheno_id == phecode) %>%
-      select('min')
-    min <- as.vector(min)
-    max <- df %>%
-      filter(pheno_id == phecode) %>%
-      select('max')
-    max <- as.vector(max)
-    
-    outliers <- phen %>% 
-      filter(!between(phen$value, min, max)) %>% 
-      select('value')
-    
-}
-
-
-remove_outliers <- function(phen, phecode) {
-    min <- df %>% 
-      filter(pheno_id == phecode) %>%
-      select('min')
-    min <- as.vector(min)
-    max <- df %>%
-      filter(pheno_id == phecode) %>%
-      select('max')
-    max <- as.vector(max)
-    
-    outlier_rm <- phen %>% 
-      filter(between(phen$value, min, max)) 
-    
-}
-
-
-summarise_phen <- function(phen, covs) {
-    dat <- inner_join(phen, covs, by="id")
-    dat %>% 
-        group_by(ancestry, agebin, deob) %>%
-        summarise(
-            n=sum(!is.na(value)), 
-            m=mean(value, na.rm=T),
-            sd=sd(value, na.rm=T),
-            min=min(value, na.rm=T),
-            max=max(value, na.rm=T),
-            q5=quantile(value, 0.05, na.rm=T),
-            q25=quantile(value, 0.25, na.rm=T),
-            q50=quantile(value, 0.5, na.rm=T),
-            q75=quantile(value, 0.75, na.rm=T),
-            q95=quantile(value, 0.95, na.rm=T)
-        )
 }
 ```
 
-
-##Continuous Phenotypes
-
-```{r}
-for(i in 1:length(phenotypes$pheno_id)){
-    phecode <- phenotypes[i,1]
-   print(phecode)
-
-phen <- read_phenotype_data(phecode, config$phenotype_input_dir)
-
-outliers <- detect_outliers(phen, phecode)
-print('outliers:')
-print(length(outliers$value))
-
-print(plot_phen_all(phen, phecode))
-
-print(plot_phen_traj(phen, phecode))
-
-cs[[phecode]] <- summarise_phen(phen, covs)
-cs[[phecode]]
 
 
 assign(paste(phecode,"outlier_rm",sep="_"), remove_outliers(phen, phecode))
 
-}
-```
 
 
-## Save summary statistics
-
-```{r}
-dir.create(config$results_dir, recursive=T)
-saveRDS(cs, file=file.path(config$results_dir, "phenotype_summaries.rds"))
-```
----
-
-## Save outlier removed files
-```{r}
-for(i in 1:length(phenotypes$pheno_id)){
-    phecode <- phenotypes[i,1]
-     print(phecode)
-     
-   saveRDS(paste(phecode,"outlier_rm",sep="_"), file=file.path(config$results_dir, paste(phecode,"outlier_rm.rds",sep="_")))
-}
 
 ```
+
+
+
 ## Run details
 
 Get git version
