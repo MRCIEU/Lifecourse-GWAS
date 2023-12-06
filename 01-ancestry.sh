@@ -2,19 +2,22 @@
 
 ##################################################################################################################################
 ###### 
-###### Pipeline step:		1	
-###### Date			17.10.2023
+###### Pipeline step:		2	
+###### Start date		    17.10.2023
+###### Update:              23.11.2023
 ###### Program:         	KING version 2.3.2 (https://www.kingrelatedness.com/Download.shtml)
-###### Written by:		Grace M. Power
+###### Written by:		    Grace M. Power
 ###### Packages loaded:		N/A
-###### Datafiles :		[studyfile].bed
-######				[studyfile].fam
-######				[studyfile].bim
-######				KGref.bed
-######				KGref.fam
-######				KGref.bim 
-######				(available at: https://www.kingrelatedness.com/ancestry/)
-###### Objective :		To generate ancestrial group labels within each study sample using ancestry inference in KING 
+###### Datafiles :		    [studyfile]_chr_[chr].bed
+######				        [studyfile]_chr_[chr].fam
+######				        [studyfile]_chr_[chr].bim
+######				        KGref.bed
+######				        KGref.fam
+######				        KGref.bim 
+######				        (available at: https://www.kingrelatedness.com/ancestry/)
+###### Objective :		    To generate labels for ancestrial group within each study sample using ancestry inference in KING. 
+######                      One file is required as output to phenotype file development
+######                      File per ancestry group are required to output to run further genotype analyses
 ######
 ##################################################################################################################################
 
@@ -31,6 +34,7 @@
 # - Generate sparse GRM per ancestry 
 # - Generate PCs per ancestry
 
+
 # Outputs:
 
 # - ID list for each ancestry
@@ -41,23 +45,61 @@
 #   - /output/pcs/<ancestry>.eigenvec
 
 
+#Download executable file and unzip
 
-##[should I add a section of code to create plink binary files? These are required to run the below - [studyfile].bed etc] 
-# https://zzz.bwh.harvard.edu/plink/data.shtml#bed
-
-#In Linux download executable file and unzip
-
-## TODO - define where we want to keep these downloads - probably in /resources
 wget https://www.kingrelatedness.com/Linux-king.tar.gz
 tar -xzvf Linux-king.tar.gz
 
+# Download the KING reference
 
-# 1. download the king reference
+mkdir king_test
+cd king_test
+mkdir out
+
+wget https://www.kingrelatedness.com/ancestry/KGref.bed.xz
+wget https://www.kingrelatedness.com/ancestry/KGref.fam.xz
+wget https://www.kingrelatedness.com/ancestry/KGref.bim.xz
+
+# decompress files
+
+xz -d -v KGref.bed.xz 
+xz -d -v KGref.bim.xz 
+xz -d -v KGref.fam.xz 
+
 # 2. extract the king reference SNPs from our data (per chromosome)
+
+awk '{print $2}' king_test/KGref.bim > king_test/KGref_snplist.txt
+
+test_dir=/user/work/sd20930/LifecourseMR_wg/ancestry_pipeline/king_test
+source ${test_dir}/config.sh
+
 # 3. ld prune (per chromosome)
-# 4. combine into a single pruned file
+#variant pruning: window size in kb = 100, step size variant ct = 5, vif threshold = 1.05
+
+for i in {01..22};
+do
+#plink --bfile ${genotype_input_dir}_chr_${i} --extract ${resource_dir}/snplist.txt --prune parameters --make-bed --out ${genotype_input_dir}/${genotype_input_dir}${i}_extract
+
+plink --bfile ${genotype_input_dir}/data_chr${i} -extract ${resource_dir}/KGref_snplist.txt -indep 100 5 1.05 -make-bed -out ${output_dir}/${i}_extract
+done
+
+### need to extract SNPs in {i}_extract.prune.in from {i}_extract.bed
+
+# 4. combine into a single pruned .bed file
+
+#plink --bmerge etc etc --make-bed --out ${genotype_input_dir}/${genotype_input_dir}_pruned
+for i in {01..22};
+do
+echo ${i}_extract >> mergelist.txt
+done
+
+### hello
+
+plink -merge-list mergelist.txt -make-out -out merged
+
 # 5. Run ancestry identification
 
+./king -b ${resource_dir}/KGref.bed, ${output_dir}/merged.bed -projection -rplot -prefix out_ancestry_${study_name}
 
 ## Intermediate files: 
 ## OUTPUT: table with columns ID and ancestry
@@ -70,22 +112,6 @@ bfile_prefix=$(jq "bfile_prefix" config.json)
 
 
 
-# 2. extract the king reference SNPs from our data (per chromosome)
-
-awk '{ print $2}' /path/to/king/king.bim > /path/to/king/snplist.txt
-
-for i in {1..22};
-do
-    plink --bfile ${genotype_input_dir}/${genotype_input_dir}${i} --extract /path/to/king/snplist.txt --prune parameters --make-bed --out ${genotype_input_dir}/${genotype_input_dir}${i}_extract
-done
-
-plink --bfile ${genotype_input_dir}/${genotype_input_dir}X --extract /path/to/king/snplist.txt --prune parameters --make-bed --out ${genotype_input_dir}/${genotype_input_dir}X_extract
-
-# merge the data into one
-plink --bmerge etc etc --make-bed --out ${genotype_input_dir}/${genotype_input_dir}_pruned
-
-
-/path/to/king -b KGref.bed, ${genotype_input_dir}/${genotype_input_dir}_pruned.bed --pca --projection --rplot --prefix out_ancestry_[studyname]
 
 # TODO: extract king reference SNPs by chr:pos rather than rsid;
 # or update reference to have chr:pos_a1_a2, in which case we extract by variant ID as normal
