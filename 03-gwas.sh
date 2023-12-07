@@ -15,11 +15,11 @@ exec &> >(tee ${results_dir}/03/logfile)
 
 # Inputs:
 
-# - sparse GRM
-# - PCs
-# - genotype data
-# - phenotypes
-# - covariates
+# - sparse GRM - 01
+# - PCs - 01
+# - genotype data - 00
+# - phenotypes - 02
+# - covariates - 00
 
 # Processes:
 
@@ -28,19 +28,37 @@ exec &> >(tee ${results_dir}/03/logfile)
 # Output:
 
 # - GWAS summary stats per phen x age x ancestry
-#     - results/03/phen_<phencode>_<age>_<ancestry>.*
+#     - results/03/phen_<phencode>_<ancestry>_<age>.*
 
-generate dummy files to practice
-for anc in AFR EUR
-do
-    mkdir -p ${genotype_processed_dir}/$anc
-    for i in {1..22}
-    do
-        touch ${genotype_processed_dir}/${anc}/${bfile_prefix}${i}.bed
-        touch ${genotype_processed_dir}/${anc}/${bfile_prefix}${i}.bim
-        touch ${genotype_processed_dir}/${anc}/${bfile_prefix}${i}.fam
-    done
-done
+
+# Get list of phenotypes
+# TODO - move this to 02 so that there no collisions in parallelising this
+ls ${phenotype_processed_dir}/phen_*.txt > ${phenotype_processed_dir}/phenolist
+
+
+# Allow specific analysis to be run
+# Can take any number between 1:ngwas where ngwas is the number of rows in ${phenotype_processed_dir}/phenolist
+index=$1
+nphen=`cat ${phenotype_processed_dir}/phenolist | wc -l`
+
+if [ -z $index ]
+then
+    echo "Running all $nphen GWASs"
+else
+    re='^[0-9]+$'
+    if ! [[ $index =~ $re ]] ; then
+        echo "error: Index variable is not a number"
+        echo "Usage: ${0} [index number]"
+        exit 1
+    fi
+
+    if [ "$index" -gt "$nphen" ] ; then
+        echo "error: Index is larger than number of phenotypes"
+        echo "Usage: ${0} [index number]"
+        exit 1
+    fi
+    echo "Running $index of $nphen GWASs"
+fi
 
 # Get the list of relevant ancestries
 ancestries=( $(ls ${genotype_processed_dir}/*/*.bed | \
@@ -51,19 +69,19 @@ ancestries=( $(ls ${genotype_processed_dir}/*/*.bed | \
 echo $ancestries
 
 
+## TODO
+# copy bim files over to results/03
+
+
 # Make mbfile - list of all the per-chr bfiles for each ancestry
 for anc in $ancestries
 do
     echo $anc
     ls ${genotype_processed_dir}/${anc}/*.bed | sed 's/.bed//g' > ${genotype_processed_dir}/${anc}/geno_chrs.txt
-    cat ${genotype_processed_dir}/${anc}/geno_chrs.txt
 done
 
-
-# Get list of phenotypes
-ls ${phenotype_processed_dir}/phen_*.txt > ${phenotype_processed_dir}/phenolist
-
 # Do GWAS for each phenotype
+i=1
 for anc in $ancestries
 do
     phenolist=( $(grep $anc ${phenotype_processed_dir}/phenolist) )
@@ -72,35 +90,40 @@ do
         filename=$(basename -- ${phen})
         filename="${filename%.*}"
         echo $filename
-        if [ "$env_family_data" == "true" ]
-        then
-            echo "family"
-            ./bin/gcta-1.94.1 \
-                --mbfile ${genotype_processed_dir}/${anc}/geno_chrs.txt \
-                --fastGWA-mlm \
-                --grm-sparse ${genotype_processed_dir}/${anc}/sp_grm \
-                --pheno ${phenotype_input_dir}/ \
-                --qcovar ${phenotype_input_dir}/covs_${anc}.txt \
-                --thread-num ${env_threads} \
-                --maf 0 \
-                --geno 1 \
-                --out ${results_dir}/03/${filename}
-        elif
-            echo "not family"
-            ./bin/gcta-1.94.1 \
-                --mbfile ${genotype_processed_dir}/${anc}/geno_chrs.txt \
-                --fastGWA-lr \
-                --pheno ${phenotype_input_dir}/ \
-                --qcovar ${phenotype_input_dir}/covs_${anc}.txt \
-                --thread-num ${env_threads} \
-                --maf 0 \
-                --geno 1 \
-                --out ${results_dir}/03/${filename}
+        if [ -z $index ] || [ "$index" -eq "$i" ] ; then            
+            if [ "$env_family_data" == "true" ]
+            then
+                echo "family"
+                ./bin/gcta-1.94.1 \
+                    --mbfile ${genotype_processed_dir}/${anc}/geno_chrs.txt \
+                    --fastGWA-mlm \
+                    --grm-sparse ${genotype_processed_dir}/${anc}/sp_grm \
+                    --pheno ${phen} \
+                    --qcovar ${phenotype_input_dir}/covs_${anc}.txt \
+                    --thread-num ${env_threads} \
+                    --maf 0 \
+                    --geno 1 \
+                    --out ${results_dir}/03/${filename}
+            elif
+                echo "not family"
+                ./bin/gcta-1.94.1 \
+                    --mbfile ${genotype_processed_dir}/${anc}/geno_chrs.txt \
+                    --fastGWA-lr \
+                    --pheno ${phen} \
+                    --qcovar ${phenotype_input_dir}/covs_${anc}.txt \
+                    --thread-num ${env_threads} \
+                    --maf 0 \
+                    --geno 1 \
+                    --out ${results_dir}/03/${filename}
+            fi
+            # compress GWAS
+            # keep only b, se, af, n because all other info is constant across GWASs
+            # if space is a real issue could sacrifice af and n
+            # add variantid
+            Rscript resources/genetics/compress_gwas.r ${filename}.fastGWA
+            rm ${filename}.fastGWA
         fi
-        # compress GWAS
-        # keep only b, se, af, n because all other info is constant across GWASs
-        # if space is a real issue could sacrifice af and n
-        Rscript resources/genetics/compress_gwas.r ${filename}
+        i=$((i+1))
     done
 done
 
