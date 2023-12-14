@@ -12,7 +12,6 @@ TO DO:
 - update envronment output
 
 
-
 Files needed to input into this:
  - environment
  - ancestry - currently id and ancestry from ancestry file
@@ -33,6 +32,13 @@ What format does sex need to be in? - currently specified at the begninning to b
 Currently drops anything with NA rather than being specific to the variables of interest
 Age is assumed to be in years
 
+Install required packages
+```{r}
+if (!require(quantreg)) install.packages("quantreg", repos="https://cloud.r-project.org")
+library(quantreg)
+if (!require(rms)) install.packages("rms", repos="https://cloud.r-project.org")
+library(rms)
+```
 
 
 ```{r}
@@ -43,6 +49,7 @@ library(ggplot2)
 library(data.table)
 library(here)
 library(rmarkdown)
+library(dotenv)
 ```
 
 Read config file
@@ -51,30 +58,31 @@ Read config file
 will need to change to Sys.getenv everywhere that config$ appears. 
 
 ```{r}
-config <- jsonlite::read_json(here("config.json"))
-
-nmin <- 500
-male <- 1
-female <- 2
+readRenviron(here("config-template.env"))
 ```
 
 #set up output directories
 ```{r}
-dir.create(config$results_dir, recursive=T)
-dir.create(config$phenotype_processed_dir, recursive=T)
+dir.create(Sys.getenv("results_dir"), showWarnings = FALSE)
+dir.create(Sys.getenv("phenotype_processed_dir"), showWarnings = FALSE)
+
 ```
 
 # Source R functions file
 
+Move this to be in the resources file
+Use package 'here' - gives directory path to root directory. 
+
 ```{r}
-source(file.path(config$code_dir, "phenotype_functions.R"))
+source(here("resources", "phenotypes", "phenotype_functions.R"))
 ```
+
 # Data input
 
 Read in phenotype names and outlier removal parameters
 
 ```{r}
-df <- read.csv(file.path(config$phenotype_input_dir, "phenotype_list.csv"))
+df <- read.csv(file.path(Sys.getenv("phenotype_input_dir"), "phenotype_list.csv"))
 names(df)
 
 phenotypes <- df["pheno_id"]
@@ -84,7 +92,7 @@ phenotypes <- df["pheno_id"]
 read in ancestry file
 
 ```{r}
-ancestry <- fread(file.path(config$genotype_input_dir, "ancestry.txt"))
+ancestry <- fread(file.path(Sys.getenv("genotype_input_dir"), "ancestry.txt"))
 names(df)
 ```
 
@@ -92,14 +100,14 @@ names(df)
 read in PC's file
 
 ```{r}
-gen_covs <- fread(file.path(config$genotype_input_dir, "gen_covariates.txt"))
+gen_covs <- fread(file.path(Sys.getenv("genotype_input_dir"), "gen_covariates.txt"))
 names(gen_covs)
 ```
 
 ## Currently assuming that sex appears in the phenotype covariates file
 
 ```{r}
-phen_covs <- fread(file.path(config$phenotype_input_dir, "pheno_covariates.txt"))
+phen_covs <- fread(file.path(Sys.getenv("phenotype_input_dir"), "pheno_covariates.txt"))
 names(phen_covs)
 ```
 
@@ -126,11 +134,14 @@ for(i in 1:length(phenotypes$pheno_id)){
 
 cs <- list()
 
-phen <- read_phenotype_data(phecode, config$phenotype_input_dir) 
+phen <- read_phenotype_data(phecode, Sys.getenv("phenotype_input_dir")) 
 
 
 if(!is.null(phen)){ 
   
+  #add check that don't have multiple genetic observations per person, or covariate observations 
+  
+#  triCATCH
   
 dat <- phen %>%
   left_join(phen_covs, by = "id") %>% 
@@ -182,7 +193,7 @@ colnames(cats) <- c("agebin", "ancestry", "n")
 
 cs$categories <- cats 
 
-cats <- filter(cats, n >= nmin)
+cats <- filter(cats, n >= Sys.getenv("env_minumum_strat_n"))
 analysis_data <- inner_join(dat, cats, by = c("agebin", "ancestry"))
 
 ancestry_list_filtered <- unique(analysis_data$ancestry)
@@ -201,8 +212,11 @@ for(k in 1:length(ancestry_list_filtered)){
   
   pheno_out <- remove_outliers(pheno_out, phecode)
   
-  saveRDS('pheno_out', file=file.path(config$phenotype_processed_dir, paste(phecode, paste(anc_group, paste(age_group,"pheno_dat.rds",sep="_"), sep="_"), sep = "_")))            
-  sumstats <- summarise_phen(pheno_out, age_group, anc_group, male, female)
+  pheno_out$winsorised <- mbw(MBW_Y=pheno_out$value,MBW_X=pheno_out$age, knots=5, multiple=1,lpc=0.005, upc=0.995, plotme="show", comparator=0)
+  
+  
+  saveRDS('pheno_out', file=file.path(Sys.getenv("phenotype_processed_dir"), paste(phecode, paste(anc_group, paste(age_group,"pheno_dat.rds",sep="_"), sep="_"), sep = "_")))            
+  sumstats <- summarise_phen(pheno_out, age_group, anc_group)
   summary_output <- rbind(summary_output,cbind(anc_group, age_group, length(outliers$value), sumstats))
   
   }
@@ -210,7 +224,7 @@ for(k in 1:length(ancestry_list_filtered)){
 }
     cs$sums <- summary_output
 
-saveRDS(cs, file=file.path(config$results_dir, paste(phecode,"summary.rds",sep="_")))
+saveRDS(cs, file=file.path(Sys.getenv("results_dir"), paste(phecode,"summary.rds",sep="_")))
 }
 }
 ```
