@@ -154,8 +154,8 @@ mbw <- function(MBW_Y, MBW_X, knots=5, lpc=0.005, upc=0.995, multiple=1, plotme=
   MBW_output[MBW_output<MBW_data$lb] <- MBW_data$lb[MBW_output<MBW_data$lb]
   MBW_output[MBW_output>MBW_data$ub] <- MBW_data$ub[MBW_output>MBW_data$ub]
   # Report the winsorisation:
-  print(paste0(sum(MBW_data$Winsorised)," of ",length(MBW_data$Winsorised)," data points winsorised"))
-  print(head(MBW_data[MBW_data$Winsorised,],n=20))
+  #print(paste0(sum(MBW_data$Winsorised)," of ",length(MBW_data$Winsorised)," data points winsorised"))
+  #print(head(MBW_data[MBW_data$Winsorised,],n=20))
   # If indicated, plot the fitted values on a scatterplot, along with the knots:
   if (plotme!="show"&plotme!="save") print("No plot option chosen (valid options are show or save)")
   if (plotme=="show"|plotme=="save"){
