@@ -66,7 +66,15 @@ exec &> >(tee ${results_dir}/01/logfile)
 bfiles=( $(ls ${genotype_input_dir}/${bfile_prefix}*.bed | \
     xargs -I {} sh -c "basename {}" | \
     xargs -I {} sh -c "echo {} | sed 's/.bed//g'" ))
-echo $bfiles
+
+echo "List of input bfiles:"
+# Make mbfile - list of all the per-chr bfiles for each ancestry
+> ${genotype_processed_dir}/geno_chrs.txt
+for f in ${bfiles[@]}
+do
+    echo $f
+    echo "${genotype_input_dir}/${f}" >> ${genotype_processed_dir}/geno_chrs.txt
+done
 
 # Create scratch directory
 mkdir -p ${genotype_processed_dir}/scratch
@@ -78,12 +86,14 @@ do
     echo $f
     awk -f resources/genotypes/highldregionsb37.awk ${genotype_input_dir}/${f}.bim > ${genotype_processed_dir}/scratch/${f}_highldregions.txt
     bin/plink2 \
+        --threads ${env_threads} \
         --bfile ${genotype_input_dir}/${f} \
         --exclude ${genotype_processed_dir}/scratch/${f}_highldregions.txt \
         --indep-pairwise 10000 5 0.1 \
         --out ${genotype_processed_dir}/scratch/${f}_indep
 
     bin/plink2 \
+        --threads ${env_threads} \
         --bfile ${genotype_input_dir}/${f} \
         --extract ${genotype_processed_dir}/scratch/${f}_indep.prune.in \
         --make-bed \
@@ -96,6 +106,7 @@ done
 f1=`head -n 1 ${genotype_processed_dir}/scratch/bfiles`
 sed -i 1d ${genotype_processed_dir}/scratch/bfiles
 bin/plink2 \
+    --threads ${env_threads} \
     --bfile $f1 \
     --pmerge-list bfile ${genotype_processed_dir}/scratch/bfiles \
     --make-bed \
@@ -122,6 +133,7 @@ bin/king \
     --prefix ${genotype_processed_dir}/scratch/king
 
 bin/plink2 \
+    --threads ${env_threads} \
     --bfile ${genotype_processed_dir}/scratch/indep \
     --keep ${genotype_processed_dir}/scratch/kingunrelated.txt \
     --make-bed \
@@ -130,6 +142,7 @@ bin/plink2 \
 if [ "${env_family_data}" = "true" ]
 then
     bin/plink2 \
+        --threads ${env_threads} \
         --bfile ${genotype_processed_dir}/scratch/indep \
         --remove ${genotype_processed_dir}/scratch/kingunrelated.txt \
         --make-bed \
@@ -170,6 +183,7 @@ then
 else
 	# Remove genetic outliers from data
     bin/plink2 \
+        --threads ${env_threads} \
         --bfile ${genotype_processed_dir}/scratch/indep_unrelated \
         --remove ${genotype_processed_dir}/${bfile_prefix}_genetic_outliers.txt \
         --make-bed \
@@ -178,6 +192,7 @@ else
     if [ "${env_family_data}" = "true" ]
     then
         bin/plink2 \
+            --threads ${env_threads} \
             --bfile ${genotype_processed_dir}/scratch/indep_related \
             --remove ${genotype_processed_dir}/${bfile_prefix}_genetic_outliers.txt \
             --make-bed \
@@ -225,4 +240,4 @@ then
         ${genotype_processed_dir}/${bfile_prefix}
 fi
 
-echo "Completed 01!"
+echo "Successfully generated PCs etc!"
