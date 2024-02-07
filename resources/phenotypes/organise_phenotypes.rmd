@@ -39,16 +39,9 @@ Currently drops anything with NA rather than being specific to the variables of 
 Age is assumed to be in years
 
 
-Install required packages
 ```{r}
-if (!require(quantreg)) install.packages("quantreg", repos="https://cloud.r-project.org")
-library(quantreg)
-if (!require(rms)) install.packages("rms", repos="https://cloud.r-project.org")
 library(rms)
-```
-
-
-```{r}
+library(quantreg)
 library(git2r)
 library(dplyr)
 library(jsonlite)
@@ -62,14 +55,13 @@ library(dotenv)
 Read config file
 
 ```{r}
-readRenviron(here("config-template.env"))
+readRenviron(here("config.env"))
 ```
 
 #set up output directories
 ```{r}
 dir.create(Sys.getenv("results_dir"), showWarnings = FALSE)
 dir.create(Sys.getenv("phenotype_processed_dir"), showWarnings = FALSE)
-
 ```
 
 # Source R functions file
@@ -93,18 +85,37 @@ phenotypes <- df["pheno_id"]
 ```
 
 ## Covariates
+
 Genetic covariates
 
 ```{r}
-gen_covs <- fread(file.path(Sys.getenv("genotype_input_dir"), "gen_covariates.txt"))
+gen_covs <- fread(file.path(Sys.getenv("genotype_processed_dir"), paste0(Sys.getenv("bfile_prefix"), "pc.txt")))
 names(gen_covs)
+```
+
+```{r}
+gen_covs <- gen_covs %>% select(-c(FA, MO, AFF, SEX))
 ```
 
 Phenotypic covariates
 
+Expect space separated file with a header line and the following columns:
+
+- `FID` - family identified (can be same as `IID`)
+- `IID` - individual identifier
+- `yob` - year of birth
+- `parity` - parity
+
 ```{r}
 phen_covs <- fread(file.path(Sys.getenv("phenotype_input_dir"), "pheno_covariates.txt"))
 names(phen_covs)
+```
+
+Organising covariates
+
+
+```{r}
+
 ```
 
 
@@ -142,8 +153,8 @@ if(!is.null(phen)){
 #  triCATCH
   
 dat <- phen %>%
-  left_join(phen_covs, by = "id") %>% 
-  left_join(gen_covs, by = "id") %>%
+  left_join(gen_covs, by = c("FID", "IID")) %>%
+  left_join(phen_covs, by = c("FID", "IID")) %>% 
   na.exclude
 
 ##age and ancestry distribution
@@ -185,14 +196,14 @@ if(type == "cont"){
 }
 
 #counts of sample size in each age group
-cats <- dat %>% group_by(agebin, ancestry) %>%
+cats <- dat %>% group_by(agebin) %>%
   summarize(n())
-colnames(cats) <- c("agebin", "ancestry", "n")
+colnames(cats) <- c("agebin", "n")
 
 cs$categories <- cats 
 
 cats <- filter(cats, n >= as.numeric(Sys.getenv("env_minumum_strat_n")))
-analysis_data <- inner_join(dat, cats, by = c("agebin", "ancestry"))
+analysis_data <- inner_join(dat, cats, by = c("agebin"))
 
 summary_output <- tibble()
 
@@ -200,7 +211,7 @@ for(k in 1:length(cats$n)){
   
   age_group <- cats$agebin[k]
   
-  pheno_out <- filter(analysis_data, (agebin == age_group) & (ancestry == anc_group))
+  pheno_out <- filter(analysis_data, (agebin == age_group))
   
   saveRDS('pheno_out', file=file.path(Sys.getenv("phenotype_processed_dir"), paste("phen", paste(phecode, paste(age_group,"pheno_dat.rds",sep="_"), sep="_"), sep = "_")))     
   

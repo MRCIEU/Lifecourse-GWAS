@@ -26,4 +26,7 @@
 
 Rscript resources/render.r resources/phenotypes/organise_phenotypes.rmd
 
+# Get list of phenotypes
+ls ${phenotype_processed_dir}/phen_*.txt > ${phenotype_processed_dir}/phenolist
 
+echo "Successfully organised phenotypes!"
