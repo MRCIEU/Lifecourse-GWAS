@@ -8,6 +8,7 @@ library(glue)
 args <- commandArgs(T)
 bfile <- args[1]
 outfile <- args[2]
+plinkbin <- args[3]
 
 # update orig bim
 
@@ -24,7 +25,7 @@ switchfile <- paste0(outfile, ".switch")
 data.table::fwrite(subset(bim, select=c(V2, V6)), file=switchfile, quote=FALSE, col.names=FALSE, sep=" ")
 
 glue(
-    "{here('bin', 'plink2')} --bfile {bfile} --ref-allele {switchfile} 2 1 --make-bed --out {outfile} --keep-allele-order"
+    "{plinkbin} --bfile {bfile} --ref-allele {switchfile} 2 1 --make-bed --out {outfile} --keep-allele-order"
 ) %>% system()
 
 # make copy of original bim file
