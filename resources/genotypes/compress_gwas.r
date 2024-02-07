@@ -1,15 +1,19 @@
 library(data.table)
-library(fst)
+# library(fst)
 
 fn <- commandArgs(T)[1]
 stopifnot(file.exists(fn))
 a <- data.table::fread(fn, header=TRUE)
-names(a) <- c("SNP", "BETA", "SE", "AF1", "N")
 b <- a[, .(SNP, BETA, SE, AF1, N)]
-b
-p <- paste0(fn, ".fst")
-fst::write_fst(a, path=p, compress=100)
+head(b)
+# p <- paste0(fn, ".fst")
+# fst::write_fst(a, path=p, compress=100)
+p <- paste0(fn, ".rds")
+saveRDS(b, p)
 
+## Note
+# Was previously using fst but finding it can be cumbersome to install
+# So reverting to using rds as it
 
 ## redundant - these are bigger than compressed files
 # writebingwas <- function(a, fn) {
