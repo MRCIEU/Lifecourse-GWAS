@@ -1,5 +1,31 @@
 #!/bin/bash
 
+## code to keep only a subset for testing purposes
+# head -n 1000 data_chr01.fam > temp1
+# tail -n 1000 data_chr01.fam > temp2
+# cat temp1 temp2 | awk '{print $1, $2}' > keep
+
+# for f in *bed
+# do
+#     echo $f
+#     bn=$(echo $f | sed 's/.bed//g')
+#     plink2 --bfile $bn --keep keep --make-bed --out subset/${bn}
+# done
+
+
+
+# strict stop if there are any errors
+set -e
+
+# get environmental variables
+source config.env
+
+# create results directory
+mkdir -p ${results_dir}/01
+
+# log everything from this script to a logfile in the results director
+exec &> >(tee ${results_dir}/01/logfile)
+
 ##################################################################################################################################
 ###### 
 ###### Pipeline step:		1	
@@ -22,80 +48,181 @@
 # Inputs:
 
 # - Cleaned genotype data
-# - King reference files
 
 # Processes:
 
-# - Identify ancestries (KING)
-# - Keep set of ancestries with N > threshold 
-# - Generate sparse GRM per ancestry 
-# - Generate PCs per ancestry
+# - Generate PCs (aware of relatedness if necessary)
+# - Generate sparse GRM (for family data)
 
 # Outputs:
 
-# - ID list for each ancestry
-#   - /output/ancestries/<ancestry>_id.txt
 # - Sparse GRM for each ancestry
-#   - /output/grm/<ancestry>.*
+#   - //grm/<ancestry>.*
 # - PCs for each ancestry
 #   - /output/pcs/<ancestry>.eigenvec
 
 
+# Get bfile prefix names into an array
+bfiles=( $(ls ${genotype_input_dir}/${bfile_prefix}*.bed | \
+    xargs -I {} sh -c "basename {}" | \
+    xargs -I {} sh -c "echo {} | sed 's/.bed//g'" ))
+echo $bfiles
 
-##[should I add a section of code to create plink binary files? These are required to run the below - [studyfile].bed etc] 
-# https://zzz.bwh.harvard.edu/plink/data.shtml#bed
+# Create scratch directory
+mkdir -p ${genotype_processed_dir}/scratch
 
-#In Linux download executable file and unzip
-
-## TODO - define where we want to keep these downloads - probably in /resources
-wget https://www.kingrelatedness.com/Linux-king.tar.gz
-tar -xzvf Linux-king.tar.gz
-
-
-# 1. download the king reference
-# 2. extract the king reference SNPs from our data (per chromosome)
-# 3. ld prune (per chromosome)
-# 4. combine into a single pruned file
-# 5. Run ancestry identification
-
-
-## Intermediate files: 
-## OUTPUT: table with columns ID and ancestry
-
-# get the input file names
-
-# TODO: check the syntax for jq
-genotype_input_dir=$(jq "genotype_input_dir" config.json)
-bfile_prefix=$(jq "bfile_prefix" config.json)
-
-
-
-# 2. extract the king reference SNPs from our data (per chromosome)
-
-awk '{ print $2}' /path/to/king/king.bim > /path/to/king/snplist.txt
-
-for i in {1..22};
+# Prune for PC etc
+> ${genotype_processed_dir}/scratch/bfiles
+for f in ${bfiles[@]}
 do
-    plink --bfile ${genotype_input_dir}/${genotype_input_dir}${i} --extract /path/to/king/snplist.txt --prune parameters --make-bed --out ${genotype_input_dir}/${genotype_input_dir}${i}_extract
+    echo $f
+    awk -f resources/genotypes/highldregionsb37.awk ${genotype_input_dir}/${f}.bim > ${genotype_processed_dir}/scratch/${f}_highldregions.txt
+    bin/plink2 \
+        --bfile ${genotype_input_dir}/${f} \
+        --exclude ${genotype_processed_dir}/scratch/${f}_highldregions.txt \
+        --indep-pairwise 10000 5 0.1 \
+        --out ${genotype_processed_dir}/scratch/${f}_indep
+
+    bin/plink2 \
+        --bfile ${genotype_input_dir}/${f} \
+        --extract ${genotype_processed_dir}/scratch/${f}_indep.prune.in \
+        --make-bed \
+        --out ${genotype_processed_dir}/scratch/${f}_indep
+
+    echo ${genotype_processed_dir}/scratch/${f}_indep >> ${genotype_processed_dir}/scratch/bfiles
 done
 
-plink --bfile ${genotype_input_dir}/${genotype_input_dir}X --extract /path/to/king/snplist.txt --prune parameters --make-bed --out ${genotype_input_dir}/${genotype_input_dir}X_extract
+# Generate single bfile
+f1=`head -n 1 ${genotype_processed_dir}/scratch/bfiles`
+sed -i 1d ${genotype_processed_dir}/scratch/bfiles
+bin/plink2 \
+    --bfile $f1 \
+    --pmerge-list bfile ${genotype_processed_dir}/scratch/bfiles \
+    --make-bed \
+    --out ${genotype_processed_dir}/scratch/indep \
+    --maj-ref
 
-# merge the data into one
-plink --bmerge etc etc --make-bed --out ${genotype_input_dir}/${genotype_input_dir}_pruned
+# If family data
+## get list of relateds and list of unrelateds
+## generate pcs in unrelateds and project to relateds
+## nobody is removed
+
+# If not family data
+## get list of relateds and list of unrelateds
+## use list of unrelateds as keeplist going forwards
 
 
-/path/to/king -b KGref.bed, ${genotype_input_dir}/${genotype_input_dir}_pruned.bed --pca --projection --rplot --prefix out_ancestry_[studyname]
+# Get relateds and unrelateds
 
-# TODO: extract king reference SNPs by chr:pos rather than rsid;
-# or update reference to have chr:pos_a1_a2, in which case we extract by variant ID as normal
+bin/king \
+    -b ${genotype_processed_dir}/scratch/indep.bed \
+    --unrelated \
+    --degree 3 \
+    --cpus ${env_threads} \
+    --prefix ${genotype_processed_dir}/scratch/king
 
-# TODO: the plink and king binaries will be stored in the repository somewhere, so when calling them use that path
+bin/plink2 \
+    --bfile ${genotype_processed_dir}/scratch/indep \
+    --keep ${genotype_processed_dir}/scratch/kingunrelated.txt \
+    --make-bed \
+    --out ${genotype_processed_dir}/scratch/indep_unrelated
 
-# TODO: figure out the output of the ancestry inference - does it need to be edited for future use
+if [ "${env_family_data}" = "true" ]
+then
+    bin/plink2 \
+        --bfile ${genotype_processed_dir}/scratch/indep \
+        --remove ${genotype_processed_dir}/scratch/kingunrelated.txt \
+        --make-bed \
+        --out ${genotype_processed_dir}/scratch/indep_related
+fi
 
-# TODO: Split the data into ancestry files, or have 1 file and have a ID keep list for each ancestry? Perhaps define a minimum sample size for an ancestral group
+# Generate PCs
 
-# TODO: Store logs somewhere that is being transferred back to HQ
+if [ "${env_family_data}" = "true" ]
+then
+    bin/king \
+        -b ${genotype_processed_dir}/scratch/indep_unrelated.bed,${genotype_processed_dir}/scratch/indep_related.bed \
+        --mds ${env_n_pcs} \
+        --cpus ${env_threads} \
+        --projection \
+        --prefix ${genotype_processed_dir}/${bfile_prefix}
+else
+    bin/king \
+        -b ${genotype_processed_dir}/scratch/indep_unrelated.bed \
+        --mds ${env_n_pcs} \
+        --cpus ${env_threads} \
+        --prefix ${genotype_processed_dir}/${bfile_prefix}
+fi
 
-# TODO: Allow people to just provide an ancestry mapping of IDs already, but specify the format
+# Check PCs e.g. by plotting them
+Rscript resources/genotypes/genetic_outliers.r \
+    ${genotype_processed_dir}/${bfile_prefix}pc.txt \
+    ${env_pca_sd} \
+    ${env_n_pcs} \
+    ${genotype_processed_dir}/${bfile_prefix}_genetic_outliers.txt \
+    ${results_dir}/01/pcaplot.png
+
+n_outliers=`wc -l ${genotype_processed_dir}/${bfile_prefix}_genetic_outliers.txt | awk '{ print $1 }'`
+
+if [ "${n_outliers}" = "0" ]
+then
+	echo "No genetic outliers detected"
+else
+	# Remove genetic outliers from data
+    bin/plink2 \
+        --bfile ${genotype_processed_dir}/scratch/indep_unrelated \
+        --remove ${genotype_processed_dir}/${bfile_prefix}_genetic_outliers.txt \
+        --make-bed \
+        --out ${genotype_processed_dir}/scratch/indep_unrelated
+
+    if [ "${env_family_data}" = "true" ]
+    then
+        bin/plink2 \
+            --bfile ${genotype_processed_dir}/scratch/indep_related \
+            --remove ${genotype_processed_dir}/${bfile_prefix}_genetic_outliers.txt \
+            --make-bed \
+            --out ${genotype_processed_dir}/scratch/indep_related
+
+        bin/king \
+            -b ${genotype_processed_dir}/scratch/indep_unrelated.bed,${genotype_processed_dir}/scratch/indep_related.bed \
+            --mds ${env_n_pcs} \
+            --cpus ${env_threads} \
+            --projection \
+            --prefix ${genotype_processed_dir}/${bfile_prefix}
+    else
+        bin/king \
+            -b ${genotype_processed_dir}/scratch/indep_unrelated.bed \
+            --mds ${env_n_pcs} \
+            --cpus ${env_threads} \
+            --prefix ${genotype_processed_dir}/${bfile_prefix}
+    fi
+
+    mv ${results_dir}/01/pcaplot.png ${results_dir}/01/pcaplot_round1.png
+    Rscript resources/genotypes/genetic_outliers.r \
+        ${genotype_processed_dir}/${bfile_prefix}pc.txt \
+        ${env_pca_sd} \
+        ${env_n_pcs} \
+        ${genotype_processed_dir}/${bfile_prefix}_genetic_outliers.txt \
+        ${results_dir}/01/pcaplot.png
+fi
+
+# Generate sparse GRM
+
+if [ "${env_family_data}" = "true" ]
+then
+    bin/king \
+        -b ${genotype_processed_dir}/scratch/indep.bed \
+        --related \
+        --degree 3 \
+        --cpus ${env_threads} \
+        --prefix ${genotype_processed_dir}/scratch/king
+
+    awk '{ print $1, $3, $14 }' ${genotype_processed_dir}/scratch/king.kin0 | grep -v "4th" | sed 1d > ${genotype_processed_dir}/scratch/king.kin0.formatted
+
+    Rscript resources/genotypes/pedFAM.R \
+        ${genotype_processed_dir}/scratch/indep.fam \
+        ${genotype_processed_dir}/scratch/king.kin0.formatted \
+        ${genotype_processed_dir}/${bfile_prefix}
+fi
+
+echo "Completed 01!"
