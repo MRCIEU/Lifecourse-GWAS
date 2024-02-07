@@ -1,3 +1,16 @@
+## code to keep only a subset for testing purposes
+# head -n 1000 data_chr01.fam > temp1
+# tail -n 1000 data_chr01.fam > temp2
+# cat temp1 temp2 | awk '{print $1, $2}' > keep
+
+# for f in *bed
+# do
+#     echo $f
+#     bn=$(echo $f | sed 's/.bed//g')
+#     plink2 --bfile $bn --keep keep --make-bed --out subset/${bn}
+# done
+
+
 # This code generates the sparse GRM the long way - first full grm then making it sparse
 # expect it gives similar answer as the quick version in the code
 bin/gcta-1.94.1 --bfile ${genotype_processed_dir}/scratch/indep --make-grm-bin --out ${genotype_processed_dir}/${bfile_prefix}_test

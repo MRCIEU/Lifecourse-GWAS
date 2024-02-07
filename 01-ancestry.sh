@@ -26,41 +26,17 @@ mkdir -p ${results_dir}/01
 # log everything from this script to a logfile in the results director
 exec &> >(tee ${results_dir}/01/logfile)
 
-##################################################################################################################################
-###### 
-###### Pipeline step:		1	
-###### Date			17.10.2023
-###### Program:         	KING version 2.3.2 (https://www.kingrelatedness.com/Download.shtml)
-###### Written by:		Grace M. Power
-###### Packages loaded:		N/A
-###### Datafiles :		[studyfile].bed
-######				[studyfile].fam
-######				[studyfile].bim
-######				KGref.bed
-######				KGref.fam
-######				KGref.bim 
-######				(available at: https://www.kingrelatedness.com/ancestry/)
-###### Objective :		To generate ancestrial group labels within each study sample using ancestry inference in KING 
-######
-##################################################################################################################################
-
-
 # Inputs:
-
 # - Cleaned genotype data
 
 # Processes:
-
 # - Generate PCs (aware of relatedness if necessary)
 # - Generate sparse GRM (for family data)
 
 # Outputs:
-
 # - Sparse GRM for each ancestry
-#   - //grm/<ancestry>.*
 # - PCs for each ancestry
-#   - /output/pcs/<ancestry>.eigenvec
-
+# - mbfile for fastGWA
 
 # Get bfile prefix names into an array
 bfiles=( $(ls ${genotype_input_dir}/${bfile_prefix}*.bed | \
