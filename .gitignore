@@ -48,4 +48,5 @@ po/*~
 # RStudio Connect folder
 rsconnect/
 
+config.env
 config.json

@@ -9,13 +9,24 @@
 
 ## Setup environment
 
-Setup your directory locations. Copy the `config-template.json` to a new file called `config.json`, then edit it to have the paths to genotype / phenotype data locations as required
+Setup your directory locations. Copy the `config-template.env` to a new file called `config.env`, then edit it to have the paths to genotype / phenotype data locations etc as required
 
 ```
-cp config-template.json config.json
+cp config-template.env config.env
 ```
 
-Then don't commit `config.json` as this will be visible to everyone otherwise.
+We recommend using data paths that are outside of the cloned code repository. You will see that you need the following working data directories, ideally on fast disk that can be accessed by HPC nodes.
+
+```
+geno_input/
+geno_processed/
+phen_input/
+output/
+results/
+```
+
+Don't commit `config.env` as this will be visible to everyone otherwise.
+
 
 ### Installing R packages
 
