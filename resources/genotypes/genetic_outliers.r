@@ -10,7 +10,7 @@ main <- function()
 	pcaplotfile <- as.character(arguments[5])
 
 	pca <- read.table(pcafile, header=TRUE)
-	pca2 <- removeOutliersFromData(pca[,-c(1:6)], pcasd, iterations=3)
+	pca2 <- removeOutliersFromData(pca[,-c(1:2)], pcasd, iterations=3)
 
 	index <- apply(pca2, 1, function(x) any(is.na(x)))
 
@@ -19,8 +19,8 @@ main <- function()
 
 	write.table(genetic_outliers, file=outliers, row=F, col=F, qu=F)
 
-	thresh1a <- mean(pca[,7],na.rm=T) + pcasd*(sd(pca[,7],na.rm=T))
-	thresh1b <- mean(pca[,7],na.rm=T) - pcasd*(sd(pca[,7],na.rm=T))
+	thresh1a <- mean(pca[,3],na.rm=T) + pcasd*(sd(pca[,3],na.rm=T))
+	thresh1b <- mean(pca[,3],na.rm=T) - pcasd*(sd(pca[,3],na.rm=T))
 	pc <- 2:npc
 	scores <- data.frame()
 	hline.data1 <- data.frame()
@@ -30,13 +30,13 @@ main <- function()
 	out <- data.frame()
 	for (i in 1:length(pc))
 	{
-		PC <- pc[i]+6
+		PC <- pc[i]+2
 
 		thresh2a <- mean(pca[,PC],na.rm=T) + pcasd*(sd(pca[,PC],na.rm=T))
 		thresh2b <- mean(pca[,PC],na.rm=T) - pcasd*(sd(pca[,PC],na.rm=T))
 		hline1 <- data.frame(PCy=paste("PC",pc[i],sep=""),z = thresh2a)
 		hline2 <- data.frame(PCy=paste("PC",pc[i],sep=""),z = thresh2b)
-		d <- data.frame(iid=pca$IID,threshold1=thresh1a,threshold2=thresh1b,threshold3=thresh2a,threshold4=thresh2b,PC=paste("PC1vsPC",pc[i],sep=""),PC1="PC1",PCy=paste("PC",pc[i],sep=""),PC.scores.x=pca[,7],PC.scores.y=pca[,PC])
+		d <- data.frame(iid=pca$IID,threshold1=thresh1a,threshold2=thresh1b,threshold3=thresh2a,threshold4=thresh2b,PC=paste("PC1vsPC",pc[i],sep=""),PC1="PC1",PCy=paste("PC",pc[i],sep=""),PC.scores.x=pca[,3],PC.scores.y=pca[,PC])
 
 		scores <- rbind(scores,d)
 		hline.data1 <- rbind(hline.data1,hline1)

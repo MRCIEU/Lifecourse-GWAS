@@ -41,23 +41,34 @@ done
 # Create scratch directory
 mkdir -p ${genotype_processed_dir}/scratch
 
+# Get list of pruned SNPs
+if test -f "resources/genotypes/${major_ancestry}_pruned_variants.txt.gz"; then
+    echo "Found prune file"
+    prunefile="${genotype_processed_dir}/scratch/indep.prune.in"
+    gunzip -c resources/genotypes/${major_ancestry}_pruned_variants.txt.gz > ${prunefile}
+fi
+
 # Prune for PC etc
 > ${genotype_processed_dir}/scratch/bfiles
 for f in ${bfiles[@]}
 do
     echo $f
     awk -f resources/genotypes/highldregionsb37.awk ${genotype_input_dir}/${f}.bim > ${genotype_processed_dir}/scratch/${f}_highldregions.txt
-    bin/plink2 \
-        --threads ${env_threads} \
-        --bfile ${genotype_input_dir}/${f} \
-        --exclude ${genotype_processed_dir}/scratch/${f}_highldregions.txt \
-        --indep-pairwise 10000 5 0.1 \
-        --out ${genotype_processed_dir}/scratch/${f}_indep
+
+    if ! test -f "${genotype_processed_dir}/scratch/indep.prune.in"; then
+        bin/plink2 \
+            --threads ${env_threads} \
+            --bfile ${genotype_input_dir}/${f} \
+            --exclude ${genotype_processed_dir}/scratch/${f}_highldregions.txt \
+            --indep-pairwise 10000 5 0.1 \
+            --out ${genotype_processed_dir}/scratch/${f}_indep
+        prunefile="${genotype_processed_dir}/scratch/${f}_indep.prune.in"
+    fi
 
     bin/plink2 \
         --threads ${env_threads} \
         --bfile ${genotype_input_dir}/${f} \
-        --extract ${genotype_processed_dir}/scratch/${f}_indep.prune.in \
+        --extract ${prunefile} \
         --make-bed \
         --out ${genotype_processed_dir}/scratch/${f}_indep
 
@@ -113,53 +124,27 @@ fi
 
 # Generate PCs
 
-if [ "${env_family_data}" = "true" ]
-then
-    bin/king \
-        -b ${genotype_processed_dir}/scratch/indep_unrelated.bed,${genotype_processed_dir}/scratch/indep_related.bed \
-        --mds ${env_n_pcs} \
-        --cpus ${env_threads} \
-        --projection \
-        --prefix ${genotype_processed_dir}/${bfile_prefix}
+if test -f "${genotype_processed_dir}/${bfile_prefix}pc.txt"; then
+    echo "pcafile already provided"
+    Rscript resources/genotypes/genetic_outliers.r \
+        ${genotype_processed_dir}/${bfile_prefix}pc.txt \
+        ${env_pca_sd} \
+        ${env_n_pcs} \
+        ${genotype_processed_dir}/${bfile_prefix}_genetic_outliers.txt \
+        ${results_dir}/01/pcaplot.png
+
+    n_outliers=`wc -l ${genotype_processed_dir}/${bfile_prefix}_genetic_outliers.txt | awk '{ print $1 }'`
+    if [ "${n_outliers}" = "0" ]; then
+        echo "WARNING: there are $n_outliers genetic outliers based on the user-provided PCs"
+        echo "We recommend one of the following"
+        echo "- changing the env_pca_sd threshold"
+        echo "- removing those outliers in ${genotype_processed_dir}/${bfile_prefix}_genetic_outliers.txt and recalculating the PCs"
+        echo "- allowing the pipeline to calculate the PCs and remove outliers itself"
+        exit 1
+    fi
 else
-    bin/king \
-        -b ${genotype_processed_dir}/scratch/indep_unrelated.bed \
-        --mds ${env_n_pcs} \
-        --cpus ${env_threads} \
-        --prefix ${genotype_processed_dir}/${bfile_prefix}
-fi
-
-# Check PCs e.g. by plotting them
-Rscript resources/genotypes/genetic_outliers.r \
-    ${genotype_processed_dir}/${bfile_prefix}pc.txt \
-    ${env_pca_sd} \
-    ${env_n_pcs} \
-    ${genotype_processed_dir}/${bfile_prefix}_genetic_outliers.txt \
-    ${results_dir}/01/pcaplot.png
-
-n_outliers=`wc -l ${genotype_processed_dir}/${bfile_prefix}_genetic_outliers.txt | awk '{ print $1 }'`
-
-if [ "${n_outliers}" = "0" ]
-then
-	echo "No genetic outliers detected"
-else
-	# Remove genetic outliers from data
-    bin/plink2 \
-        --threads ${env_threads} \
-        --bfile ${genotype_processed_dir}/scratch/indep_unrelated \
-        --remove ${genotype_processed_dir}/${bfile_prefix}_genetic_outliers.txt \
-        --make-bed \
-        --out ${genotype_processed_dir}/scratch/indep_unrelated
-
     if [ "${env_family_data}" = "true" ]
     then
-        bin/plink2 \
-            --threads ${env_threads} \
-            --bfile ${genotype_processed_dir}/scratch/indep_related \
-            --remove ${genotype_processed_dir}/${bfile_prefix}_genetic_outliers.txt \
-            --make-bed \
-            --out ${genotype_processed_dir}/scratch/indep_related
-
         bin/king \
             -b ${genotype_processed_dir}/scratch/indep_unrelated.bed,${genotype_processed_dir}/scratch/indep_related.bed \
             --mds ${env_n_pcs} \
@@ -174,14 +159,72 @@ else
             --prefix ${genotype_processed_dir}/${bfile_prefix}
     fi
 
-    mv ${results_dir}/01/pcaplot.png ${results_dir}/01/pcaplot_round1.png
+    # Remove unnecessary columns from pc file
+    cut -d " " -f 1,2,7- ${genotype_processed_dir}/${bfile_prefix}pc.txt > ${genotype_processed_dir}/${bfile_prefix}pc.txt_formatted
+    mv ${genotype_processed_dir}/${bfile_prefix}pc.txt_formatted ${genotype_processed_dir}/${bfile_prefix}pc.txt
+
+    # Check PCs e.g. by plotting them
     Rscript resources/genotypes/genetic_outliers.r \
         ${genotype_processed_dir}/${bfile_prefix}pc.txt \
         ${env_pca_sd} \
         ${env_n_pcs} \
         ${genotype_processed_dir}/${bfile_prefix}_genetic_outliers.txt \
         ${results_dir}/01/pcaplot.png
+
+    n_outliers=`wc -l ${genotype_processed_dir}/${bfile_prefix}_genetic_outliers.txt | awk '{ print $1 }'`
+
+    if [ "${n_outliers}" = "0" ]
+    then
+        echo "No genetic outliers detected"
+    else
+        # Remove genetic outliers from data
+        bin/plink2 \
+            --threads ${env_threads} \
+            --bfile ${genotype_processed_dir}/scratch/indep_unrelated \
+            --remove ${genotype_processed_dir}/${bfile_prefix}_genetic_outliers.txt \
+            --make-bed \
+            --out ${genotype_processed_dir}/scratch/indep_unrelated
+
+        if [ "${env_family_data}" = "true" ]
+        then
+            bin/plink2 \
+                --threads ${env_threads} \
+                --bfile ${genotype_processed_dir}/scratch/indep_related \
+                --remove ${genotype_processed_dir}/${bfile_prefix}_genetic_outliers.txt \
+                --make-bed \
+                --out ${genotype_processed_dir}/scratch/indep_related
+
+            bin/king \
+                -b ${genotype_processed_dir}/scratch/indep_unrelated.bed,${genotype_processed_dir}/scratch/indep_related.bed \
+                --mds ${env_n_pcs} \
+                --cpus ${env_threads} \
+                --projection \
+                --prefix ${genotype_processed_dir}/${bfile_prefix}
+        else
+            bin/king \
+                -b ${genotype_processed_dir}/scratch/indep_unrelated.bed \
+                --mds ${env_n_pcs} \
+                --cpus ${env_threads} \
+                --prefix ${genotype_processed_dir}/${bfile_prefix}
+        fi
+
+        mv ${results_dir}/01/pcaplot.png ${results_dir}/01/pcaplot_round1.png
+
+
+        # Remove unnecessary columns from pc file
+        cut -d " " -f 1,2,7- ${genotype_processed_dir}/${bfile_prefix}pc.txt > ${genotype_processed_dir}/${bfile_prefix}pc.txt_formatted
+
+        mv ${genotype_processed_dir}/${bfile_prefix}pc.txt_formatted ${genotype_processed_dir}/${bfile_prefix}pc.txt
+
+        Rscript resources/genotypes/genetic_outliers.r \
+            ${genotype_processed_dir}/${bfile_prefix}pc.txt \
+            ${env_pca_sd} \
+            ${env_n_pcs} \
+            ${genotype_processed_dir}/${bfile_prefix}_genetic_outliers.txt \
+            ${results_dir}/01/pcaplot.png
+    fi
 fi
+
 
 # Generate sparse GRM
 
