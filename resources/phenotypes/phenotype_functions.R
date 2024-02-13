@@ -16,14 +16,15 @@ read_phenotype_data <- function(phecode, input_dir) {
   phen <- data.table::fread(filename)
   
   # Check columns are there as expected
-  column_names <- c("id", "age", "value")
+  column_names <- c("FID", "IID", "age", "value")
   if(!all(column_names %in% names(phen))) {
     print(head(phen))
-    stop("expect 'id', 'age' and 'value' columns to be present")
+    stop("expect 'FID', 'IID', 'age' and 'value' columns to be present")
   }
   
   # Cut into age bins
   phen$agebin <- cut(phen$age+1, breaks=c(0:19, seq(20, 120, by=5)))
+  levels(phen$agebin) <- levels(phen$agebin) %>% gsub("\\(", "", .) %>% gsub("]", "", .) %>% gsub(",", "-", .)
   return(phen)
 }
 
@@ -34,42 +35,35 @@ plot_phen_all <- function(phen, phecode) {
 }
 
 plot_phen_traj <- function(phen, phecode) {
-  ggplot(phen, aes(x=agebin, y=value, group=id)) +
-    geom_line(aes(group=id), alpha=0.2) +
+  ggplot(phen, aes(x=agebin, y=value, group=IID)) +
+    geom_line(aes(group=IID), alpha=0.2) +
     labs(title=phecode)
 }
 
 
 detect_outliers <- function(phen, phecode) {
   min <- df %>% 
-    filter(pheno_id == phecode) %>%
-    select('min')
-  min <- as.vector(min)
+    filter(pheno_id == phecode) %>% {.$min}
   max <- df %>%
-    filter(pheno_id == phecode) %>%
-    select('max')
-  max <- as.vector(max)
+    filter(pheno_id == phecode) %>% {.$max}
   
   outliers <- phen %>% 
     filter(!between(phen$value, min, max)) %>% 
     select('value')
-  
+  return(outliers)
 }
 
 
 remove_outliers <- function(phen, phecode) {
   min <- df %>% 
-    filter(pheno_id == phecode) %>%
-    select('min')
-  min <- as.vector(min)
+    filter(pheno_id == phecode) %>% {.$min}
   max <- df %>%
-    filter(pheno_id == phecode) %>%
-    select('max')
-  max <- as.vector(max)
+    filter(pheno_id == phecode) %>% {.$max}
   
   outlier_rm <- phen %>% 
-    filter(between(phen$value, min, max)) 
-  
+    filter(between(phen$value, min, max))
+  message("Detected ", nrow(phen) - nrow(outlier_rm), " outliers based on phenotype definition file")
+  return(outlier_rm)
 }
 
 
