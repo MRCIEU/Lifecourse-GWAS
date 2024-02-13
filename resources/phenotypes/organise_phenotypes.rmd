@@ -39,19 +39,11 @@ Currently drops anything with NA rather than being specific to the variables of 
 Age is assumed to be in years
 
 
-Install required packages
 ```{r}
-if (!require(quantreg)) install.packages("quantreg", repos="https://cloud.r-project.org")
-library(quantreg)
-if (!require(rms)) install.packages("rms", repos="https://cloud.r-project.org")
 library(rms)
-```
-
-
-```{r}
+library(quantreg)
 library(git2r)
 library(dplyr)
-library(jsonlite)
 library(ggplot2)
 library(data.table)
 library(here)
@@ -62,14 +54,13 @@ library(dotenv)
 Read config file
 
 ```{r}
-readRenviron(here("config-template.env"))
+readRenviron(here("config.env"))
 ```
 
 #set up output directories
 ```{r}
 dir.create(Sys.getenv("results_dir"), showWarnings = FALSE)
 dir.create(Sys.getenv("phenotype_processed_dir"), showWarnings = FALSE)
-
 ```
 
 # Source R functions file
@@ -86,29 +77,51 @@ source(here("resources", "phenotypes", "phenotype_functions.R"))
 Read in phenotype names and outlier removal parameters
 
 ```{r}
-df <- read.csv(file.path(Sys.getenv("phenotype_input_dir"), "phenotype_list.csv"))
-names(df)
-
-phenotypes <- df["pheno_id"]
+df <- fread(here("phenotype_list.csv")) %>% 
+  as_tibble() %>%
+  mutate(filepath = file.path(Sys.getenv("phenotype_input_dir"), paste0(pheno_id, ".txt"))) %>%
+  filter(file.exists(filepath))
+df
+phenotypes <- df$pheno_id
 ```
 
 ## Covariates
+
 Genetic covariates
 
 ```{r}
-gen_covs <- fread(file.path(Sys.getenv("genotype_input_dir"), "gen_covariates.txt"))
+gen_covs <- fread(file.path(Sys.getenv("genotype_processed_dir"), paste0(Sys.getenv("bfile_prefix"), "pc.txt")))
 names(gen_covs)
 ```
 
 Phenotypic covariates
+
+Expect space separated file with a header line and the following columns:
+
+- `FID` - family identified (can be same as `IID`)
+- `IID` - individual identifier
+- `sex` - sex
+- `yob` - year of birth (optional)
+- `parity` - parity (optional)
+- `bp_med`
+- `cholesterol_med`
+- any other covariates to be included
 
 ```{r}
 phen_covs <- fread(file.path(Sys.getenv("phenotype_input_dir"), "pheno_covariates.txt"))
 names(phen_covs)
 ```
 
+Organising covariates
+
+- For every trait identify the covariates that are required from the csv file
+- Create that cov file
+- For every trait create the cov-quan, cov-qual and the phen file
+- GCTA will use both cov-quan and cov-qual
+
 
 # Summarise data
+
 Now run by phenotype 
 
 Steps (for each phenotype):
@@ -122,110 +135,101 @@ Steps (for each phenotype):
 
 note currently just for BMI but will need to loop over all phenotypes
 
-```{r}
 
-for(i in 1:length(phenotypes$pheno_id)){
-  phecode <- phenotypes[i,1]
+
+```{r}
+for(i in 1:length(phenotypes)){
+  phecode <- phenotypes[i]
   print(phecode)
   type <- filter(df, pheno_id == phecode)$var_type
   print(type)
-
-cs <- list()
-
-phen <- read_phenotype_data(phecode, Sys.getenv("phenotype_input_dir")) 
-
-
-if(!is.null(phen)){ 
+  cs <- list()
+  phen <- read_phenotype_data(phecode, Sys.getenv("phenotype_input_dir"))
+  
+  if(is.null(phen)) {
+    return(NULL)
+  }
   
   #add check that don't have multiple genetic observations per person, or covariate observations 
+  #  triCATCH
   
-#  triCATCH
-  
-dat <- phen %>%
-  left_join(phen_covs, by = "id") %>% 
-  left_join(gen_covs, by = "id") %>%
-  na.exclude
+  dat <- phen %>%
+    left_join(gen_covs, by = c("FID", "IID")) %>%
+    left_join(phen_covs, by = c("FID", "IID")) %>% 
+    na.exclude
 
-##age and ancestry distribution
-hist(dat$age, breaks=length(unique(round(dat$age))))
-cs$age_summary <- summary(dat$age)
+  ##age and ancestry distribution
+  hist(dat$age, breaks=length(unique(round(dat$age))))
+  cs$age_summary <- summary(dat$age)
 
-print(plot_phen_all(dat, phecode))
-print(plot_phen_traj(dat, phecode))
+  print(plot_phen_all(dat, phecode))
+  print(plot_phen_traj(dat, phecode))
 
-rm(dat_temp)
+  rm(dat_temp)
 
-dat$deob <- cut(dat$yob/10, breaks=seq(190,203, by=1))
-cs$deob_summary <- table(dat$deob)
-cs$deob_summary
+  dat$deob <- cut(dat$yob/10, breaks=seq(190,203, by=1))
+  cs$deob_summary <- table(dat$deob)
+  cs$deob_summary
 
-hist(dat$yob, breaks=length(unique(round(dat$yob))))
+  hist(dat$yob, breaks=length(unique(round(dat$yob))))
 
-cs$sex_table <- table(dat$sex)
-cs$sex_table
+  cs$sex_table <- table(dat$sex)
+  cs$sex_table
 
-cs$sex_yob <- dat %>% 
+  cs$sex_yob <- dat %>% 
     group_by(sex) %>% 
     summarise(
         yob_mean = mean(yob, na.rm=T), 
         yob_sd = sd(yob, na.rm=T)
     )
-cs$sex_yob
+  cs$sex_yob
 
 
-#remove outliers and windsorize if exposure is continuous, use function if age range >2 otherwise just apply standard windsorizing 
+  #remove outliers and windsorize if exposure is continuous, use function if age range >2 otherwise just apply standard windsorizing 
 
-outliers <- detect_outliers(dat, phecode)
-analysis_data <- remove_outliers(dat, phecode)
+  outliers <- detect_outliers(dat, phecode)
+  analysis_data <- remove_outliers(dat, phecode)
 
-age_range = max(dat$age) - min(dat$age)
+  age_range = max(dat$age) - min(dat$age)
 
-if(type == "cont"){
-    dat$value <- mbw(MBW_Y=dat$value,MBW_X=dat$age, knots=5, multiple=1,lpc=0.005, upc=0.995, plotme="show", comparator=0)
-}
-
-#counts of sample size in each age group
-cats <- dat %>% group_by(agebin, ancestry) %>%
-  summarize(n())
-colnames(cats) <- c("agebin", "ancestry", "n")
-
-cs$categories <- cats 
-
-cats <- filter(cats, n >= as.numeric(Sys.getenv("env_minumum_strat_n")))
-analysis_data <- inner_join(dat, cats, by = c("agebin", "ancestry"))
-
-summary_output <- tibble()
-
-for(k in 1:length(cats$n)){
-  
-  age_group <- cats$agebin[k]
-  
-  pheno_out <- filter(analysis_data, (agebin == age_group) & (ancestry == anc_group))
-  
-  saveRDS('pheno_out', file=file.path(Sys.getenv("phenotype_processed_dir"), paste("phen", paste(phecode, paste(age_group,"pheno_dat.rds",sep="_"), sep="_"), sep = "_")))     
-  
-  sumstats <- summarise_phen(pheno_out, age_group)
-  summary_output <- rbind(summary_output,cbind(age_group, length(outliers$value), sumstats))
-  
+  if(type == "cont"){
+      out <- mbw(MBW_Y=dat$value,MBW_X=dat$age, knots=5, multiple=1,lpc=0.005, upc=0.995, plotme="show", comparator=0)
+      dat$value <- out
   }
 
-    cs$sums <- summary_output
+  #counts of sample size in each age group
+  cats <- dat %>% group_by(agebin) %>%
+    summarize(n())
+  colnames(cats) <- c("agebin", "n")
 
-saveRDS(cs, file=file.path(Sys.getenv("results_dir"), paste(phecode,"summary.rds",sep="_")))
-}
+  cs$categories <- cats 
+
+  cats <- filter(cats, n >= as.numeric(Sys.getenv("env_minumum_strat_n")))
+  analysis_data <- inner_join(dat, cats, by = c("agebin"))
+
+  summary_output <- list()
+
+  for(k in 1:length(cats$n)){
+    
+    age_group <- cats$agebin[k]
+    pheno_out <- filter(analysis_data, (agebin == cats$agebin[k])) %>% filter(!duplicated(paste(FID, IID)))
+    write.table(pheno_out, file=file.path(Sys.getenv("phenotype_processed_dir"), paste0(phecode, "_", age_group, ".phen")), row=FALSE, col=FALSE, qu=FALSE)
+
+    cov_ids <- subset(df, pheno_id == phecode)$covs %>% strsplit(., ":") %>% {.[[1]]}
+    covs <- dat %>% select(all_of(c(names(gen_covs), cov_ids))) %>% filter(IID %in% pheno_out$IID) %>% filter(!duplicated(paste(FID, IID)))
+    write.table(covs, file=file.path(Sys.getenv("phenotype_processed_dir"), paste0(phecode, "_", age_group, ".covs")), row=FALSE, col=FALSE, qu=FALSE)
+   
+    sumstats <- summarise_phen(pheno_out, cats$agebin[k])
+    summary_output[[k]] <- cbind(age_group, length(outliers$value), sumstats)
+  }
+
+
+  cs$sums <- bind_rows(summary_output)
+  print(cs$sums)
+
+  saveRDS(cs, file=file.path(Sys.getenv("results_dir"), "02", paste0(phecode,"_summary.rds")))
 }
 ```
-
-
-
-assign(paste(phecode,"outlier_rm",sep="_"), remove_outliers(phen, phecode))
-
-
-
-
-```
-
-
 
 ## Run details
 

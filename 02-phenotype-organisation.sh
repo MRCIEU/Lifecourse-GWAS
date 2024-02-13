@@ -1,5 +1,17 @@
 #!/bin/bash
 
+# strict stop if there are any errors
+set -e
+
+# get environmental variables
+source config.env
+
+# create results directory
+mkdir -p ${results_dir}/02
+
+# log everything from this script to a logfile in the results director
+exec &> >(tee ${results_dir}/02/logfile)
+
 # Inputs:
 
 # - Phenotype files
@@ -24,6 +36,9 @@
 # todo:
 # check where the outputs all wanna go
 
-Rscript resources/render.r resources/phenotypes/organise_phenotypes.rmd
+Rscript resources/render.r resources/phenotypes/organise_phenotypes.rmd ${results_dir}/02
 
+# Get list of phenotypes
+ls ${phenotype_processed_dir}/*.phen > ${phenotype_processed_dir}/phenolist
 
+echo "Successfully organised phenotypes!"

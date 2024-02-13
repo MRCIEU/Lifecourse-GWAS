@@ -1,0 +1,4 @@
+﻿Name,pheno_id,var_type,units,min,max,covs
+Body Mass Index,bmi,cont,kg/m2,0,100,sex
+LDL cholesterol,ldl,cont,mmol/L,0,200,sex:cholesterol_med
+HDL cholesterol,hdl,cont,mmol/L,0,200,sex:cholesterol_med

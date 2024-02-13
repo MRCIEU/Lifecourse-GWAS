@@ -36,6 +36,7 @@ exec &> >(tee ${results_dir}/03/logfile)
 index=$1
 nphen=`cat ${phenotype_processed_dir}/phenolist | wc -l`
 
+
 if [ -z $index ]
 then
     echo "Running all $nphen GWASs"
@@ -67,6 +68,8 @@ do
     filename=$(basename -- ${phen})
     filename="${filename%.*}"
     echo $filename
+    covs=$(echo $phen | sed 's/.phen$/.covs/1')
+    echo $covs
     if [ -z $index ] || [ "$index" -eq "$i" ] ; then            
         if [ "$env_family_data" == "true" ]
         then
@@ -76,7 +79,7 @@ do
                 --fastGWA-mlm \
                 --grm-sparse ${genotype_processed_dir}/${bfile_prefix} \
                 --pheno ${phen} \
-                --qcovar ${phenotype_input_dir}/covs.txt \
+                --qcovar ${covs} \
                 --thread-num ${env_threads} \
                 --maf 0 \
                 --geno 1 \
@@ -87,7 +90,7 @@ do
                 --mbfile ${genotype_processed_dir}/geno_chrs.txt \
                 --fastGWA-lr \
                 --pheno ${phen} \
-                --qcovar ${phenotype_input_dir}/covs.txt \
+                --qcovar ${covs} \
                 --thread-num ${env_threads} \
                 --maf 0 \
                 --geno 1 \
@@ -97,8 +100,8 @@ do
         # keep only b, se, af, n because all other info is constant across GWASs
         # if space is a real issue could sacrifice af and n
         # add variantid
-        Rscript resources/genetics/compress_gwas.r ${filename}.fastGWA
-        rm ${filename}.fastGWA
+        Rscript resources/genotypes/compress_gwas.r ${results_dir}/03/${filename}.fastGWA
+        rm ${results_dir}/03/${filename}.fastGWA
     fi
     i=$((i+1))
 done
