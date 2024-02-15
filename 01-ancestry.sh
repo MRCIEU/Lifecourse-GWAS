@@ -25,17 +25,15 @@ exec &> >(tee ${results_dir}/01/logfile)
 # - mbfile for fastGWA
 
 # Get bfile prefix names into an array
-bfiles=( $(ls ${genotype_input_dir}/${bfile_prefix}*.bed | \
+bfiles=( $(ls ${genotype_processed_dir}/bfiles/${bfile_prefix}*.bed | \
     xargs -I {} sh -c "basename {}" | \
     xargs -I {} sh -c "echo {} | sed 's/.bed//g'" ))
 
-echo "List of input bfiles:"
-# Make mbfile - list of all the per-chr bfiles for each ancestry
-> ${genotype_processed_dir}/geno_chrs.txt
+# bfiles=$(< ${genotype_processed_dir}/geno_chrs.txt)
+
 for f in ${bfiles[@]}
 do
     echo $f
-    echo "${genotype_input_dir}/${f}" >> ${genotype_processed_dir}/geno_chrs.txt
 done
 
 # Create scratch directory

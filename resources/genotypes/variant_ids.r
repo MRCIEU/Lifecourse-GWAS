@@ -41,7 +41,7 @@ switchfile <- paste0(outfile, ".switch")
 data.table::fwrite(subset(bim, select=c(V2, V6)), file=switchfile, quote=FALSE, col.names=FALSE, sep=" ")
 
 glue(
-    "{plinkbin} --bfile {bfile} --ref-allele {switchfile} 2 1 --make-bed --out {outfile} --keep-allele-order"
+    "{plinkbin} --bfile {bfile} --rm-dup force-first --ref-allele {switchfile} 2 1 --make-bed --out {outfile} --keep-allele-order"
 ) %>% system()
 
 # make copy of original bim file

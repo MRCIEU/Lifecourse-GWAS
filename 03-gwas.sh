@@ -10,7 +10,7 @@ source config.env
 mkdir -p ${results_dir}/03
 
 # log everything from this script to a logfile in the results director
-exec &> >(tee ${results_dir}/03/logfile)
+exec &> >(tee ${results_dir}/03/logfile${1})
 
 
 # Inputs:
@@ -65,12 +65,12 @@ i=1
 phenolist=( $(cat ${phenotype_processed_dir}/phenolist) )
 for phen in ${phenolist[@]}
 do
-    filename=$(basename -- ${phen})
-    filename="${filename%.*}"
-    echo $filename
-    covs=$(echo $phen | sed 's/.phen$/.covs/1')
-    echo $covs
     if [ -z $index ] || [ "$index" -eq "$i" ] ; then            
+        filename=$(basename -- ${phen})
+        filename="${filename%.*}"
+        echo $filename
+        covs=$(echo $phen | sed 's/.phen$/.covs/1')
+        echo $covs
         if [ "$env_family_data" == "true" ]
         then
             echo "family"
@@ -84,7 +84,7 @@ do
                 --maf 0 \
                 --geno 1 \
                 --out ${results_dir}/03/${filename}
-        elif
+        else
             echo "not family"
             ./bin/gcta-1.94.1 \
                 --mbfile ${genotype_processed_dir}/geno_chrs.txt \
