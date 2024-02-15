@@ -162,7 +162,7 @@ for(i in 1:length(phenotypes)){
   ##age and ancestry distribution
   hist(dat$age, breaks=length(unique(round(dat$age))))
   cs$age_summary <- summary(dat$age)
-  cs$age_quantile <- dat$age %>% quantile(probs=seq(0, 1, 0.01)
+  cs$age_quantile <- dat$age %>% quantile(probs=seq(0, 1, 0.01))
 
   print(plot_phen_all(dat, phecode))
   print(plot_phen_traj(dat, phecode))
