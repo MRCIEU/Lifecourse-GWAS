@@ -212,7 +212,7 @@ for(i in 1:length(phenotypes)){
   for(k in 1:length(cats$n)){
     
     age_group <- cats$agebin[k]
-    pheno_out <- filter(analysis_data, (agebin == cats$agebin[k])) %>% filter(!duplicated(paste(FID, IID)))
+    pheno_out <- filter(analysis_data, (agebin == cats$agebin[k])) %>% filter(!duplicated(paste(FID, IID))) %>% select(FID, IID, value)
     write.table(pheno_out, file=file.path(Sys.getenv("phenotype_processed_dir"), paste0(phecode, "_", age_group, ".phen")), row=FALSE, col=FALSE, qu=FALSE)
 
     cov_ids <- subset(df, pheno_id == phecode)$covs %>% strsplit(., ":") %>% {.[[1]]}
@@ -241,7 +241,7 @@ for(i in 1:length(phenotypes)){
   for(k in 1:length(catsls$n)){
     
     age_group <- catsls$lsbin[k]
-    pheno_out <- filter(analysis_data, (lsbin == catsls$lsbin[k])) %>% filter(!duplicated(paste(FID, IID)))
+    pheno_out <- filter(analysis_data, (lsbin == catsls$lsbin[k])) %>% filter(!duplicated(paste(FID, IID))) %>% select(FID, IID, value)
     write.table(pheno_out, file=file.path(Sys.getenv("phenotype_processed_dir"), paste0(phecode, "_", age_group, ".phen")), row=FALSE, col=FALSE, qu=FALSE)
 
     cov_ids <- subset(df, pheno_id == phecode)$covs %>% strsplit(., ":") %>% {.[[1]]}

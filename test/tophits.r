@@ -13,19 +13,17 @@ standardise <- function(d, ea_col="ea", oa_col="oa", beta_col="beta", eaf_col="e
     d
 }
 
-# bmi
-
 traits <- tribble(
     ~trait, ~id,
     "bmi", "ieu-b-40",
     "ldl", "ieu-b-110"
 )
 
-lapply(2:nrow(traits), \(i) {
+lapply(1:nrow(traits), \(i) {
     a <- tophits(traits$id[i]) %>% 
         standardise(., oa_col="nea", pos_col="position") %>%
         select(vid, ea, beta)
-    write.table(b, file=here("resources", "genotypes", "tophits", paste0(traits$trait[i], ".txt")), row=F, col=F, qu=F)
+    write.table(a, file=here("resources", "genotypes", "tophits", paste0(traits$trait[i], ".txt")), row=F, col=F, qu=F)
 })
 
 

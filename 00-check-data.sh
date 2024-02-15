@@ -7,10 +7,10 @@ set -e
 source config.env
 
 # create results directory
-mkdir -p ${results_dir}/01
+mkdir -p ${results_dir}/00
 
 # log everything from this script to a logfile in the results director
-exec &> >(tee ${results_dir}/01/logfile)
+exec &> >(tee ${results_dir}/00/logfile)
 
 
 ## Check that the software all runs
