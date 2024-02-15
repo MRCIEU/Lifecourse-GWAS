@@ -55,6 +55,7 @@ Read config file
 
 ```{r}
 readRenviron(here("config.env"))
+agebins <- fread(here("resources", "phenotypes", "agebins.csv")) %>% as_tibble()
 ```
 
 #set up output directories
@@ -144,7 +145,7 @@ for(i in 1:length(phenotypes)){
   type <- filter(df, pheno_id == phecode)$var_type
   print(type)
   cs <- list()
-  phen <- read_phenotype_data(phecode, Sys.getenv("phenotype_input_dir"))
+  phen <- read_phenotype_data(phecode, Sys.getenv("phenotype_input_dir"), agebins)
   
   if(is.null(phen)) {
     return(NULL)
@@ -161,11 +162,10 @@ for(i in 1:length(phenotypes)){
   ##age and ancestry distribution
   hist(dat$age, breaks=length(unique(round(dat$age))))
   cs$age_summary <- summary(dat$age)
+  cs$age_quantile <- dat$age %>% quantile(probs=seq(0, 1, 0.01)
 
   print(plot_phen_all(dat, phecode))
   print(plot_phen_traj(dat, phecode))
-
-  rm(dat_temp)
 
   dat$deob <- cut(dat$yob/10, breaks=seq(190,203, by=1))
   cs$deob_summary <- table(dat$deob)
@@ -222,10 +222,39 @@ for(i in 1:length(phenotypes)){
     sumstats <- summarise_phen(pheno_out, cats$agebin[k])
     summary_output[[k]] <- cbind(age_group, length(outliers$value), sumstats)
   }
-
-
   cs$sums <- bind_rows(summary_output)
   print(cs$sums)
+
+
+  #counts of sample size in each lifestage group
+  catsls <- dat %>% group_by(lsbin) %>%
+    summarize(n())
+  colnames(catsls) <- c("lsbin", "n")
+
+  cs$categories_ls <- catsls
+
+  catsls <- filter(catsls, n >= as.numeric(Sys.getenv("env_minumum_strat_n")))
+  analysis_data <- inner_join(dat, catsls, by = c("lsbin"))
+
+  summary_output <- list()
+
+  for(k in 1:length(catsls$n)){
+    
+    age_group <- catsls$lsbin[k]
+    pheno_out <- filter(analysis_data, (lsbin == catsls$lsbin[k])) %>% filter(!duplicated(paste(FID, IID)))
+    write.table(pheno_out, file=file.path(Sys.getenv("phenotype_processed_dir"), paste0(phecode, "_", age_group, ".phen")), row=FALSE, col=FALSE, qu=FALSE)
+
+    cov_ids <- subset(df, pheno_id == phecode)$covs %>% strsplit(., ":") %>% {.[[1]]}
+    covs <- dat %>% select(all_of(c(names(gen_covs), cov_ids))) %>% filter(IID %in% pheno_out$IID) %>% filter(!duplicated(paste(FID, IID)))
+    write.table(covs, file=file.path(Sys.getenv("phenotype_processed_dir"), paste0(phecode, "_", age_group, ".covs")), row=FALSE, col=FALSE, qu=FALSE)
+   
+    sumstats <- summarise_phen(pheno_out, catsls$lsbin[k])
+    summary_output[[k]] <- cbind(age_group, length(outliers$value), sumstats)
+  }
+
+
+  cs$sums_ls <- bind_rows(summary_output)
+  print(cs$sums_ls)
 
   saveRDS(cs, file=file.path(Sys.getenv("results_dir"), "02", paste0(phecode,"_summary.rds")))
 }

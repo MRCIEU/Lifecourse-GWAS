@@ -4,7 +4,7 @@
 
 
 
-read_phenotype_data <- function(phecode, input_dir) {
+read_phenotype_data <- function(phecode, input_dir, agebins) {
   # Check if phenotype is present
   filename <- file.path(input_dir, paste0(phecode, ".txt"))
   if(!file.exists(filename)) {
@@ -21,11 +21,29 @@ read_phenotype_data <- function(phecode, input_dir) {
     print(head(phen))
     stop("expect 'FID', 'IID', 'age' and 'value' columns to be present")
   }
+
+  # Remove duplicates by FID,IID,age
+  phen <- subset(phen, !duplicated(paste(FID, IID, age)))
   
   # Cut into age bins
-  phen$agebin <- cut(phen$age+1, breaks=c(0:19, seq(20, 120, by=5)))
-  levels(phen$agebin) <- levels(phen$agebin) %>% gsub("\\(", "", .) %>% gsub("]", "", .) %>% gsub(",", "-", .)
+  # phen$agebin <- cut(phen$age+1, breaks=c(0:19, seq(20, 120, by=5)))
+  # levels(phen$agebin) <- levels(phen$agebin) %>% gsub("\\(", "", .) %>% gsub("]", "", .) %>% gsub(",", "-", .)
+  phen <- make_agebin(phen, agebins)
   return(phen)
+}
+
+make_agebin <- function(phen, agebins) {
+  lsbins <- subset(agebins, ! grepl("^[0-9]", category))
+  agebins <- subset(agebins, grepl("^[0-9]", category))
+  a <- lapply(1:nrow(agebins), \(i) {
+    subset(phen, age >= agebins$min[i] & age < agebins$max[i]) %>%
+      mutate(agebin = agebins$category[i])
+  }) %>% bind_rows()
+  b <- lapply(1:nrow(lsbins), \(i) {
+    subset(phen, age >= lsbins$min[i] & age < lsbins$max[i]) %>%
+      mutate(lsbin = lsbins$category[i])
+  }) %>% bind_rows()
+  inner_join(a, select(b, FID, IID, age, lsbin))
 }
 
 plot_phen_all <- function(phen, phecode) {
