@@ -115,36 +115,54 @@ summarise_phen <- function(data, age_group, anc_group,male,female) {
     )
 }
 
-
-
-mbw <- function(MBW_Y, MBW_X, knots=5, lpc=0.005, upc=0.995, multiple=1, plotme="show", comparator=0){
+mbw <- function(MBW_Y, MBW_X, knots=7, lpc=0.005, upc=0.995, multiple=1, plotme="none", comparator=0, jitter_X=0, jitter_Y=0){
   print(paste0("Winsorising at ",multiple," times the interval from the median to percentiles ",lpc," and ",upc))
   # Put the input variables into a dataframe:
   MBW_data <- data.frame(Y=MBW_Y,X=MBW_X)
-  
-  # Calculate Harrell's recommended percentiles of the exposure for the chosen number of knots:
-  # (percentiles are type 6 to match Stata)
-  if (knots==3) MBW_knotvals <- quantile(MBW_data$X,probs=c(0.1,0.5,0.9),type=6)
-  if (knots==4) MBW_knotvals <- quantile(MBW_data$X,probs=c(0.05,0.35,0.65,0.95),type=6)
-  if (knots==5) MBW_knotvals <- quantile(MBW_data$X,probs=c(0.05,0.275,0.5,0.725,0.95),type=6)
-  if (knots==6) MBW_knotvals <- quantile(MBW_data$X,probs=c(0.05,0.23,0.41,0.59,0.77,0.95),type=6)
-  if (knots==7) MBW_knotvals <- quantile(MBW_data$X,probs=c(0.025,0.183,0.342,0.5,0.658,0.817,0.975),type=6)
-  print(MBW_knotvals)
-  # Calculate the restricted cubic spline values from these knots:
-  MBW_cspl_X <- rcs(MBW_data$X,MBW_knotvals)
-  # Model percentiles of MBW_Y as a cubic spline function of MBW_X and get fitted values:
-  MBW_data$fit_lpc <- fitted(rq(Y~MBW_cspl_X, data=MBW_data, tau=lpc, model=TRUE))
-  MBW_data$fit_50 <- fitted(rq(Y~MBW_cspl_X, data=MBW_data, tau=0.5, model=TRUE))
-  MBW_data$fit_upc <- fitted(rq(Y~MBW_cspl_X, data=MBW_data, tau=upc, model=TRUE))
+  # knots must be either 0, or between 3 and 7 inclusive:
+  if (knots!=0&(knots<3|knots>7)) stop("Number of knots must be 0,3,4,5,6 or 7") 
+  # If knots=0, model simple percentiles of Y with no effect of age:
+  if (knots==0){
+    Ypc <- quantile(MBW_data$Y,probs=c(lpc,0.25,0.5,0.75,upc),type=6)
+    print(Ypc)
+    MBW_data$fit_lpc <- Ypc[1]
+    MBW_data$fit_25 <- Ypc[2]
+    MBW_data$fit_50 <- Ypc[3]
+    MBW_data$fit_75 <- Ypc[4]
+    MBW_data$fit_upc <- Ypc[5]
+  }
+  # If knots is 3-7, model Y against cubic splines of X:
+  if (knots>=3&knots<=7){
+    # Calculate Harrell's recommended percentiles of the exposure for the chosen number of knots:
+    # (percentiles are type 6 to match Stata)
+    if (knots==3) MBW_knotvals <- quantile(MBW_data$X,probs=c(0.1,0.5,0.9),type=6)
+    if (knots==4) MBW_knotvals <- quantile(MBW_data$X,probs=c(0.05,0.35,0.65,0.95),type=6)
+    if (knots==5) MBW_knotvals <- quantile(MBW_data$X,probs=c(0.05,0.275,0.5,0.725,0.95),type=6)
+    if (knots==6) MBW_knotvals <- quantile(MBW_data$X,probs=c(0.05,0.23,0.41,0.59,0.77,0.95),type=6)
+    if (knots==7) MBW_knotvals <- quantile(MBW_data$X,probs=c(0.025,0.183,0.342,0.5,0.658,0.817,0.975),type=6)
+    print(MBW_knotvals)
+    # Calculate the restricted cubic spline values from these knots:
+    MBW_cspl_X <- rcs(MBW_data$X,MBW_knotvals)
+    # Model percentiles of MBW_Y as a cubic spline function of MBW_X and get fitted values:
+    model_lpc <- rq(Y~MBW_cspl_X, data=MBW_data, tau=lpc, model=TRUE)
+    MBW_data$fit_lpc <- predict(model_lpc)
+    model_25 <- rq(Y~MBW_cspl_X, data=MBW_data, tau=0.25, model=TRUE)
+    MBW_data$fit_25 <- predict(model_25)
+    model_50 <- rq(Y~MBW_cspl_X, data=MBW_data, tau=0.5, model=TRUE)
+    MBW_data$fit_50 <- predict(model_50)
+    model_75 <- rq(Y~MBW_cspl_X, data=MBW_data, tau=0.75, model=TRUE)
+    MBW_data$fit_75 <- predict(model_75)
+    model_upc <- rq(Y~MBW_cspl_X, data=MBW_data, tau=upc, model=TRUE)
+    MBW_data$fit_upc <- predict(model_upc)
+  }
   # If indicated, also fit a comparator model:
   if (comparator==1){
     # Comparator 1 is a quadratic function of age assuming constant variance and winsorising based on a normal assumption:
     MBW_data$X2 <- MBW_data$X^2
     c1model <- lm(Y~X+X2,data=MBW_data)
-    MBW_data$c1fit_mn <- fitted(c1model)
+    MBW_data$c1fit_mn <- predict(c1model)
     MBW_data$c1fit_lpc <- predict(c1model)+qnorm(lpc)*summary(c1model)$sigma
     MBW_data$c1fit_upc <- predict(c1model)+qnorm(upc)*summary(c1model)$sigma
-    rm(c1model)
   }
   if (comparator==2){
     # Comparator 2 is simple winsorising within age bands (yearly to 19, then 5 years from 20):
@@ -157,7 +175,7 @@ mbw <- function(MBW_Y, MBW_X, knots=5, lpc=0.005, upc=0.995, multiple=1, plotme=
       MBW_data$c2fit_upc[MBW_data$Xcat==xcat] <- quantile(MBW_data$Y[MBW_data$Xcat==xcat], probs=upc)
     }
   }
-  # Calculate the winsorising bounds:
+  # Calculate the winsorising bounds (equal to the modelled percentiles if multiple=1):
   MBW_data$lb <- MBW_data$fit_50-multiple*(MBW_data$fit_50-MBW_data$fit_lpc)
   MBW_data$ub <- MBW_data$fit_50+multiple*(MBW_data$fit_upc-MBW_data$fit_50)
   # Winsorise any points outside the bounds and save this as a modified variable (BEFORE re-ordering):
@@ -165,43 +183,107 @@ mbw <- function(MBW_Y, MBW_X, knots=5, lpc=0.005, upc=0.995, multiple=1, plotme=
   MBW_output <- MBW_data$Y
   MBW_output[MBW_output<MBW_data$lb] <- MBW_data$lb[MBW_output<MBW_data$lb]
   MBW_output[MBW_output>MBW_data$ub] <- MBW_data$ub[MBW_output>MBW_data$ub]
-  # Report the winsorisation:
-  #print(paste0(sum(MBW_data$Winsorised)," of ",length(MBW_data$Winsorised)," data points winsorised"))
-  #print(head(MBW_data[MBW_data$Winsorised,],n=20))
-  # If indicated, plot the fitted values on a scatterplot, along with the knots:
+  # Report summary results of the winsorisation:
+  MBW_data$Winsorised_amount <- MBW_output-MBW_data$Y
+  mbw_report <- data.frame(matrix(nrow=0,ncol=2))
+  colnames(mbw_report) <- c("Value","Description")
+  mbw_report <- rbind(mbw_report,data.frame(Value=length(MBW_data$Winsorised),Description="Total sample size"))
+  mbw_report <- rbind(mbw_report,data.frame(Value=as.numeric(summary(MBW_data[,"X"])[3]),Description="Median X among all data"))
+  mbw_report <- rbind(mbw_report,data.frame(Value=sum(MBW_data$Y<MBW_data$lb),Description="Number of values winsorised up"))
+  mbw_report <- rbind(mbw_report,data.frame(Value=sum(MBW_data$Y>MBW_data$ub),Description="Number of values winsorised down"))
+  mbw_report <- rbind(mbw_report,data.frame(Value=as.numeric(summary(MBW_data[MBW_data$Y<MBW_data$lb,"Winsorised_amount"])[1]),Description="Minimum change when winsorised up"))
+  mbw_report <- rbind(mbw_report,data.frame(Value=as.numeric(summary(MBW_data[MBW_data$Y<MBW_data$lb,"Winsorised_amount"])[2]),Description="25 %ile of change when winsorised up"))
+  mbw_report <- rbind(mbw_report,data.frame(Value=as.numeric(summary(MBW_data[MBW_data$Y<MBW_data$lb,"Winsorised_amount"])[3]),Description="50 %ile of change when winsorised up"))
+  mbw_report <- rbind(mbw_report,data.frame(Value=as.numeric(summary(MBW_data[MBW_data$Y<MBW_data$lb,"Winsorised_amount"])[4]),Description="Mean change when winsorised up"))
+  mbw_report <- rbind(mbw_report,data.frame(Value=as.numeric(summary(MBW_data[MBW_data$Y<MBW_data$lb,"Winsorised_amount"])[5]),Description="75 %ile of change when winsorised up"))
+  mbw_report <- rbind(mbw_report,data.frame(Value=as.numeric(summary(MBW_data[MBW_data$Y<MBW_data$lb,"Winsorised_amount"])[6]),Description="Maximum change when winsorised up"))
+  mbw_report <- rbind(mbw_report,data.frame(Value=as.numeric(summary(MBW_data[MBW_data$Y<MBW_data$lb,"X"])[3]),Description="Median X among those winsorised up"))
+  mbw_report <- rbind(mbw_report,data.frame(Value=as.numeric(summary(MBW_data[MBW_data$Y>MBW_data$ub,"Winsorised_amount"])[6]),Description="Minimum change when winsorised down"))
+  mbw_report <- rbind(mbw_report,data.frame(Value=as.numeric(summary(MBW_data[MBW_data$Y>MBW_data$ub,"Winsorised_amount"])[5]),Description="25 %ile of change when winsorised down"))
+  mbw_report <- rbind(mbw_report,data.frame(Value=as.numeric(summary(MBW_data[MBW_data$Y>MBW_data$ub,"Winsorised_amount"])[3]),Description="50 %ile of change when winsorised down"))
+  mbw_report <- rbind(mbw_report,data.frame(Value=as.numeric(summary(MBW_data[MBW_data$Y>MBW_data$ub,"Winsorised_amount"])[4]),Description="Mean change when winsorised down"))
+  mbw_report <- rbind(mbw_report,data.frame(Value=as.numeric(summary(MBW_data[MBW_data$Y>MBW_data$ub,"Winsorised_amount"])[2]),Description="75 %ile of change when winsorised down"))
+  mbw_report <- rbind(mbw_report,data.frame(Value=as.numeric(summary(MBW_data[MBW_data$Y>MBW_data$ub,"Winsorised_amount"])[1]),Description="Maximum change when winsorised down"))
+  mbw_report <- rbind(mbw_report,data.frame(Value=as.numeric(summary(MBW_data[MBW_data$Y>MBW_data$ub,"X"])[3]),Description="Median X among those winsorised down"))
+  mbw_report <- rbind(mbw_report,data.frame(Value=knots,Description="Number of knots (If 0, intercept-only model fitted)"))
+  if(knots>0){
+    for (k in 1:knots){
+      mbw_report <- rbind(mbw_report,data.frame(Value=as.numeric(MBW_knotvals[k]),Description=paste0("Position of knot number ",k)))
+    }
+  }
+  print(mbw_report)
+  # If indicated, plot the data points and fitted values on a scatterplot, along with the knots:
   if (plotme!="show"&plotme!="save") print("No plot option chosen (valid options are show or save)")
   if (plotme=="show"|plotme=="save"){
-    # If indicated, set it up to save as a pdf:
+    # If indicated, set it up to save the graph as a pdf (and the report as a csv):
     if (plotme=="save"){
-      print("Saving plot in the working directory")
-      pdf("Winsorising_plot.pdf", width=8, height=7,bg="white", colormodel="cmyk", paper="A4")
+      print("Saving plot and report in the working directory")
+      pdf("mbw_plot.pdf", width=8, height=7,bg="white", colormodel="cmyk", paper="A4")
+      write.table(mbw_report, file="mbw_report.csv", sep=",", row.names=FALSE)
     }
-    # Do the plot:
     if (plotme=="show") print("Showing plot in R")
+    # Make a dataframe containing fitted values for 1000 points uniformly spaced across the range of X:
+    # (This is so that plotted fitted values don't reflect individual X data)
+    MBW_plotdata <- data.frame(X=seq(from=min(MBW_data$X),to=max(MBW_data$X),length.out=1000))
+    if(knots==0){
+      MBW_plotdata$fit_lpc <- Ypc[1]
+      MBW_plotdata$fit_50 <- Ypc[2]
+      MBW_plotdata$fit_upc <- Ypc[3]
+    }
+    if(knots>=3&knots<=7){
+      MBW_cspl_X <- rcs(MBW_plotdata$X,MBW_knotvals)
+      MBW_plotdata$fit_lpc <- predict(model_lpc,MBW_cspl_X)
+      MBW_plotdata$fit_50 <- predict(model_50,MBW_cspl_X)
+      MBW_plotdata$fit_upc <- predict(model_upc,MBW_cspl_X)
+    }
+    MBW_plotdata$lb <- MBW_plotdata$fit_50-multiple*(MBW_plotdata$fit_50-MBW_plotdata$fit_lpc)
+    MBW_plotdata$ub <- MBW_plotdata$fit_50+multiple*(MBW_plotdata$fit_upc-MBW_plotdata$fit_50)
+    if (comparator==1){
+      MBW_plotdata$X2 <- MBW_plotdata$X^2
+      MBW_plotdata$c1fit_mn <- predict(c1model,MBW_plotdata)
+      MBW_plotdata$c1fit_lpc <- predict(c1model,MBW_plotdata)+qnorm(lpc)*summary(c1model)$sigma
+      MBW_plotdata$c1fit_upc <- predict(c1model,MBW_plotdata)+qnorm(upc)*summary(c1model)$sigma
+      rm(c1model)
+    }   
+    if (comparator==2){
+      MBW_plotdata$Xcat[MBW_plotdata$X<20] <- floor(MBW_plotdata$X[MBW_plotdata$X<20])
+      MBW_plotdata$Xcat[MBW_plotdata$X>=20] <- 5*floor(MBW_plotdata$X[MBW_plotdata$X>=20]/5)
+      for (xcat in MBW_Xcats){
+        MBW_plotdata$c2fit_lpc[MBW_plotdata$Xcat==xcat] <- quantile(MBW_data$Y[MBW_data$Xcat==xcat], probs=lpc)
+        MBW_plotdata$c2fit_50[MBW_plotdata$Xcat==xcat] <- quantile(MBW_data$Y[MBW_data$Xcat==xcat], probs=0.5)
+        MBW_plotdata$c2fit_upc[MBW_plotdata$Xcat==xcat] <- quantile(MBW_data$Y[MBW_data$Xcat==xcat], probs=upc)
+      }
+    }
+    # Make a jittered version of X (+/- a uniformly distributed value between 0 and jitter_X):
+    MBW_data$Xj <- MBW_data$X+runif(n=dim(MBW_data)[1],min=(-1)*jitter_X,max=jitter_X)
+    # Make a jittered version of Y (+/- a uniformly distributed value between 0 and jitter_Y*IQR(Y)):
+    MBW_data$IQR <- MBW_data$fit_75-MBW_data$fit_25
+    MBW_data$randoms <- runif(n=dim(MBW_data)[1],min=(-1),max=1)
+    MBW_data$Yj <- MBW_data$Y+MBW_data$randoms*jitter_Y*MBW_data$IQR
+    # Do the plot:
     MBW_data <- MBW_data[order(MBW_data$X),]
-    plot(MBW_data$X,MBW_data$Y,col="grey",pch=1,xlab="exposure",ylab="outcome",cex=0.5)
-    points(MBW_data$X[MBW_data$Winsorised],pch=1,MBW_data$Y[MBW_data$Winsorised],col="red",cex=0.5)
-    points(MBW_data$X,MBW_data$fit_50,col="red",lwd=1,type="l")
-    points(MBW_data$X,MBW_data$fit_lpc,col="red",lwd=1,type="l",lty=2)
-    points(MBW_data$X,MBW_data$fit_upc,col="red",lwd=1,type="l",lty=2)
-    points(MBW_data$X,MBW_data$lb,col="red",lwd=1,type="l",lty=2)
-    points(MBW_data$X,MBW_data$ub,col="red",lwd=1,type="l",lty=2)
-    abline(v=MBW_knotvals,lty=2,col="grey")
+    plot(MBW_data$Xj,MBW_data$Yj,col="grey",pch=1,xlab="exposure",ylab="outcome",cex=0.5)
+    points(MBW_data$Xj[MBW_data$Winsorised],pch=1,MBW_data$Yj[MBW_data$Winsorised],col="red",cex=0.5)
+    points(MBW_plotdata$X,MBW_plotdata$fit_50,col="red",lwd=1,type="l")
+    points(MBW_plotdata$X,MBW_plotdata$fit_lpc,col="red",lwd=1,type="l",lty=2)
+    points(MBW_plotdata$X,MBW_plotdata$fit_upc,col="red",lwd=1,type="l",lty=2)
+    points(MBW_plotdata$X,MBW_plotdata$lb,col="red",lwd=1,type="l",lty=2)
+    points(MBW_plotdata$X,MBW_plotdata$ub,col="red",lwd=1,type="l",lty=2)
+    if (knots>=3&knots<=7) abline(v=MBW_knotvals,lty=2,col="grey")
     # If indicated, also plot the comparator method:
     if (comparator==1){
-      points(MBW_data$X,MBW_data$c1fit_mn,col="blue",lwd=1,type="l")
-      points(MBW_data$X,MBW_data$c1fit_lpc,col="blue",lwd=1,type="l",lty=2)
-      points(MBW_data$X,MBW_data$c1fit_upc,col="blue",lwd=1,type="l",lty=2)
+      points(MBW_plotdata$X,MBW_plotdata$c1fit_mn,col="blue",lwd=1,type="l")
+      points(MBW_plotdata$X,MBW_plotdata$c1fit_lpc,col="blue",lwd=1,type="l",lty=2)
+      points(MBW_plotdata$X,MBW_plotdata$c1fit_upc,col="blue",lwd=1,type="l",lty=2)
     }
     if (comparator==2){
-      points(MBW_data$X,MBW_data$c2fit_50,col="blue",lwd=1,type="l")
-      points(MBW_data$X,MBW_data$c2fit_lpc,col="blue",lwd=1,type="l",lty=2)
-      points(MBW_data$X,MBW_data$c2fit_upc,col="blue",lwd=1,type="l",lty=2)
+      points(MBW_plotdata$X,MBW_plotdata$c2fit_50,col="blue",lwd=1,type="l")
+      points(MBW_plotdata$X,MBW_plotdata$c2fit_lpc,col="blue",lwd=1,type="l",lty=2)
+      points(MBW_plotdata$X,MBW_plotdata$c2fit_upc,col="blue",lwd=1,type="l",lty=2)
     }
     # If saving, finalise the pdf:
     if (plotme=="save") dev.off()
   }
-  # Return the modified variable and remove temporary variables:
+  # Return the modified variable:
   return(MBW_output)
-  rm(list=c("MBW_data","MBW_knotvals","MBW_cspl_X","MBW_output"))
 }

@@ -190,12 +190,20 @@ for(i in 1:length(phenotypes)){
   outliers <- detect_outliers(dat, phecode)
   analysis_data <- remove_outliers(dat, phecode)
 
-  age_range = max(dat$age) - min(dat$age)
+  age_range = max(analysis_data$age) - min(analysis_data$age)
+  y_sd = sd(analysis_data$value)
 
-  if(type == "cont"){
-      out <- mbw(MBW_Y=dat$value,MBW_X=dat$age, knots=5, multiple=1,lpc=0.005, upc=0.995, plotme="show", comparator=0)
+  if(type == "cont" & age_range>2){
+      out <- mbw(MBW_Y=dat$value,MBW_X=dat$age, knots=5, multiple=1,lpc=0.005, upc=0.995, plotme="show", comparator=1, jitter_X=0.5, jitter_Y=0.05*y_sd)
       dat$value <- out
   }
+  
+
+if(type == "cont" & age_range<=2){
+      out <- mbw(MBW_Y=dat$value,MBW_X=dat$age, knots=0, multiple=1,lpc=0.005, upc=0.995, plotme="show", comparator=1, jitter_X=0.5, jitter_Y=0.05*y_sd)
+      dat$value <- out
+  }
+
 
   #counts of sample size in each age group
   cats <- dat %>% group_by(agebin) %>%
