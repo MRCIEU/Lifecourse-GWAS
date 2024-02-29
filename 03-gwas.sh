@@ -13,6 +13,8 @@ mkdir -p ${results_dir}/03
 exec &> >(tee ${results_dir}/03/logfile${1})
 
 
+asdfsdsfd || echo "hello"
+
 # Inputs:
 
 # - sparse GRM - 01
@@ -35,7 +37,6 @@ exec &> >(tee ${results_dir}/03/logfile${1})
 # Can take any number between 1:ngwas where ngwas is the number of rows in ${phenotype_processed_dir}/phenolist
 index=$1
 nphen=`cat ${phenotype_processed_dir}/phenolist | wc -l`
-
 
 if [ -z $index ]
 then
@@ -71,10 +72,11 @@ do
         echo $filename
         covs=$(echo $phen | sed 's/.phen$/.covs/1')
         echo $covs
+        echo "0" > ${phen}.flag
         if [ "$env_family_data" == "true" ]
         then
             echo "family"
-            ./bin/gcta-1.94.1 \
+            ( ./bin/gcta-1.94.1  \
                 --mbfile ${genotype_processed_dir}/geno_chrs.txt \
                 --fastGWA-mlm \
                 --grm-sparse ${genotype_processed_dir}/${bfile_prefix} \
@@ -83,13 +85,30 @@ do
                 --thread-num ${env_threads} \
                 --maf 0 \
                 --geno 1 \
-                --out ${results_dir}/03/${filename}
+                --out ${results_dir}/03/${filename} ) \
+                || ( echo "1" > ${phen}.flag )
+            flag=`cat ${phen}.flag`
+            echo $flag
+            if [ "$flag" -eq "1" ] ; then
+                echo "LMM failed. Trying linear model using unrelateds only"
+                ./bin/gcta-1.94.1 \
+                    --mbfile ${genotype_processed_dir}/geno_chrs.txt \
+                    --fastGWA-lr \
+                    --keep ${genotype_processed_dir}/scratch/kingunrelated.txt \
+                    --pheno ${phen} \
+                    --qcovar ${covs} \
+                    --thread-num ${env_threads} \
+                    --maf 0 \
+                    --geno 1 \
+                    --out ${results_dir}/03/${filename}
+            fi
         else
             echo "not family"
             ./bin/gcta-1.94.1 \
                 --mbfile ${genotype_processed_dir}/geno_chrs.txt \
                 --fastGWA-lr \
                 --pheno ${phen} \
+                --keep ${genotype_processed_dir}/scratch/kingunrelated.txt \
                 --qcovar ${covs} \
                 --thread-num ${env_threads} \
                 --maf 0 \

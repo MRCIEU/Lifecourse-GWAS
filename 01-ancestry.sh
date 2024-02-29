@@ -103,6 +103,8 @@ bin/king \
     --cpus ${env_threads} \
     --prefix ${genotype_processed_dir}/scratch/king
 
+cp ${genotype_processed_dir}/scratch/kingunrelated.txt ${genotype_processed_dir}/kingunrelated.txt
+
 bin/plink2 \
     --threads ${env_threads} \
     --bfile ${genotype_processed_dir}/scratch/indep \
