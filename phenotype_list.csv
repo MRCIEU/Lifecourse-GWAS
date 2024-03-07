@@ -30,8 +30,8 @@ Total fat mass (dxa),android.f.g,cont,g,0,130000,sex
 Total lean mass (dxa),android.l.g,cont,g,0,130000,sex
 Total tissue fat percentage (dxa),android.tissue.fp,cont,percent,0,1,sex
 Total mass (dxa),total.g,cont,g,0,200000,sex
-Visceral adipose tissue mass (dxa),
-Visceral adipose tissue volume (dxa),
+Visceral adipose tissue mass (dxa),,,,,,
+Visceral adipose tissue volume (dxa),,,,,,
 Total Bone Mineral Density (BMD),bmd,cont,g/cm2,0,50,sex:specify_measurement_device (i.e. DXA/bioelectrical impodence/other)
 Trunk BMD,bmd.trnk,cont,g/cm2,0,50,sex:specify_measurement_device
 Heel BMD,bmd.h,cont,g/cm2,0,50,sex:specify_measurement_device (i.e. DXA/other)
@@ -52,6 +52,6 @@ Calcium,calc,cont,***,0,***,sex
 Estrogen,estrgn,cont,***,0,***,sex:menarche_age:parity_n:menopause_age:hrt:hormonal_contraception
 Progesterone,prgstrn,***,0,***,***,sex:menarche_age:parity_n:menopause_age:hrt:hormonal_contraception
 Testosterone,testrn,***,0,***,***,sex:menarche_age:parity_n:menopause_age:hrt:hormonal_contraception
-Lung function measures, 
-Dermatology, 
-Mood/questionnaires, 
+Lung function measures,,,,,, 
+Dermatology,,,,,, 
+Mood/questionnaires,,,,,, 
