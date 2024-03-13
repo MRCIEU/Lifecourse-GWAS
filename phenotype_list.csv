@@ -2,27 +2,6 @@
 Body Mass Index,bmi,cont,kg/m2,0,100,sex
 Waist circumference,wc,cont,cm,0,200,sex
 Waist to Hip Ratio,whr,cont,cm,0,200,sex
-Android tissue mass (dxa),android.tissue.g,cont,g,0,20000,sex
-Android fat free mass (dxa),android.ff.g,cont,g,0,10000,sex
-Android bone mass (dxa),android.bn.g,cont,g,0,1000,sex
-Android fat mass (dxa),android.f.g,cont,g,0,20000,sex
-Android lean mass (dxa),android.l.g,cont,g,0,10000,sex
-Android tissue fat percentage (dxa),android.tissue.fp,cont,percent,0,1,sex
-Android total mass(dxa),android.total.g,cont,g,0,25000,sex
-Gynoid tissue mass (dxa),gynoid.tissue.g,cont,g,0,20000,sex
-Gynoid fat free mass (dxa),gynoid.ff.g,cont,g,0,10000,sex
-Gynoid bone mass (dxa),gynoid.bn.g,cont,g,0,1000,sex
-Gynoid fat mass (dxa),gynoid.f.g,cont,g,0,20000,sex
-Gynoid lean mass (dxa),gynoid.l.g,cont,g,0,10000,sex
-Gynoid tissue fat percentage (dxa),gynoid.tissue.fp,cont,percent,0,1,sex
-Gynoid total mass (dxa),gynoid.total.g,cont,g,0,25000,sex
-Trunk tissue mass (dxa),trunk.tissue.g,cont,g,0,20000,sex
-Trunk fat free mass (dxa),trunk.ff.g,cont,g,0,10000,sex
-Trunk bone mass (dxa),trunk.bn.g,cont,g,0,1000,sex
-Trunk fat mass (dxa),trunk.f.g,cont,g,0,20000,sex
-Trunk lean mass (dxa),trunk.l.g,cont,g,0,10000,sex
-Trunk tissue fat percentage (dxa),trunk.tissue.fp,cont,percent,0,1,sex
-Trunk total mass (dxa),trunk.total.g,cont,g,0,25000,sex
 Total tissue mass (dxa),android.tissue.g,cont,g,0,200000,sex
 Total fat free mass (dxa),android.ff.g,cont,g,0,130000,sex
 Total bone mass (dxa),android.bn.g,cont,g,0,100000,sex
