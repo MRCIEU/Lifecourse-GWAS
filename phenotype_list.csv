@@ -2,12 +2,12 @@
 Body Mass Index,bmi,cont,kg/m2,0,100,sex
 Waist circumference,wc,cont,cm,0,200,sex
 Waist to Hip Ratio,whr,cont,cm,0,200,sex
-Total tissue mass (dxa),android.tissue.g,cont,g,0,200000,sex
-Total fat free mass (dxa),android.ff.g,cont,g,0,130000,sex
-Total bone mass (dxa),android.bn.g,cont,g,0,100000,sex
-Total fat mass (dxa),android.f.g,cont,g,0,130000,sex
-Total lean mass (dxa),android.l.g,cont,g,0,130000,sex
-Total tissue fat percentage (dxa),android.tissue.fp,cont,percent,0,1,sex
+Total tissue mass (dxa),total.tissue.g,cont,g,0,200000,sex
+Total fat free mass (dxa),total.ff.g,cont,g,0,130000,sex
+Total bone mass (dxa),total.bn.g,cont,g,0,100000,sex
+Total fat mass (dxa),total.f.g,cont,g,0,130000,sex
+Total lean mass (dxa),total.l.g,cont,g,0,130000,sex
+Total tissue fat percentage (dxa),total.tissue.fp,cont,percent,0,1,sex
 Total mass (dxa),total.g,cont,g,0,200000,sex
 Visceral adipose tissue mass (dxa),,,,,,
 Visceral adipose tissue volume (dxa),,,,,,
