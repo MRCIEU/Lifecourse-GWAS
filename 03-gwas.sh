@@ -12,9 +12,6 @@ mkdir -p ${results_dir}/03
 # log everything from this script to a logfile in the results director
 exec &> >(tee ${results_dir}/03/logfile${1})
 
-
-asdfsdsfd || echo "hello"
-
 # Inputs:
 
 # - sparse GRM - 01

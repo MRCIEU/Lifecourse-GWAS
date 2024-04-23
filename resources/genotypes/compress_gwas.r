@@ -4,6 +4,14 @@ library(data.table)
 fn <- commandArgs(T)[1]
 stopifnot(file.exists(fn))
 a <- data.table::fread(fn, header=TRUE)
+
+# Harmonise alleles to alphabetical
+
+ord <- a$A1 > a$A2
+table(ord)
+a$BETA[ord] <- a$BETA[ord] * -1
+a$AF1[ord] <- 1-a$AF1[ord]
+
 b <- a[, .(SNP, BETA, SE, AF1, N)]
 head(b)
 # p <- paste0(fn, ".fst")
