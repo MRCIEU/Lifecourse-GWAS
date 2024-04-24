@@ -69,6 +69,8 @@ mk_phen_bfile () {
                 --threads ${env_threads} \
                 --bfile ${bf} \
                 --extract ${genotype_processed_dir}/scratch/tophits/${ph}.hits \
+                --exclude ${genotype_processed_dir}/bfiles/${fn}_vremove \
+                --remove ${genotype_processed_dir}/bfiles/sremove \
                 --make-bed \
                 --out ${genotype_processed_dir}/scratch/tophits/temp/${fn}
             

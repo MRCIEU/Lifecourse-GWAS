@@ -77,6 +77,7 @@ do
                 --mbfile ${genotype_processed_dir}/geno_chrs.txt \
                 --fastGWA-mlm \
                 --grm-sparse ${genotype_processed_dir}/${bfile_prefix} \
+                --exclude ${genotype_processed_dir}/bfiles/vremove \
                 --pheno ${phen} \
                 --qcovar ${covs} \
                 --thread-num ${env_threads} \
@@ -91,6 +92,7 @@ do
                 ./bin/gcta-1.94.1 \
                     --mbfile ${genotype_processed_dir}/geno_chrs.txt \
                     --fastGWA-lr \
+                    --exclude ${genotype_processed_dir}/bfiles/vremove \
                     --keep ${genotype_processed_dir}/scratch/kingunrelated.txt \
                     --pheno ${phen} \
                     --qcovar ${covs} \
@@ -105,6 +107,7 @@ do
                 --mbfile ${genotype_processed_dir}/geno_chrs.txt \
                 --fastGWA-lr \
                 --pheno ${phen} \
+                --exclude ${genotype_processed_dir}/bfiles/vremove \
                 --keep ${genotype_processed_dir}/scratch/kingunrelated.txt \
                 --qcovar ${covs} \
                 --thread-num ${env_threads} \
@@ -116,6 +119,7 @@ do
         # keep only b, se, af, n because all other info is constant across GWASs
         # if space is a real issue could sacrifice af and n
         # add variantid
+        echo "Compressing output..."
         Rscript resources/genotypes/compress_gwas.r ${results_dir}/03/${filename}.fastGWA
         rm ${results_dir}/03/${filename}.fastGWA
     fi
