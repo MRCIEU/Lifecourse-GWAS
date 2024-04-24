@@ -37,31 +37,69 @@ bfiles=( $(ls ${genotype_input_dir}/${bfile_prefix}*.bed | \
 mkdir -p ${genotype_processed_dir}/bfiles
 
 echo "List of input bfiles:"
+for f in ${bfiles[@]}
+do
+    echo $f
+done
+
+echo ""
+echo "Cleaning each chromosome"
+
 # Make mbfile - list of all the per-chr bfiles for each ancestry
+# List of samples to remove
+# List of variants to remove
 > ${genotype_processed_dir}/geno_chrs.txt
+> ${genotype_processed_dir}/bfiles/sremove
+> ${genotype_processed_dir}/bfiles/vremove
 
 for f in ${bfiles[@]}
 do
     echo $f
+
+    if test -f ${genotype_input_dir}/${f}.bim.orig; then
+        echo "bim file previously updated. Restoring..."
+        mv ${genotype_input_dir}/${f}.bim.orig ${genotype_input_dir}/${f}.bim
+    fi
+
+    # Update variant IDs and effect allele coding
+    Rscript resources/genotypes/variant_ids_bim.r ${genotype_input_dir}/${f}
+    echo "Updated variant IDs"
+
+    cat ${genotype_input_dir}/${f}.bim | { grep "_duplicate" || true; } > ${genotype_processed_dir}/bfiles/${f}_temp_duplicate
+
     # Clean data
     bin/plink2 \
         --bfile ${genotype_input_dir}/${f} \
-        --rm-dup force-first \
-        --maf ${env_minmaf} \
-        --hwe ${env_hwe} \
-        --geno ${env_miss} \
-        --mind ${snp_imiss} \
-        --chr 1-23 \
-        --make-bed \
+        --freq \
+        --hardy \
+        --missing \
         --out ${genotype_processed_dir}/bfiles/${f}_temp \
         --threads ${env_threads}
+
+    awk -v maf=${env_minmaf} '($6 < maf || $6 > (1-maf)) {print $2}' ${genotype_processed_dir}/bfiles/${f}_temp.afreq > ${genotype_processed_dir}/bfiles/${f}_temp_mafsnps
+
+    if test -f ${genotype_processed_dir}/bfiles/${f}_temp.hardy; then
+        awk -v hwe=${env_hwe} '($10 < hwe) {print $2}' ${genotype_processed_dir}/bfiles/${f}_temp.hardy > ${genotype_processed_dir}/bfiles/${f}_temp_hardysnps
+    fi
+
+    if test -f ${genotype_processed_dir}/bfiles/${f}_temp.hardy.x; then
+        awk -v hwe=${env_hwe} '($14 < hwe) {print $2}' ${genotype_processed_dir}/bfiles/${f}_temp.hardy.x > ${genotype_processed_dir}/bfiles/${f}_temp_hardysnps
+    fi
     
-    # Update variant IDs and effect allele coding
-    Rscript resources/genotypes/variant_ids.r ${genotype_processed_dir}/bfiles/${f}_temp ${genotype_processed_dir}/bfiles/${f} bin/plink2
+    awk -v miss=${env_miss} '($5 > miss) {print $2}' ${genotype_processed_dir}/bfiles/${f}_temp.vmiss | { grep -wv "ID" || true; } > ${genotype_processed_dir}/bfiles/${f}_temp_vmiss
+    awk -v miss=${env_imiss} '($5 > miss) {print $1, $2}' ${genotype_processed_dir}/bfiles/${f}_temp.smiss | { grep -wv "#FID IID" || true; } >> ${genotype_processed_dir}/bfiles/sremove
 
-    rm ${genotype_processed_dir}/bfiles/${f}_temp.bed
-    rm ${genotype_processed_dir}/bfiles/${f}_temp.bim
-    rm ${genotype_processed_dir}/bfiles/${f}_temp.fam
+    cat ${genotype_processed_dir}/bfiles/${f}_temp_duplicate ${genotype_processed_dir}/bfiles/${f}_temp_mafsnps ${genotype_processed_dir}/bfiles/${f}_temp_hardysnps ${genotype_processed_dir}/bfiles/${f}_temp_vmiss | sort | uniq > ${genotype_processed_dir}/bfiles/${f}_vremove
+    cat ${genotype_processed_dir}/bfiles/${f}_vremove >> ${genotype_processed_dir}/bfiles/vremove
 
-    echo "${genotype_processed_dir}/bfiles/${f}" >> ${genotype_processed_dir}/geno_chrs.txt
+    echo "${genotype_input_dir}/${f}" >> ${genotype_processed_dir}/geno_chrs.txt
+    echo "Removing $(cat ${genotype_processed_dir}/bfiles/${f}_vremove | wc -l) variants"
 done
+
+sort ${genotype_processed_dir}/bfiles/sremove | uniq > temp
+mv temp ${genotype_processed_dir}/bfiles/sremove
+echo "Removing $(cat ${genotype_processed_dir}/bfiles/sremove | wc -l) individuals due to missing data"
+echo "Removing $(cat ${genotype_processed_dir}/bfiles/vremove | wc -l) variants in total"
+
+
+echo "Successfully completed 00-check-data.sh"

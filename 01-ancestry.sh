@@ -25,7 +25,7 @@ exec &> >(tee ${results_dir}/01/logfile)
 # - mbfile for fastGWA
 
 # Get bfile prefix names into an array
-bfiles=( $(ls ${genotype_processed_dir}/bfiles/${bfile_prefix}*.bed | \
+bfiles=( $(ls ${genotype_input_dir}/${bfile_prefix}*.bed | \
     xargs -I {} sh -c "basename {}" | \
     xargs -I {} sh -c "echo {} | sed 's/.bed//g'" ))
 
@@ -57,7 +57,8 @@ do
         bin/plink2 \
             --threads ${env_threads} \
             --bfile ${genotype_input_dir}/${f} \
-            --exclude ${genotype_processed_dir}/scratch/${f}_highldregions.txt \
+            --remove ${genotype_processed_dir}/bfiles/sremove \
+            --exclude ${genotype_processed_dir}/scratch/${f}_highldregions.txt ${genotype_processed_dir}/bfiles/${f}_vremove \
             --indep-pairwise 10000 5 0.1 \
             --out ${genotype_processed_dir}/scratch/${f}_indep
         prunefile="${genotype_processed_dir}/scratch/${f}_indep.prune.in"
@@ -66,7 +67,9 @@ do
     bin/plink2 \
         --threads ${env_threads} \
         --bfile ${genotype_input_dir}/${f} \
+        --remove ${genotype_processed_dir}/bfiles/sremove \
         --extract ${prunefile} \
+        --exclude ${genotype_processed_dir}/bfiles/${f}_vremove \
         --make-bed \
         --out ${genotype_processed_dir}/scratch/${f}_indep
 
