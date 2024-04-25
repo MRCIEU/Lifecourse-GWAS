@@ -1,7 +1,8 @@
 ﻿Name,pheno_id,var_type,units,min,max,covs,GWAS
 Body Mass Index,bmi,cont,kg/m2,0,100,sex,ukb-b-19953
+Height,height,cont,cm,10,300,sex,ebi-a-GCST90029008
 Waist circumference,wc,cont,cm,0,200,sex,ukb-b-9405
-Waist to Hip Ratio,whr,cont,cm,0,200,sex,***
+Waist to Hip Ratio,whr,cont,cm,0,200,sex,ebi-a-GCST90029009
 Total tissue mass (dxa),total.tissue.g,cont,g,0,200000,sex,***
 Total fat free mass (dxa),total.ff.g,cont,g,0,130000,sex,***
 Total bone mass (dxa),total.bn.g,cont,g,0,100000,sex,***
@@ -16,7 +17,7 @@ Trunk BMD,bmd.trnk,cont,g/cm2,0,50,sex:specify_measurement_device,***
 Heel BMD,bmd.h,cont,g/cm2,0,50,sex:specify_measurement_device (i.e. DXA/other),ebi-a-GCST90029004
 Systolic blood pressure,sbp,cont,mmHg,0,300,sex:bp_medication,ukb-b-20175
 Diastolic blood pressure,dbp,cont,mmHg,0,300,sex:bp_medication,ukb-b-7992
-Pulsatile pressure,pp,cont,mmHg,0,300,sex:bp_medication,***
+Pulsatile pressure,pp,cont,mmHg,0,300,sex:bp_medication,ebi-a-GCST90000061
 LDL cholesterol,ldl,cont,mmol/L,0,50,sex:cholesterol_med,ieu-b-5089
 HDL cholesterol,hdl,cont,mmol/L,0,50,sex:cholesterol_med,ieu-b-109
 Triglycerides (total),trig,cont,mmol/L,0,50,sex:cholesterol_med,ieu-b-111
@@ -33,4 +34,5 @@ Progesterone,prgstrn,***,0,***,***,sex:menarche_age:parity_n:menopause_age:hrt:h
 Testosterone,testrn,***,0,***,***,sex:menarche_age:parity_n:menopause_age:hrt:hormonal_contraception,ebi-a-GCST90012114
 Lung function measures,,,,,,, 
 Dermatology,,,,,,, 
-Mood/questionnaires,,,,,,, 
+Mood/questionnaires,,,,,,,
+Cognition,,,,,,, 
