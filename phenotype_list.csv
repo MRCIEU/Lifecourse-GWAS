@@ -1,36 +1,36 @@
-﻿Name,pheno_id,var_type,units,min,max,covs
-Body Mass Index,bmi,cont,kg/m2,0,100,sex
-Waist circumference,wc,cont,cm,0,200,sex
-Waist to Hip Ratio,whr,cont,cm,0,200,sex
-Total tissue mass (dxa),total.tissue.g,cont,g,0,200000,sex
-Total fat free mass (dxa),total.ff.g,cont,g,0,130000,sex
-Total bone mass (dxa),total.bn.g,cont,g,0,100000,sex
-Total fat mass (dxa),total.f.g,cont,g,0,130000,sex
-Total lean mass (dxa),total.l.g,cont,g,0,130000,sex
-Total tissue fat percentage (dxa),total.tissue.fp,cont,percent,0,1,sex
-Total mass (dxa),total.g,cont,g,0,200000,sex
-Visceral adipose tissue mass (dxa),,,,,,
-Visceral adipose tissue volume (dxa),,,,,,
-Total Bone Mineral Density (BMD),bmd,cont,g/cm2,0,50,sex:specify_measurement_device (i.e. DXA/bioelectrical impodence/other)
-Trunk BMD,bmd.trnk,cont,g/cm2,0,50,sex:specify_measurement_device
-Heel BMD,bmd.h,cont,g/cm2,0,50,sex:specify_measurement_device (i.e. DXA/other)
-Systolic blood pressure,sbp,cont,mmHg,0,300,sex:bp_medication
-Diastolic blood pressure,dbp,cont,mmHg,0,300,sex:bp_medication
-Pulsatile pressure,pp,cont,mmHg,0,300,sex:bp_medication 
-LDL cholesterol,ldl,cont,mmol/L,0,50,sex:cholesterol_med
-HDL cholesterol,hdl,cont,mmol/L,0,50,sex:cholesterol_med
-Triglycerides (total),trig,cont,mmol/L,0,50,sex:cholesterol_med
-Glucose,gluc,cont,mmol/L,0,50,sex:diabetes_diagnosis:insulin_med
-Insulin*,insulin,cont,***,0,200,sex:insulin_med
-Leptin*,leptin,cont,ng/ml,0,***,sex
-Adiponectin,adipon,cont,ng/ml,0,***,sex
-C-reactive protein,crp,cont,mg/L,0,***,sex
-Interleukin 6,il6,cont,***,0,***,sex 
-Vitamin D,vitd,cont,***,0,***,sex 
-Calcium,calc,cont,***,0,***,sex
-Estrogen,estrgn,cont,***,0,***,sex:menarche_age:parity_n:menopause_age:hrt:hormonal_contraception
-Progesterone,prgstrn,***,0,***,***,sex:menarche_age:parity_n:menopause_age:hrt:hormonal_contraception
-Testosterone,testrn,***,0,***,***,sex:menarche_age:parity_n:menopause_age:hrt:hormonal_contraception
-Lung function measures,,,,,, 
-Dermatology,,,,,, 
-Mood/questionnaires,,,,,, 
+﻿Name,pheno_id,var_type,units,min,max,covs,GWAS
+Body Mass Index,bmi,cont,kg/m2,0,100,sex,ukb-b-19953
+Waist circumference,wc,cont,cm,0,200,sex,ukb-b-9405
+Waist to Hip Ratio,whr,cont,cm,0,200,sex,***
+Total tissue mass (dxa),total.tissue.g,cont,g,0,200000,sex,***
+Total fat free mass (dxa),total.ff.g,cont,g,0,130000,sex,***
+Total bone mass (dxa),total.bn.g,cont,g,0,100000,sex,***
+Total fat mass (dxa),total.f.g,cont,g,0,130000,sex,ukb-b-19393
+Total lean mass (dxa),total.l.g,cont,g,0,130000,sex,***
+Total tissue fat percentage (dxa),total.tissue.fp,cont,percent,0,1,sex,ukb-b-8909
+Total mass (dxa),total.g,cont,g,0,200000,sex,***
+Visceral adipose tissue mass (dxa),,,,,,,
+Visceral adipose tissue volume (dxa),,,,,,,ebi-a-GCST90016671
+Total Bone Mineral Density (BMD),bmd,cont,g/cm2,0,50,sex:specify_measurement_device (i.e. DXA/bioelectrical impodence/other),ebi-a-GCST005348
+Trunk BMD,bmd.trnk,cont,g/cm2,0,50,sex:specify_measurement_device,***
+Heel BMD,bmd.h,cont,g/cm2,0,50,sex:specify_measurement_device (i.e. DXA/other),ebi-a-GCST90029004
+Systolic blood pressure,sbp,cont,mmHg,0,300,sex:bp_medication,ukb-b-20175
+Diastolic blood pressure,dbp,cont,mmHg,0,300,sex:bp_medication,ukb-b-7992
+Pulsatile pressure,pp,cont,mmHg,0,300,sex:bp_medication,***
+LDL cholesterol,ldl,cont,mmol/L,0,50,sex:cholesterol_med,ieu-b-5089
+HDL cholesterol,hdl,cont,mmol/L,0,50,sex:cholesterol_med,ieu-b-109
+Triglycerides (total),trig,cont,mmol/L,0,50,sex:cholesterol_med,ieu-b-111
+Glucose,gluc,cont,mmol/L,0,50,sex:diabetes_diagnosis:insulin_med,ebi-a-GCST90014005
+Insulin*,insulin,cont,***,0,200,sex:insulin_med,ukb-b-15445
+Leptin*,leptin,cont,ng/ml,0,***,sex,ieu-a-1003
+Adiponectin,adipon,cont,ng/ml,0,***,sex,ieu-a-1
+C-reactive protein,crp,cont,mg/L,0,***,sex,ebi-a-GCST90014002
+Interleukin 6,il6,cont,***,0,***,sex,prot-b-2 
+Vitamin D,vitd,cont,***,0,***,sex,ebi-a-GCST010144
+Calcium,calc,cont,***,0,***,sex,ebi-a-GCST90013999
+Estrogen,estrgn,cont,***,0,***,sex:menarche_age:parity_n:menopause_age:hrt:hormonal_contraception,***
+Progesterone,prgstrn,***,0,***,***,sex:menarche_age:parity_n:menopause_age:hrt:hormonal_contraception,***
+Testosterone,testrn,***,0,***,***,sex:menarche_age:parity_n:menopause_age:hrt:hormonal_contraception,ebi-a-GCST90012114
+Lung function measures,,,,,,, 
+Dermatology,,,,,,, 
+Mood/questionnaires,,,,,,, 
