@@ -13,17 +13,13 @@ standardise <- function(d, ea_col="ea", oa_col="oa", beta_col="beta", eaf_col="e
     d
 }
 
-traits <- tribble(
-    ~trait, ~id,
-    "bmi", "ieu-b-40",
-    "ldl", "ieu-b-110"
-)
+traits <- read.csv(here("phenotype_list.csv"))
 
 lapply(1:nrow(traits), \(i) {
-    a <- tophits(traits$id[i]) %>% 
+    a <- tophits(traits$opengwasid[i]) %>% 
         standardise(., oa_col="nea", pos_col="position") %>%
         select(vid, ea, beta)
-    write.table(a, file=here("resources", "genotypes", "tophits", paste0(traits$trait[i], ".txt")), row=F, col=F, qu=F)
+    write.table(a, file=here("resources", "genotypes", "tophits", paste0(traits$pheno_id[i], ".txt")), row=F, col=F, qu=F)
 })
 
 
