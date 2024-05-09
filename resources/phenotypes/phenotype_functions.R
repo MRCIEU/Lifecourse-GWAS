@@ -22,6 +22,9 @@ read_phenotype_data <- function(phecode, input_dir, agebins) {
     stop("expect 'FID', 'IID', 'age' and 'value' columns to be present")
   }
 
+  # Keep only required columns
+  phen <- phen %>% dplyr::select(all_of(column_names))
+
   # Remove duplicates by FID,IID,age
   phen <- subset(phen, !duplicated(paste(FID, IID, age)))
   
