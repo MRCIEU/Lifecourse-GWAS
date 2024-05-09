@@ -186,6 +186,7 @@ for(i in 1:length(phenotypes)){
 
 
   #remove outliers and windsorize if exposure is continuous, use function if age range >2 otherwise just apply standard windsorizing 
+  #The Jitter applied to the output functions is between 0 and jitter_X for X and jitter_Y multiplied by the interquatlie range for Y. 
 
   outliers <- detect_outliers(dat, phecode)
   analysis_data <- remove_outliers(dat, phecode)
@@ -194,13 +195,13 @@ for(i in 1:length(phenotypes)){
   y_sd = sd(analysis_data$value)
 
   if(type == "cont" & age_range>2){
-      out <- mbw(MBW_Y=dat$value,MBW_X=dat$age, knots=5, multiple=1,lpc=0.005, upc=0.995, plotme="show", comparator=1, jitter_X=0.5, jitter_Y=0.05*y_sd)
+      out <- mbw(MBW_Y=dat$value,MBW_X=dat$age, knots=5, multiple=1,lpc=0.005, upc=0.995, plotme="show", comparator=1, jitter_X=0.5, jitter_Y=0.05)
       dat$value <- out
   }
   
 
 if(type == "cont" & age_range<=2){
-      out <- mbw(MBW_Y=dat$value,MBW_X=dat$age, knots=0, multiple=1,lpc=0.005, upc=0.995, plotme="show", comparator=1, jitter_X=0.5, jitter_Y=0.05*y_sd)
+      out <- mbw(MBW_Y=dat$value,MBW_X=dat$age, knots=0, multiple=1,lpc=0.005, upc=0.995, plotme="show", comparator=1, jitter_X=0.5, jitter_Y=0.05)
       dat$value <- out
   }
 
