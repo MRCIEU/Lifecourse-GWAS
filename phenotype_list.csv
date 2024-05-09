@@ -36,3 +36,40 @@ Lung function measures,,,,,,,
 Dermatology,,,,,,, 
 Mood/questionnaires,,,,,,,
 Cognition,,,,,,, 
+
+
+List as discussed:
+
+Name,pheno_id,var_type,units,min,max,covs,opengwasid
+Body mass index,bmi,cont,kg/m2,0,100,sex,ukb-b-19953
+Height,height,cont,cm,
+Waist circumference,wc,cont,cm,0,200,sex,ukb-b-9405
+Waist to hip ratio,whr,cont,cm/cm,0,200,sex,ebi-a-GCST90029009
+Heel bone mineral density,bmd,cont,
+Forced expiratory volume in 1 second,fev1,cont,l,0,10,sex,ukb-b-19657
+FEV1/FVC ratio,fev1fvc,cont,l,0,10,sex,ebi-a-GCST90029026
+Systolic blood pressure,sbp,cont,
+LDL cholesterol,ldl,cont,mmol/L,0,200,sex:cholesterol_med,ieu-b-110
+HDL cholesterol,hdl,cont,mmol/L,0,200,sex:cholesterol_med,ieu-b-109
+Triglicerides,trig,cont,
+CRP,crp,cont
+IL6,il6,cont
+Leptin,leptin,cont
+HbA1c,hba1c,cont
+Insulin,insulin,cont
+Adiponectin,adiponectin,cont
+Calcium,calcium,cont
+Vitamin D,vitd,cont
+Estrogen,estrogen,cont
+Progesterone,progesterone,cont
+Testosterone,testosterone,cont
+Cognitive function,cognition,cont
+Depression scores,depression,cont
+Physical activity,physical,cont
+Neuroticism personality trait score,neuroticism,cont
+Extraversion personality trait score,extraversion,cont
+Agreeableness personality trait score,agreeableness,cont
+Conscientiousness personality trait score,conscientiousness,cont
+Openness personality trait score,openness,cont
+
+
