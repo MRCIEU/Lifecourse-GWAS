@@ -22,7 +22,7 @@ Esrtadiol, estradiol,cont,pmol/L,0,15000,sex:menarche_age:parity_n:menopause_age
 Testosterone,testosterone,cont,nmol/L,0,60,sex:menarche_age:parity_n:menopause_age:hrt:hormonal_contraception,ebi-a-GCST90012114
 Sex hormone binding globulin, shbg,cont,nmol/L,0,300,sex:menarche_age:parity_n:menopause_age:hrt:hormonal_contraception,ieu-b-4870
 Cognitive function,cognition,cont,score,0,100,sex,ieu-b-4838
-Depression scores,depression,cont,score,0,100,sex,ebi-a-GCST90038650
+Depression score,depression,cont,score,0,100,sex,ebi-a-GCST90038650
 Physical activity,physical,cont,score,0,100,sex,ebi-a-GCST90093322
 Neuroticism personality trait score,neuroticism,cont,score,0,100,sex,ebi-a-GCST90029028
 Extraversion personality trait score,extraversion,cont,score,0,100,sex,ieu-a-115
