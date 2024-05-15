@@ -1,75 +1,31 @@
-﻿Name,pheno_id,var_type,units,min,max,covs,GWAS
-Body Mass Index,bmi,cont,kg/m2,0,100,sex,ukb-b-19953
-Height,height,cont,cm,10,300,sex,ebi-a-GCST90029008
-Waist circumference,wc,cont,cm,0,200,sex,ukb-b-9405
-Waist to Hip Ratio,whr,cont,cm,0,200,sex,ebi-a-GCST90029009
-Total tissue mass (dxa),total.tissue.g,cont,g,0,200000,sex,***
-Total fat free mass (dxa),total.ff.g,cont,g,0,130000,sex,***
-Total bone mass (dxa),total.bn.g,cont,g,0,100000,sex,***
-Total fat mass (dxa),total.f.g,cont,g,0,130000,sex,ukb-b-19393
-Total lean mass (dxa),total.l.g,cont,g,0,130000,sex,***
-Total tissue fat percentage (dxa),total.tissue.fp,cont,percent,0,1,sex,ukb-b-8909
-Total mass (dxa),total.g,cont,g,0,200000,sex,***
-Visceral adipose tissue mass (dxa),,,,,,,ukb-b-20044
-Visceral adipose tissue volume (dxa),,,,,,,ebi-a-GCST90016671
-Total Bone Mineral Density (BMD),bmd,cont,g/cm2,0,50,sex:specify_measurement_device (i.e. DXA/bioelectrical impodence/other),ebi-a-GCST005348
-Trunk BMD,bmd.trnk,cont,g/cm2,0,50,sex:specify_measurement_device,***
-Heel BMD,bmd.h,cont,g/cm2,0,50,sex:specify_measurement_device (i.e. DXA/other),ebi-a-GCST90029004
-Systolic blood pressure,sbp,cont,mmHg,0,300,sex:bp_medication,ukb-b-20175
-Diastolic blood pressure,dbp,cont,mmHg,0,300,sex:bp_medication,ukb-b-7992
-Pulsatile pressure,pp,cont,mmHg,0,300,sex:bp_medication,ebi-a-GCST90000061
-LDL cholesterol,ldl,cont,mmol/L,0,50,sex:cholesterol_med,ieu-b-5089
-HDL cholesterol,hdl,cont,mmol/L,0,50,sex:cholesterol_med,ieu-b-109
-Triglycerides (total),trig,cont,mmol/L,0,50,sex:cholesterol_med,ieu-b-111
-Glucose,gluc,cont,mmol/L,0,50,sex:diabetes_diagnosis:insulin_med,ebi-a-GCST90014005
-Insulin*,insulin,cont,***,0,200,sex:insulin_med,ukb-b-15445
-Leptin*,leptin,cont,ng/ml,0,***,sex,ieu-a-1003
-Adiponectin,adipon,cont,ng/ml,0,***,sex,ieu-a-1
-C-reactive protein,crp,cont,mg/L,0,***,sex,ebi-a-GCST90014002
-Interleukin 6,il6,cont,***,0,***,sex,prot-b-2 
-Vitamin D,vitd,cont,***,0,***,sex,ebi-a-GCST010144
-Calcium,calc,cont,***,0,***,sex,ebi-a-GCST90013999
-Estrogen,estrgn,cont,***,0,***,sex:menarche_age:parity_n:menopause_age:hrt:hormonal_contraception,***
-Progesterone,prgstrn,***,0,***,***,sex:menarche_age:parity_n:menopause_age:hrt:hormonal_contraception,***
-Testosterone,testrn,***,0,***,***,sex:menarche_age:parity_n:menopause_age:hrt:hormonal_contraception,ebi-a-GCST90012114
-Lung function measures,,,,,,, 
-Dermatology,,,,,,, 
-Mood/questionnaires,,,,,,,
-Cognition,,,,,,, 
-
-
-List as discussed:
-
-Name,pheno_id,var_type,units,min,max,covs,opengwasid
-Body mass index,bmi,cont,kg/m2,0,100,sex,ukb-b-19953
-Height,height,cont,cm,
-Waist circumference,wc,cont,cm,0,200,sex,ukb-b-9405
-Waist to hip ratio,whr,cont,cm/cm,0,200,sex,ebi-a-GCST90029009
-Heel bone mineral density,bmd,cont,
+﻿Name,pheno_id,var_type,units,min,max,covs,opengwasid
+Body mass index,bmi,cont,kg/m2,0,60,sex,ukb-b-19953
+Height,height,cont,cm,10,250,sex,ebi-a-GCST90029008
+Waist circumference,wc,cont,cm,0,20,sex,ukb-b-9405
+Waist to hip ratio,whr,cont,ratio,0,20,sex,ebi-a-GCST90029009
+Heel bone mineral density,bmd,cont,g/cm2,0,20,sex,ukb-b-8875
 Forced expiratory volume in 1 second,fev1,cont,l,0,10,sex,ukb-b-19657
 FEV1/FVC ratio,fev1fvc,cont,l,0,10,sex,ebi-a-GCST90029026
-Systolic blood pressure,sbp,cont,
-LDL cholesterol,ldl,cont,mmol/L,0,200,sex:cholesterol_med,ieu-b-110
-HDL cholesterol,hdl,cont,mmol/L,0,200,sex:cholesterol_med,ieu-b-109
-Triglicerides,trig,cont,
-CRP,crp,cont
-IL6,il6,cont
-Leptin,leptin,cont
-HbA1c,hba1c,cont
-Insulin,insulin,cont
-Adiponectin,adiponectin,cont
-Calcium,calcium,cont
-Vitamin D,vitd,cont
-Estrogen,estrogen,cont
-Progesterone,progesterone,cont
-Testosterone,testosterone,cont
-Cognitive function,cognition,cont
-Depression scores,depression,cont
-Physical activity,physical,cont
-Neuroticism personality trait score,neuroticism,cont
-Extraversion personality trait score,extraversion,cont
-Agreeableness personality trait score,agreeableness,cont
-Conscientiousness personality trait score,conscientiousness,cont
-Openness personality trait score,openness,cont
-
-
+Systolic blood pressure,sbp,cont,mmHg,0,250,sex:bp_medication,ukb-b-20175
+LDL cholesterol,ldl,cont,mmol/L,0,10,sex:cholesterol_med,ieu-b-110
+HDL cholesterol,hdl,cont,mmol/L,0,10,sex:cholesterol_med,ieu-b-109
+Triglycerides,trig,cont,mmol/L,0,20,sex:cholesterol_med,ieu-b-111
+C-reactive protein,crp,cont,mg/L,0,100,sex,ebi-a-GCST90014002
+Interleukin 6,il6,cont,pg/ml,0,100,sex,prot-b-2 
+Leptin,leptin,cont,ng/ml,0,100,sex,ieu-a-1003
+Glycated haemoglobin,hba1c,cont,mmol/mol,0,70,sex,ebi-a-GCST90014006
+Insulin,insulin,cont,pmol/L,0,200,sex:insulin_med,ukb-b-15445
+Adiponectin,adiponectin,cont,ug/ml,0,100,sex,ieu-a-1
+Calcium,calcium,cont,mmol/L,0,10,sex,ebi-a-GCST90013999
+Vitamin D,vitd,cont,nmol/L,0,400,sex,ebi-a-GCST010144
+Esrtadiol, estradiol,cont,pmol/L,0,15000,sex:menarche_age:parity_n:menopause_age:hrt:hormonal_contraception,ebi-a-GCST90012105
+Testosterone,testosterone,cont,nmol/L,0,60,sex:menarche_age:parity_n:menopause_age:hrt:hormonal_contraception,ebi-a-GCST90012114
+Sex hormone binding globulin, shbg,cont,nmol/L,0,300,sex:menarche_age:parity_n:menopause_age:hrt:hormonal_contraception,ieu-b-4870
+Cognitive function,cognition,cont,score,0,100,sex,ieu-b-4838
+Depression scores,depression,cont,score,0,100,sex,ebi-a-GCST90038650
+Physical activity,physical,cont,score,0,100,sex,ebi-a-GCST90093322
+Neuroticism personality trait score,neuroticism,cont,score,0,100,sex,ebi-a-GCST90029028
+Extraversion personality trait score,extraversion,cont,score,0,100,sex,ieu-a-115
+Agreeableness personality trait score,agreeableness,cont,score,0,100,sex,ieu-a-113
+Conscientiousness personality trait score,conscientiousness,cont,score,0,100,sex,ieu-a-114
+Openness personality trait score,openness,cont,score,0,20,sex,ieu-a-117
