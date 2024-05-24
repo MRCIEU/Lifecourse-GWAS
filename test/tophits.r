@@ -15,11 +15,24 @@ standardise <- function(d, ea_col="ea", oa_col="oa", beta_col="beta", eaf_col="e
 
 traits <- read.csv(here("phenotype_list.csv"))
 
-lapply(1:nrow(traits), \(i) {
-    a <- tophits(traits$opengwasid[i]) %>% 
-        standardise(., oa_col="nea", pos_col="position") %>%
-        select(vid, ea, beta)
-    write.table(a, file=here("resources", "genotypes", "tophits", paste0(traits$pheno_id[i], ".txt")), row=F, col=F, qu=F)
+lapply(13:nrow(traits), \(i) {
+    of <- here("resources", "genotypes", "tophits", paste0(traits$pheno_id[i], ".txt"))
+    if(traits$pheno_id[i] == "depression") {
+        return(NULL)
+    }
+    if(!file.exists(of)) {
+        message(i, " " , of)
+        a <- try(tophits(traits$opengwasid[i]))
+        if(class(a) != "try-error") 
+        {
+            if(nrow(a) > 0) {
+                a <- a %>% 
+                    standardise(., oa_col="nea", pos_col="position") %>%
+                    select(vid, ea, beta)
+                write.table(a, file=of, row=F, col=F, qu=F)
+            }
+        }
+    }
 })
 
 
