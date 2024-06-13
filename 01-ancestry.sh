@@ -194,7 +194,7 @@ then
             ${results_dir}/01/pcaplot.png
 
         n_outliers=`wc -l ${genotype_processed_dir}/${bfile_prefix}_genetic_outliers.txt | awk '{ print $1 }'`
-        if [ "${n_outliers}" = "0" ]; then
+        if [ "${n_outliers}" != "0" ]; then
             echo "WARNING: there are $n_outliers genetic outliers based on the user-provided PCs"
             echo "We recommend one of the following"
             echo "- changing the env_pca_sd threshold"

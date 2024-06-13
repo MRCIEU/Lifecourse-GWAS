@@ -60,11 +60,10 @@ rel <- rel[, c(1, 2, ncol(rel))]
 names(rel) <- c("IID_1", "IID_2", "relationship")
 
 # check relation labels
-relation_labels = unique(rel$relationship)
+relation_labels = table(rel$relationship)
+print(relation_labels)
 setting_labels = c("Dup/MZ", "PO", "FS", "2nd", "3rd")
-if(length(setdiff(relation_labels, setting_labels)) != 0){
-    stop("FAM fro pedigree can only handle 5 relationship labels: MZtwin, parentOffspring, fullSib, second, third")
-}
+rel <- subset(rel, relationship %in% setting_labels)
 
 rel2 <- rel[,c(2,1,3)]
 names(rel2) <- c("IID_1", "IID_2", "relationship")
