@@ -35,7 +35,9 @@ bim$A2[bim$switch] <- temp
 table(bim$switch)
 bim
 # make copy of original bim file
-file.copy(from=paste0(bfile, ".bim"), to=paste0(bfile, ".bim.orig"))
+if(!file.exists(paste0(bfile, ".bim.orig"))) {
+	file.copy(from=paste0(bfile, ".bim"), to=paste0(bfile, ".bim.orig"))
+}
 
 # update variant IDs
 ch <- bim$A1 < bim$A2
