@@ -74,6 +74,10 @@ detect_outliers <- function(phen, phecode) {
   return(outliers)
 }
 
+rank_transform <- function(x) {
+  qnorm((rank(x,na.last="keep")-0.5)/sum(!is.na(x)))
+}
+
 
 remove_outliers <- function(phen, phecode) {
   min <- df %>% 
