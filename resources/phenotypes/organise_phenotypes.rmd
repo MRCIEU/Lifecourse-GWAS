@@ -4,16 +4,10 @@ date: "`r Sys.Date()`"
 output: html_document
 ---
 
-4/1/24:
-Update spreadsheet
-Merge into main branch
-Run alspac through this file
-
-
 
 TO DO:
 
-- update windsorizing to not use age if age range <=2 
+- option to standardise trait (or not)
 - make sure input and output files match other parts of pipeline
 - update environment output
 
@@ -23,7 +17,7 @@ Files needed to input into this:
  - phenotype description (name, id, type, units, min, max)
  - genetic covariates (id, PC's)
  - phenotype file (id, age, phenotype value)
- - phenotype covariates (id,  year of birth, sex). #NB - it doesnt actually matter if sex appears in covariates file
+ - phenotype covariates (id,  year of birth, sex). #NB - now merged into the main covariates file prior to analysis.
  
 This all may need to be updated based on the output from the genetic processing
 
@@ -93,6 +87,7 @@ Genetic covariates
 ```{r}
 gen_covs <- fread(file.path(Sys.getenv("genotype_processed_dir"), paste0(Sys.getenv("bfile_prefix"), "pc.txt")))
 names(gen_covs)
+gen_covs$V1 <- NULL
 ```
 
 Phenotypic covariates
@@ -109,8 +104,8 @@ Expect space separated file with a header line and the following columns:
 - any other covariates to be included
 
 ```{r}
-phen_covs <- fread(file.path(Sys.getenv("phenotype_input_dir"), "pheno_covariates.txt"))
-names(phen_covs)
+#phen_covs <- fread(file.path(Sys.getenv("phenotype_input_dir"), "pheno_covariates.txt"))
+#names(phen_covs)
 ```
 
 Organising covariates
@@ -134,8 +129,6 @@ Steps (for each phenotype):
  - summarise phenotype, dec.o.b and sex
  - save files by age and ancestry
 
-note currently just for BMI but will need to loop over all phenotypes
-
 
 
 ```{r}
@@ -151,12 +144,11 @@ for(i in 1:length(phenotypes)){
     return(NULL)
   }
   
-  #add check that don't have multiple genetic observations per person, or covariate observations 
-  #  triCATCH
+  #Only one genetic observation per person
+  setequal(unique(gen_covs$IID), gen_covs$IID)
   
   dat <- phen %>%
     left_join(gen_covs, by = c("FID", "IID")) %>%
-    left_join(phen_covs, by = c("FID", "IID")) %>% 
     na.exclude
 
   ##age and ancestry distribution
@@ -185,7 +177,7 @@ for(i in 1:length(phenotypes)){
   cs$sex_yob
 
 
-  #remove outliers and windsorize if exposure is continuous, use function if age range >2 otherwise just apply standard windsorizing 
+  #remove outliers and plot the remaining data
   #The Jitter applied to the output functions is between 0 and jitter_X for X and jitter_Y multiplied by the interquatlie range for Y. 
 
   outliers <- detect_outliers(dat, phecode)
@@ -194,15 +186,26 @@ for(i in 1:length(phenotypes)){
   age_range = max(analysis_data$age) - min(analysis_data$age)
   y_sd = sd(analysis_data$value)
 
-  if(type == "cont" & age_range>2){
-      out <- mbw(MBW_Y=dat$value,MBW_X=dat$age, knots=5, multiple=1,lpc=0.005, upc=0.995, plotme="show", comparator=1, jitter_X=0.5, jitter_Y=0.05)
-      dat$value <- out
-  }
+  
+  ##edit this bit to make the plots but no standardisation 
+#  if(type == "cont" & age_range>2){
+#      out <- mbw(MBW_Y=dat$value,MBW_X=dat$age, knots=5, multiple=1,lpc=0.005, upc=0.995, plotme="show", comparator=1, jitter_X=0.5, jitter_Y=0.05)
+ #     dat$value <- out
+#  }
   
 
-if(type == "cont" & age_range<=2){
-      out <- mbw(MBW_Y=dat$value,MBW_X=dat$age, knots=0, multiple=1,lpc=0.005, upc=0.995, plotme="show", comparator=1, jitter_X=0.5, jitter_Y=0.05)
-      dat$value <- out
+#if(type == "cont" & age_range<=2){
+ #     out <- mbw(MBW_Y=dat$value,MBW_X=dat$age, knots=0, multiple=1,lpc=0.005, upc=0.995, plotme="show", comparator=1, jitter_X=0.5, #jitter_Y=0.05)
+ #     dat$value <- out
+#}
+  
+  ##medication adjustment - note this assumes that the value in the phenotype covariates is the same as the column name
+  if(grepl("cholesterol_med", filter(df, pheno_id == phecode)$covs) == TRUE){
+    dat$value <- dat$value + (40*dat$cholesterol_med)
+  }
+  
+  if(grepl("bp_med", filter(df, pheno_id == phecode)$covs) == TRUE){
+    dat$value <- dat$value + (15*dat$bp_med)
   }
 
 
@@ -215,13 +218,32 @@ if(type == "cont" & age_range<=2){
 
   cats <- filter(cats, n >= as.numeric(Sys.getenv("env_minumum_strat_n")))
   analysis_data <- inner_join(dat, cats, by = c("agebin"))
+  
+      if (filter(df, pheno_id == phecode)$adjust=="log") {
+        print("log transformed")
+        } else if(filter(df, pheno_id == phecode)$adjust=="sd") {
+         print("sd transformed")
+        } else if(filter(df, pheno_id == phecode)$adjust=="none") {
+         print("no transformation")
+        }
 
   summary_output <- list()
 
   for(k in 1:length(cats$n)){
     
     age_group <- cats$agebin[k]
-    pheno_out <- filter(analysis_data, (agebin == cats$agebin[k])) %>% filter(!duplicated(paste(FID, IID))) %>% select(FID, IID, value) %>% mutate(value = rank_transform(value))
+    pheno_out <- filter(analysis_data, (agebin == cats$agebin[k])) %>% filter(!duplicated(paste(FID, IID))) %>% select(FID, IID, value, age)
+    
+    ## apply the standardisation required by the adjustment in the phenotypes list file
+  
+        if (filter(df, pheno_id == phecode)$adjust=="log") {
+        pheno_out$value <- log(pheno_out$value)
+        } else if(filter(df, pheno_id == phecode)$adjust=="sd") {
+         pheno_out$value <- pheno_out$value/sd(pheno_out$value)
+        } else if(filter(df, pheno_id == phecode)$adjust=="none") {
+         pheno_out$value <- pheno_out$value
+        }
+    
     write.table(pheno_out, file=file.path(Sys.getenv("phenotype_processed_dir"), paste0(phecode, "_", age_group, ".phen")), row=FALSE, col=FALSE, qu=FALSE)
 
     cov_ids <- subset(df, pheno_id == phecode)$covs %>% strsplit(., ":") %>% {.[[1]]}
@@ -250,11 +272,11 @@ if(type == "cont" & age_range<=2){
   for(k in 1:length(catsls$n)){
     
     age_group <- catsls$lsbin[k]
-    pheno_out <- filter(analysis_data, (lsbin == catsls$lsbin[k])) %>% filter(!duplicated(paste(FID, IID))) %>% select(FID, IID, value) %>% mutate(value = rank_transform(value))
+    pheno_out <- filter(analysis_data, (lsbin == catsls$lsbin[k])) %>% filter(!duplicated(paste(FID, IID))) %>% select(FID, IID, value, age)
     write.table(pheno_out, file=file.path(Sys.getenv("phenotype_processed_dir"), paste0(phecode, "_", age_group, ".phen")), row=FALSE, col=FALSE, qu=FALSE)
 
     cov_ids <- subset(df, pheno_id == phecode)$covs %>% strsplit(., ":") %>% {.[[1]]}
-    covs <- dat %>% select(all_of(c(names(gen_covs), cov_ids))) %>% filter(IID %in% pheno_out$IID) %>% filter(!duplicated(paste(FID, IID)))
+    covs <- dat %>% select(all_of(c(names(gen_covs), cov_ids, "age"))) %>% filter(IID %in% pheno_out$IID) %>% filter(!duplicated(paste(FID, IID)))
     write.table(covs, file=file.path(Sys.getenv("phenotype_processed_dir"), paste0(phecode, "_", age_group, ".covs")), row=FALSE, col=FALSE, qu=FALSE)
    
     sumstats <- summarise_phen(pheno_out, catsls$lsbin[k])
@@ -265,7 +287,7 @@ if(type == "cont" & age_range<=2){
   cs$sums_ls <- bind_rows(summary_output)
   print(cs$sums_ls)
 
-  saveRDS(cs, file=file.path(Sys.getenv("results_dir"), "02", paste0(phecode,"_summary.rds")))
+  saveRDS(cs, file=file.path(Sys.getenv("results_dir"), paste0(phecode,"_summary.rds")))
 }
 ```
 
