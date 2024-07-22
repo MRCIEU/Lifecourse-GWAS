@@ -16,14 +16,14 @@ read_phenotype_data <- function(phecode, input_dir, agebins) {
   phen <- data.table::fread(filename)
   
   # Check columns are there as expected
-  column_names <- c("FID", "IID", "age", "value")
+  column_names <- c("FID", "IID", "age", "value", "sex")
   if(!all(column_names %in% names(phen))) {
     print(head(phen))
     stop("expect 'FID', 'IID', 'age' and 'value' columns to be present")
   }
 
   # Keep only required columns
-  phen <- phen %>% dplyr::select(all_of(column_names))
+  #phen <- phen %>% dplyr::select(all_of(column_names))
 
   # Remove duplicates by FID,IID,age
   phen <- subset(phen, !duplicated(paste(FID, IID, age)))
@@ -118,7 +118,9 @@ summarise_phen <- function(data, age_group, anc_group,male,female) {
       q90=quantile(value, 0.90, na.rm=T),
       q95=quantile(value, 0.95, na.rm=T), 
       male_sex1=sum(as.numeric(pheno_out$sex==1)),
-      female_sex2=sum(as.numeric(pheno_out$sex==2))
+      female_sex2=sum(as.numeric(pheno_out$sex==2)),
+      m_age=mean(age, na.rm=T),
+      sd_age=sd(age, na.rm=T)
     )
 }
 
