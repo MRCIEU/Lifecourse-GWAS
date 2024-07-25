@@ -7,7 +7,7 @@ Heel bone mineral density,bmd,cont,g/cm2,0,20,sex,no,ukb-b-8875
 Forced expiratory volume in 1 second,fev1,cont,l,0,10,sex,no,ukb-b-19657
 FEV1/FVC ratio,fev1fvc,cont,l,0,10,sex,no,ebi-a-GCST90029026
 Systolic blood pressure,sbp,cont,mmHg,0,250,sex:bp_medication,no,ukb-b-20175
-LDL cholesterol,ldl,cont,mmol/L,0,10,sex:cholesterol_no,ieu-b-110
+LDL cholesterol,ldl,cont,mmol/L,0,10,sex:cholesterol_med,no,ieu-b-110
 HDL cholesterol,hdl,cont,mmol/L,0,10,sex:cholesterol_med,no,ieu-b-109
 Triglycerides,trig,cont,mmol/L,0,20,sex:cholesterol_med,yes,ieu-b-111
 C-reactive protein,crp,cont,mg/L,0,100,sex,yes,ebi-a-GCST90014002
