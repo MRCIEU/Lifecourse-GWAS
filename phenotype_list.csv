@@ -12,7 +12,7 @@ HDL cholesterol,hdl,cont,mmol/L,0,10,sex:cholesterol_med,no,ieu-b-109
 Triglycerides,trig,cont,mmol/L,0,20,sex:cholesterol_med,yes:log,ieu-b-111
 C-reactive protein,crp,cont,mg/L,0,100,sex,yes:log,ebi-a-GCST90014002
 Interleukin 6,il6,cont,pg/ml,0,100,sex,yes:log,ebi-a-GCST90012005
-Leptin,leptin,cont,ng/ml,0,100,sex,yes(log),ebi-a-GCST90007307
+Leptin,leptin,cont,ng/ml,0,100,sex,yes:log,ebi-a-GCST90007307
 Glycated haemoglobin,hba1c,cont,mmol/mol,0,70,sex,yes:log,ebi-a-GCST90014006
 Insulin,insulin,cont,pmol/L,0,200,sex:insulin_med,yes:log,ukb-b-15445
 Adiponectin,adiponectin,cont,ug/ml,0,100,sex,yes:log,ieu-a-1
