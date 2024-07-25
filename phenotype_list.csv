@@ -1,31 +1,31 @@
 ﻿Name,pheno_id,var_type,units,min,max,covs,transformation,opengwasid
-Body mass index,bmi,cont,kg/m2,0,60,sex,yes,ukb-b-19953
+Body mass index,bmi,cont,kg/m2,0,60,sex,yes(log),ukb-b-19953
 Height,height,cont,cm,10,250,sex,no,ebi-a-GCST90029008
-Waist circumference,wc,cont,cm,0,20,sex,yes,ukb-b-9405
-Waist to hip ratio,whr,cont,ratio,0,20,sex,yes,ebi-a-GCST90029009
+Waist circumference,wc,cont,cm,0,20,sex,yes(log),ukb-b-9405
+Waist to hip ratio,whr,cont,ratio,0,20,sex,yes(log),ebi-a-GCST90029009
 Heel bone mineral density,bmd,cont,g/cm2,0,20,sex,no,ukb-b-8875
 Forced expiratory volume in 1 second,fev1,cont,l,0,10,sex,no,ukb-b-19657
 FEV1/FVC ratio,fev1fvc,cont,l,0,10,sex,no,ebi-a-GCST90029026
 Systolic blood pressure,sbp,cont,mmHg,0,250,sex:bp_medication,no,ukb-b-20175
 LDL cholesterol,ldl,cont,mmol/L,0,10,sex:cholesterol_med,no,ieu-b-110
 HDL cholesterol,hdl,cont,mmol/L,0,10,sex:cholesterol_med,no,ieu-b-109
-Triglycerides,trig,cont,mmol/L,0,20,sex:cholesterol_med,yes,ieu-b-111
-C-reactive protein,crp,cont,mg/L,0,100,sex,yes,ebi-a-GCST90014002
-Interleukin 6,il6,cont,pg/ml,0,100,sex,yes,ebi-a-GCST90012005
-Leptin,leptin,cont,ng/ml,0,100,sex,yes,ebi-a-GCST90007307
-Glycated haemoglobin,hba1c,cont,mmol/mol,0,70,sex,yes,ebi-a-GCST90014006
-Insulin,insulin,cont,pmol/L,0,200,sex:insulin_med,yes,ukb-b-15445
-Adiponectin,adiponectin,cont,ug/ml,0,100,sex,yes,ieu-a-1
+Triglycerides,trig,cont,mmol/L,0,20,sex:cholesterol_med,yes(log),ieu-b-111
+C-reactive protein,crp,cont,mg/L,0,100,sex,yes(log),ebi-a-GCST90014002
+Interleukin 6,il6,cont,pg/ml,0,100,sex,yes(log),ebi-a-GCST90012005
+Leptin,leptin,cont,ng/ml,0,100,sex,yes(log),ebi-a-GCST90007307
+Glycated haemoglobin,hba1c,cont,mmol/mol,0,70,sex,yes(log),ebi-a-GCST90014006
+Insulin,insulin,cont,pmol/L,0,200,sex:insulin_med,yes(log),ukb-b-15445
+Adiponectin,adiponectin,cont,ug/ml,0,100,sex,yes(log),ieu-a-1
 Calcium,calcium,cont,mmol/L,0,10,sex,no,ebi-a-GCST90013999
 Vitamin D,vitd,cont,nmol/L,0,400,sex,no,ebi-a-GCST90000618
-Estradiol,estradiol,cont,pmol/L,0,15000,sex:menarche_age:parity_n:menopause_age:hrt:hormonal_contraception,yes,ebi-a-GCST90012105
-Testosterone,testosterone,cont,nmol/L,0,60,sex:menarche_age:parity_n:menopause_age:hrt:hormonal_contraception,yes,ebi-a-GCST90012114
-Sex hormone binding globulin,shbg,cont,nmol/L,0,300,sex:menarche_age:parity_n:menopause_age:hrt:hormonal_contraception,yes,ieu-b-4870
-Cognitive function,cognition,cont,score,0,100,sex,yes,ukb-b-5238
-Depression score,depression,cont,score,0,100,sex,yes,ebi-a-GCST90038650
-Physical activity,physical,cont,score,0,100,sex,yes,ebi-a-GCST90093322
-Neuroticism personality trait score,neuroticism,cont,score,0,100,sex,yes,ukb-b-4630
-Extraversion personality trait score,extraversion,cont,score,0,100,sex,yes,ieu-a-115
-Agreeableness personality trait score,agreeableness,cont,score,0,100,sex,yes,ieu-a-113
-Conscientiousness personality trait score,conscientiousness,cont,score,0,100,sex,yes,ieu-a-114
-Openness personality trait score,openness,cont,score,0,100,yes,sex,ieu-a-117
+Estradiol,estradiol,cont,pmol/L,0,15000,sex:menarche_age:parity_n:menopause_age:hrt:hormonal_contraception,yes(log),ebi-a-GCST90012105
+Testosterone,testosterone,cont,nmol/L,0,60,sex:menarche_age:parity_n:menopause_age:hrt:hormonal_contraception,yes(log),ebi-a-GCST90012114
+Sex hormone binding globulin,shbg,cont,nmol/L,0,300,sex:menarche_age:parity_n:menopause_age:hrt:hormonal_contraception,yes(log),ieu-b-4870
+Cognitive function,cognition,cont,score,0,100,sex,yes(rank),ukb-b-5238
+Depression score,depression,cont,score,0,100,sex,yes(rank),ebi-a-GCST90038650
+Physical activity,physical,cont,score,0,100,sex,yes(rank),ebi-a-GCST90093322
+Neuroticism personality trait score,neuroticism,cont,score,0,100,sex,yes(rank),ukb-b-4630
+Extraversion personality trait score,extraversion,cont,score,0,100,sex,yes(rank),ieu-a-115
+Agreeableness personality trait score,agreeableness,cont,score,0,100,sex,yes(rank),ieu-a-113
+Conscientiousness personality trait score,conscientiousness,cont,score,0,100,sex,yes(rank),ieu-a-114
+Openness personality trait score,openness,cont,score,0,100,sex,yes(rank),ieu-a-117
