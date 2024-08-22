@@ -33,7 +33,7 @@ Currently drops anything with NA rather than being specific to the variables of 
 Age is assumed to be in years
 
 
-```{r}
+```{r, message=FALSE}
 library(rms)
 library(quantreg)
 library(git2r)
@@ -131,7 +131,7 @@ Steps (for each phenotype):
 
 
 
-```{r}
+```{r, echo=FALSE}
 for(i in 1:length(phenotypes)){
   phecode <- phenotypes[i]
   print(phecode)
@@ -156,9 +156,6 @@ for(i in 1:length(phenotypes)){
   cs$age_summary <- summary(dat$age)
   cs$age_quantile <- dat$age %>% quantile(probs=seq(0, 1, 0.01))
 
-  print(plot_phen_all(dat, phecode))
-  print(plot_phen_traj(dat, phecode))
-
   dat$deob <- cut(dat$yob/10, breaks=seq(190,203, by=1))
   cs$deob_summary <- table(dat$deob)
   cs$deob_summary
@@ -178,7 +175,7 @@ for(i in 1:length(phenotypes)){
 
 
   #remove outliers and plot the remaining data
-  #The Jitter applied to the output functions is between 0 and jitter_X for X and jitter_Y multiplied by the interquatlie range for Y. 
+  #The Jitter applied to the plot so no actual observations are plotted
 
   outliers <- detect_outliers(dat, phecode)
   analysis_data <- remove_outliers(dat, phecode)
@@ -186,18 +183,7 @@ for(i in 1:length(phenotypes)){
   age_range = max(analysis_data$age) - min(analysis_data$age)
   y_sd = sd(analysis_data$value)
 
-  
-  ##edit this bit to make the plots but no standardisation 
-#  if(type == "cont" & age_range>2){
-#      out <- mbw(MBW_Y=dat$value,MBW_X=dat$age, knots=5, multiple=1,lpc=0.005, upc=0.995, plotme="show", comparator=1, jitter_X=0.5, jitter_Y=0.05)
- #     dat$value <- out
-#  }
-  
-
-#if(type == "cont" & age_range<=2){
- #     out <- mbw(MBW_Y=dat$value,MBW_X=dat$age, knots=0, multiple=1,lpc=0.005, upc=0.995, plotme="show", comparator=1, jitter_X=0.5, #jitter_Y=0.05)
- #     dat$value <- out
-#}
+phenoplot(analysis_data$value, analysis_data$age, Quantiles=c(0.05,0.25,0.5,0.75,0.95), knots=NA, Nknots=5, jitter_X=0.5, jitter_Y=0.1, plotname="")
   
   ##medication adjustment - note this assumes that the value in the phenotype covariates is the same as the column name
   if(grepl("cholesterol_med", filter(df, pheno_id == phecode)$covs) == TRUE){
@@ -219,12 +205,19 @@ for(i in 1:length(phenotypes)){
   cats <- filter(cats, n >= as.numeric(Sys.getenv("env_minumum_strat_n")))
   analysis_data <- inner_join(dat, cats, by = c("agebin"))
   
-      if (filter(df, pheno_id == phecode)$adjust=="log") {
+      if (filter(df, pheno_id == phecode)$transformation=="log") {
         print("log transformed")
-        } else if(filter(df, pheno_id == phecode)$adjust=="sd") {
-         print("sd transformed")
-        } else if(filter(df, pheno_id == phecode)$adjust=="none") {
+        } else if(filter(df, pheno_id == phecode)$transformation=="rank") {
+         print("rank transformed")
+        } else if(filter(df, pheno_id == phecode)$transformation=="none") {
          print("no transformation")
+        }
+  
+  
+  if (filter(df, pheno_id == phecode)$standardisation=="yes") {
+        print("standardised")
+        } else if(filter(df, pheno_id == phecode)$transformation=="no") {
+         print("no standardisation")
         }
 
   summary_output <- list()
@@ -234,15 +227,23 @@ for(i in 1:length(phenotypes)){
     age_group <- cats$agebin[k]
     pheno_out <- filter(analysis_data, (agebin == cats$agebin[k])) %>% filter(!duplicated(paste(FID, IID))) %>% select(FID, IID, value, age)
     
-    ## apply the standardisation required by the adjustment in the phenotypes list file
+    ## apply the transformation required in the phenotypes list file
   
-        if (filter(df, pheno_id == phecode)$adjust=="log") {
+        if (filter(df, pheno_id == phecode)$transformation=="log") {
         pheno_out$value <- log(pheno_out$value)
-        } else if(filter(df, pheno_id == phecode)$adjust=="sd") {
-         pheno_out$value <- pheno_out$value/sd(pheno_out$value)
-        } else if(filter(df, pheno_id == phecode)$adjust=="none") {
+        } else if(filter(df, pheno_id == phecode)$transformation=="rank") {
+         pheno_out$value <- rank(pheno_out$value, ties.method = "average")
+        } else if(filter(df, pheno_id == phecode)$transformation=="none") {
          pheno_out$value <- pheno_out$value
         }
+    
+    ## apply standardisation if required
+     if (filter(df, pheno_id == phecode)$standardisation=="yes") {
+           pheno_out$value <- pheno_out$value/sd(pheno_out$value)
+        } else if(filter(df, pheno_id == phecode)$standardisation=="no") {
+          pheno_out$value <- pheno_out$value
+        }
+
     
     write.table(pheno_out, file=file.path(Sys.getenv("phenotype_processed_dir"), paste0(phecode, "_", age_group, ".phen")), row=FALSE, col=FALSE, qu=FALSE)
 
@@ -255,8 +256,7 @@ for(i in 1:length(phenotypes)){
   }
   cs$sums <- bind_rows(summary_output)
   print(cs$sums)
-
-
+   
   #counts of sample size in each lifestage group
   catsls <- dat %>% group_by(lsbin) %>%
     summarize(n())
@@ -290,6 +290,7 @@ for(i in 1:length(phenotypes)){
   saveRDS(cs, file=file.path(Sys.getenv("results_dir"), paste0(phecode,"_summary.rds")))
 }
 ```
+
 
 ## Run details
 
