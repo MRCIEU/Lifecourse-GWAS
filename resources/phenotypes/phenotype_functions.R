@@ -27,6 +27,7 @@ read_phenotype_data <- function(phecode, input_dir, agebins) {
 
   # Remove duplicates by FID,IID,age
   phen <- subset(phen, !duplicated(paste(FID, IID, age)))
+  phen$V1 <- NULL
   
   # Cut into age bins
   # phen$agebin <- cut(phen$age+1, breaks=c(0:19, seq(20, 120, by=5)))
@@ -92,7 +93,7 @@ remove_outliers <- function(phen, phecode) {
 }
 
 
-summarise_phen <- function(data, age_group, anc_group,male,female) {
+summarise_phen <- function(data) {
   data %>% 
     summarise(
       n=sum(!is.na(value)), 
@@ -123,6 +124,9 @@ summarise_phen <- function(data, age_group, anc_group,male,female) {
       sd_age=sd(age, na.rm=T)
     )
 }
+
+
+
 if (!require(polspline)) install.packages("polspline", repos="https://cloud.r-project.org")
 if (!require(quantreg)) install.packages("quantreg", repos="https://cloud.r-project.org")
 if (!require(rms)) install.packages("rms", repos="https://cloud.r-project.org")
