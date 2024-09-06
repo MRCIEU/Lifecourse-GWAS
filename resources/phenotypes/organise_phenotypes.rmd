@@ -107,6 +107,10 @@ for(i in 1:length(phenotypes)){
 
   outliers <- detect_outliers(dat, phecode)
   analysis_data <- remove_outliers(dat, phecode)
+  
+  if(length(analysis_data$value) == 0){
+    stop(paste(phecode,"All observations removed as outliers"))
+  }
 
   age_range = max(analysis_data$age) - min(analysis_data$age)
   y_sd = sd(analysis_data$value)
