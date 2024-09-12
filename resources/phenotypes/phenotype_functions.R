@@ -126,6 +126,17 @@ summarise_phen <- function(data) {
 }
 
 
+summarise_phen_msd <- function(data) {
+  data %>% 
+    summarise(
+      m_t=mean(value, na.rm=T),
+      sd_t=sd(value, na.rm=T),
+    )
+}
+
+
+
+
 
 if (!require(polspline)) install.packages("polspline", repos="https://cloud.r-project.org")
 if (!require(quantreg)) install.packages("quantreg", repos="https://cloud.r-project.org")

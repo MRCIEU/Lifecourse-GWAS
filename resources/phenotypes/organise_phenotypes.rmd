@@ -121,23 +121,14 @@ phenoplot(analysis_data$value, analysis_data$age, Quantiles=c(0.05,0.25,0.5,0.75
   
 
 if(grepl("cholesterol_med", filter(df, pheno_id == phecode)$covs) == TRUE){
-    analysis_data$value <- analysis_data$value + (40*analysis_data$cholesterol_med)
+    analysis_data$value <- analysis_data$value +   (0.40*analysis_data$value*analysis_data$cholesterol_med)
   }
   
   if(grepl("bp_med", filter(df, pheno_id == phecode)$covs) == TRUE){
     analysis_data$value <- analysis_data$value + (15*analysis_data$bp_med)
   }
 
-   ## apply the transformation required in the phenotypes list file
   
-        if (filter(df, pheno_id == phecode)$transformation=="log") {
-        analysis_data$value <- log(analysis_data$value)
-        } else if(filter(df, pheno_id == phecode)$transformation=="rank") {
-         analysis_data$value <- rank(analysis_data$value, ties.method = "average")
-        } else if(filter(df, pheno_id == phecode)$transformation=="none") {
-         analysis_data$value <- analysis_data$value
-        }
-
     if (filter(df, pheno_id == phecode)$transformation=="log") {
         print("log transformed")
         } else if(filter(df, pheno_id == phecode)$transformation=="rank") {
@@ -156,14 +147,14 @@ if(grepl("cholesterol_med", filter(df, pheno_id == phecode)$covs) == TRUE){
 
   #counts of sample size in each age group
   
-  cats_sexspec <- dat %>% 
+  cats_sexspec <- analysis_data %>% 
     group_by(agebin,sex) %>%
     filter(!duplicated(paste(FID, IID))) %>%
     summarize(n())
 
     colnames(cats_sexspec) <- c("agebin", "sex", "n")
   
-   cats <- dat %>% 
+   cats <- analysis_data %>% 
     group_by(agebin) %>%
     filter(!duplicated(paste(FID, IID))) %>% 
     summarize(n())
@@ -192,15 +183,27 @@ if(length(cats$n>=1)){
     pheno_out <- filter(analysis_data, (agebin == cats$agebin[k])) %>% 
       filter(sex == cats$sex[k]) %>%
       filter(!duplicated(paste(FID, IID))) %>% 
-      select(FID, IID, value, age,sex)
+      select(FID, IID, value, age, sex)
     } else if(sex_group == 3) {
       pheno_out <- filter(analysis_data, (agebin == cats$agebin[k])) %>% 
       filter(!duplicated(paste(FID, IID))) %>% 
-      select(FID, IID, value, age,sex)
+      select(FID, IID, value, age, sex)
     }
+   
     
- 
-    ## apply standardisation if required
+    #summarise the pretransformed variable 
+    sumstats <- summarise_phen(pheno_out)
+  
+    ## apply transformation and standardisation if required
+       if (filter(df, pheno_id == phecode)$transformation=="log") {
+        pheno_out$value <- log(pheno_out$value)
+        } else if(filter(df, pheno_id == phecode)$transformation=="rank") {
+         pheno_out$value <- rank(pheno_out$value, ties.method = "average")
+        } else if(filter(df, pheno_id == phecode)$transformation=="none") {
+         pheno_out$value <- pheno_out$value
+        }
+
+    
      if (filter(df, pheno_id == phecode)$standardisation=="yes") {
            pheno_out$value <- pheno_out$value/sd(pheno_out$value)
         } else if(filter(df, pheno_id == phecode)$standardisation=="no") {
@@ -225,8 +228,8 @@ if(length(cats$n>=1)){
     
     write.table(covs, file=file.path(Sys.getenv("phenotype_processed_dir"), paste0(phecode, "_", age_group, "_", sex_out, ".covs")), row=FALSE, col=FALSE, qu=FALSE)
    
-    sumstats <- summarise_phen(pheno_out)
-    summary_output[[k]] <- cbind(age_group, sex_group, length(outliers$value), sumstats)
+    sumstats_t <- summarise_phen_msd(pheno_out)
+    summary_output[[k]] <- cbind(age_group, sex_group, length(outliers$value), sumstats, sumstats_t)
   }
   
   cs$sums <- bind_rows(summary_output)
@@ -236,13 +239,13 @@ if(length(cats$n>=1)){
    
   #counts of sample size in each lifestage group
   
-  catsls_ss <- dat %>% 
+  catsls_ss <- analysis_data %>% 
     group_by(lsbin, sex) %>%
     filter(!duplicated(paste(FID, IID))) %>%
     summarize(n())
   colnames(catsls_ss) <- c("lsbin", "sex", "n") 
   
-  catsls <- dat %>% 
+  catsls <- analysis_data %>% 
     group_by(lsbin) %>%
     filter(!duplicated(paste(FID, IID))) %>%
     summarize(n())
@@ -276,6 +279,14 @@ if(length(cats$n>=1)){
       select(FID, IID, value, age, sex)
     }
     
+    
+       if (filter(df, pheno_id == phecode)$transformation=="log") {
+        pheno_out$value <- log(pheno_out$value)
+        } else if(filter(df, pheno_id == phecode)$transformation=="rank") {
+         pheno_out$value <- rank(pheno_out$value, ties.method = "average")
+        } else if(filter(df, pheno_id == phecode)$transformation=="none") {
+         pheno_out$value <- pheno_out$value
+        }
         
     ## apply standardisation if required
      if (filter(df, pheno_id == phecode)$standardisation=="yes") {
