@@ -14,7 +14,7 @@ C-reactive protein,crp,cont,mg/L,0,100,sex,none,yes,ebi-a-GCST90014002
 Interleukin 6,il6,cont,pg/ml,0,100,sex,none,yes,ebi-a-GCST90012005
 Leptin,leptin,cont,ng/ml,0,100,sex,none,yes,ebi-a-GCST90007307
 Glycated haemoglobin,hba1c,cont,mmol/mol,0,70,sex,none,yes,ebi-a-GCST90014006
-Insulin,insulin,cont,pmol/L,0,200,sex:insulin_med,none,yes,ukb-b-15445
+Insulin,insulin,cont,pmol/L,0,200,sex,none,yes,ukb-b-15445
 Adiponectin,adiponectin,cont,ug/ml,0,100,sex,none,yes,ieu-a-1
 Calcium,calcium,cont,mmol/L,0,10,sex,none,yes,ebi-a-GCST90013999
 Vitamin D,vitd,cont,nmol/L,0,400,sex,none,yes,ebi-a-GCST90000618
