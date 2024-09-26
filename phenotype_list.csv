@@ -7,7 +7,7 @@ Heel bone mineral density,bmd,cont,g/cm2,0,20,sex,none,yes,ukb-b-8875
 Forced expiratory volume in 1 second,fev1,cont,l,0,10,sex,none,yes,ukb-b-19657
 FEV1/FVC ratio,fev1fvc,cont,l,0,10,sex,none,yes,ebi-a-GCST90029026
 Systolic blood pressure,sbp,cont,mmHg,0,250,sex:bp_medication,none,yes,ukb-b-20175
-LDL cholesterol,ldl,cont,mmol/L,0,200,sex:cholesterol_med,none,yes,ieu-b-110
+LDL cholesterol,ldl,cont,mmol/L,0,10,sex:cholesterol_med,none,yes,ieu-b-110
 HDL cholesterol,hdl,cont,mmol/L,0,10,sex,none,yes,ieu-b-109
 Triglycerides,trig,cont,mmol/L,0,20,sex,none,yes,ieu-b-111
 C-reactive protein,crp,cont,mg/L,0,100,sex,none,yes,ebi-a-GCST90014002
@@ -18,6 +18,6 @@ Insulin,insulin,cont,pmol/L,0,200,sex:insulin_med,none,yes,ukb-b-15445
 Adiponectin,adiponectin,cont,ug/ml,0,100,sex,none,yes,ieu-a-1
 Calcium,calcium,cont,mmol/L,0,10,sex,none,yes,ebi-a-GCST90013999
 Vitamin D,vitd,cont,nmol/L,0,400,sex,none,yes,ebi-a-GCST90000618
-Estradiol,estradiol,cont,pmol/L,0,15000,sex:menarche_age:parity_n:menopause_age:hrt:hormonal_contraception,none,yes,ebi-a-GCST90012105
-Testosterone,testosterone,cont,nmol/L,0,60,sex:menarche_age:parity_n:menopause_age:hrt:hormonal_contraception,none,yes,ebi-a-GCST90012114
-Sex hormone binding globulin,shbg,cont,nmol/L,0,300,sex:menarche_age:parity_n:menopause_age:hrt:hormonal_contraception,none,yes,ieu-b-4870
+Estradiol,estradiol,cont,pmol/L,0,15000,sex,none,yes,ebi-a-GCST90012105
+Testosterone,testosterone,cont,nmol/L,0,60,sex,none,yes,ebi-a-GCST90012114
+Sex hormone binding globulin,shbg,cont,nmol/L,0,300,sex,none,yes,ieu-b-4870
