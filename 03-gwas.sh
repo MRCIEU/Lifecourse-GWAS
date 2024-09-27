@@ -120,8 +120,8 @@ do
         # if space is a real issue could sacrifice af and n
         # add variantid
         echo "Compressing output..."
-        Rscript resources/genotypes/compress_gwas.r ${results_dir}/03/${filename}.fastGWA
-        rm ${results_dir}/03/${filename}.fastGWA
+        # Rscript resources/genotypes/compress_gwas.r ${results_dir}/03/${filename}.fastGWA
+        # rm ${results_dir}/03/${filename}.fastGWA
     fi
     i=$((i+1))
 done

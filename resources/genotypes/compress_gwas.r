@@ -1,6 +1,7 @@
 library(data.table)
-# library(fst)
+library(fst)
 
+fn <- ""
 fn <- commandArgs(T)[1]
 stopifnot(file.exists(fn))
 a <- data.table::fread(fn, header=TRUE)
