@@ -176,11 +176,34 @@ then
     fi
 fi
 
-
 # Generate PCs
 
 if [ "$arg" = "pcs" ] || [ "$arg" = "all" ]
 then
+
+    pcs_unrelated () {
+        bin/flashpca \
+            --bfile ${genotype_processed_dir}/scratch/indep_unrelated \
+            --ndim ${env_n_pcs} \
+            --outpc ${genotype_processed_dir}/scratch/fastpca_pcs_unrelated.txt \
+            --outload ${genotype_processed_dir}/scratch/fastpca_loadings.txt \
+            --outmeans ${genotype_processed_dir}/scratch/fastpca_meansd.txt \
+            --numthreads ${env_threads} \
+            --outval ${genotype_processed_dir}/scratch/fastpca_eigenvalues.txt \
+            --outvec ${genotype_processed_dir}/scratch/fastpca_eigenvectors.txt \
+            --outpve ${genotype_processed_dir}/scratch/fastpca_pve.txt
+    }
+
+    pcs_related () {
+        bin/flashpca \
+            --bfile ${genotype_processed_dir}/scratch/indep_related \
+            --project \
+            --inmeansd ${genotype_processed_dir}/scratch/fastpca_meansd.txt \
+            --outproj ${genotype_processed_dir}/scratch/fastpca_pcs_related.txt \
+            --inload ${genotype_processed_dir}/scratch/fastpca_loadings.txt \
+            --numthreads ${env_threads}
+    }
+
 
     section_message "pcs"
 
@@ -205,24 +228,33 @@ then
     else
         if [ "${env_family_data}" = "true" ]
         then
-            bin/king \
-                -b ${genotype_processed_dir}/scratch/indep_unrelated.bed,${genotype_processed_dir}/scratch/indep_related.bed \
-                --mds \
-                --pcs ${env_n_pcs} \
-                --cpus ${env_threads} \
-                --projection \
-                --prefix ${genotype_processed_dir}/${bfile_prefix}
+            # bin/king \
+            #     -b ${genotype_processed_dir}/scratch/indep_unrelated.bed,${genotype_processed_dir}/scratch/indep_related.bed \
+            #     --mds \
+            #     --pcs ${env_n_pcs} \
+            #     --cpus ${env_threads} \
+            #     --projection \
+            #     --prefix ${genotype_processed_dir}/${bfile_prefix}
+
+            pcs_unrelated
+            pcs_related            
+            sed -i 1d ${genotype_processed_dir}/scratch/fastpca_pcs_related.txt
+            cat ${genotype_processed_dir}/scratch/fastpca_pcs_unrelated.txt ${genotype_processed_dir}/scratch/fastpca_pcs_related.txt > ${genotype_processed_dir}/${bfile_prefix}pc.txt
+
         else
-            bin/king \
-                -b ${genotype_processed_dir}/scratch/indep_unrelated.bed \
-                --mds ${env_n_pcs} \
-                --cpus ${env_threads} \
-                --prefix ${genotype_processed_dir}/${bfile_prefix}
+            # bin/king \
+            #     -b ${genotype_processed_dir}/scratch/indep_unrelated.bed \
+            #     --mds ${env_n_pcs} \
+            #     --cpus ${env_threads} \
+            #     --prefix ${genotype_processed_dir}/${bfile_prefix}
+
+            pcs_unrelated
+            cp ${genotype_processed_dir}/scratch/fastpca_pcs_unrelated.txt ${genotype_processed_dir}/${bfile_prefix}pc.txt
         fi
 
         # Remove unnecessary columns from pc file
-        cut -d " " -f 1,2,7- ${genotype_processed_dir}/${bfile_prefix}pc.txt > ${genotype_processed_dir}/${bfile_prefix}pc.txt_formatted
-        mv ${genotype_processed_dir}/${bfile_prefix}pc.txt_formatted ${genotype_processed_dir}/${bfile_prefix}pc.txt
+        # cut -d " " -f 1,2,7- ${genotype_processed_dir}/${bfile_prefix}pc.txt > ${genotype_processed_dir}/${bfile_prefix}pc.txt_formatted
+        # mv ${genotype_processed_dir}/${bfile_prefix}pc.txt_formatted ${genotype_processed_dir}/${bfile_prefix}pc.txt
 
         # Check PCs e.g. by plotting them
         Rscript resources/genotypes/genetic_outliers.r \
@@ -255,25 +287,35 @@ then
                     --make-bed \
                     --out ${genotype_processed_dir}/scratch/indep_related
 
-                bin/king \
-                    -b ${genotype_processed_dir}/scratch/indep_unrelated.bed,${genotype_processed_dir}/scratch/indep_related.bed \
-                    --mds ${env_n_pcs} \
-                    --cpus ${env_threads} \
-                    --projection \
-                    --prefix ${genotype_processed_dir}/${bfile_prefix}
+                # bin/king \
+                #     -b ${genotype_processed_dir}/scratch/indep_unrelated.bed,${genotype_processed_dir}/scratch/indep_related.bed \
+                #     --mds ${env_n_pcs} \
+                #     --cpus ${env_threads} \
+                #     --projection \
+                #     --prefix ${genotype_processed_dir}/${bfile_prefix}
+
+                pcs_unrelated
+                pcs_related            
+                sed -i 1d ${genotype_processed_dir}/scratch/fastpca_pcs_related.txt
+                cat ${genotype_processed_dir}/scratch/fastpca_pcs_unrelated.txt ${genotype_processed_dir}/scratch/fastpca_pcs_related.txt > ${genotype_processed_dir}/${bfile_prefix}pc.txt
+
             else
-                bin/king \
-                    -b ${genotype_processed_dir}/scratch/indep_unrelated.bed \
-                    --mds ${env_n_pcs} \
-                    --cpus ${env_threads} \
-                    --prefix ${genotype_processed_dir}/${bfile_prefix}
+                # bin/king \
+                #     -b ${genotype_processed_dir}/scratch/indep_unrelated.bed \
+                #     --mds ${env_n_pcs} \
+                #     --cpus ${env_threads} \
+                #     --prefix ${genotype_processed_dir}/${bfile_prefix}
+
+                pcs_unrelated
+                cp ${genotype_processed_dir}/scratch/fastpca_pcs_unrelated.txt ${genotype_processed_dir}/${bfile_prefix}pc.txt
+
             fi
 
             mv ${results_dir}/01/pcaplot.png ${results_dir}/01/pcaplot_round1.png
 
 
             # Remove unnecessary columns from pc file
-            cut -d " " -f 1,2,7- ${genotype_processed_dir}/${bfile_prefix}pc.txt > ${genotype_processed_dir}/${bfile_prefix}pc.txt_formatted
+            # cut -d " " -f 1,2,7- ${genotype_processed_dir}/${bfile_prefix}pc.txt > ${genotype_processed_dir}/${bfile_prefix}pc.txt_formatted
 
             mv ${genotype_processed_dir}/${bfile_prefix}pc.txt_formatted ${genotype_processed_dir}/${bfile_prefix}pc.txt
 
