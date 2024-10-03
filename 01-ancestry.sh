@@ -271,6 +271,7 @@ then
             echo "No genetic outliers detected"
         else
             # Remove genetic outliers from data
+            echo "Found ${n_outliers}. Removing them and recalculatin PCs"
             bin/plink2 \
                 --threads ${env_threads} \
                 --bfile ${genotype_processed_dir}/scratch/indep_unrelated \
@@ -316,8 +317,7 @@ then
 
             # Remove unnecessary columns from pc file
             # cut -d " " -f 1,2,7- ${genotype_processed_dir}/${bfile_prefix}pc.txt > ${genotype_processed_dir}/${bfile_prefix}pc.txt_formatted
-
-            mv ${genotype_processed_dir}/${bfile_prefix}pc.txt_formatted ${genotype_processed_dir}/${bfile_prefix}pc.txt
+            # mv ${genotype_processed_dir}/${bfile_prefix}pc.txt_formatted ${genotype_processed_dir}/${bfile_prefix}pc.txt
 
             Rscript resources/genotypes/genetic_outliers.r \
                 ${genotype_processed_dir}/${bfile_prefix}pc.txt \
