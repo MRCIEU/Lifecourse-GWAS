@@ -63,11 +63,9 @@ section_message () {
 
 
 # Get bfile prefix names into an array
-bfiles=( $(ls ${genotype_input_dir}/${bfile_prefix}*.bed | \
+bfiles=( $(ls ${genotype_processed_dir}/symlinks/${bfile_prefix}*.bed | \
     xargs -I {} sh -c "basename {}" | \
     xargs -I {} sh -c "echo {} | sed 's/.bed//g'" ))
-
-# bfiles=$(< ${genotype_processed_dir}/geno_chrs.txt)
 
 for f in ${bfiles[@]}
 do
@@ -83,24 +81,24 @@ then
 
     section_message "prune"
 
-    # Get list of pruned SNPs
+    echo "Get list of pruned SNPs"
     if test -f "resources/genotypes/${major_ancestry}_pruned_variants.txt.gz"; then
         echo "Found prune file"
         prunefile="${genotype_processed_dir}/scratch/indep.prune.in"
         gunzip -c resources/genotypes/${major_ancestry}_pruned_variants.txt.gz > ${prunefile}
     fi
 
-    # Prune for PC etc
+    echo "Prune for PC etc"
     > ${genotype_processed_dir}/scratch/bfiles
     for f in ${bfiles[@]}
     do
         echo $f
-        awk -f resources/genotypes/highldregionsb37.awk ${genotype_input_dir}/${f}.bim > ${genotype_processed_dir}/scratch/${f}_highldregions.txt
+        awk -f resources/genotypes/highldregionsb37.awk ${genotype_processed_dir}/symlinks/${f}.bim > ${genotype_processed_dir}/scratch/${f}_highldregions.txt
 
         if ! test -f "${genotype_processed_dir}/scratch/indep.prune.in"; then
             bin/plink2 \
                 --threads ${env_threads} \
-                --bfile ${genotype_input_dir}/${f} \
+                --bfile ${genotype_processed_dir}/symlinks/${f} \
                 --remove ${genotype_processed_dir}/bfiles/sremove \
                 --exclude ${genotype_processed_dir}/scratch/${f}_highldregions.txt ${genotype_processed_dir}/bfiles/${f}_vremove \
                 --indep-pairwise 10000 5 0.1 \
@@ -110,7 +108,7 @@ then
 
         bin/plink2 \
             --threads ${env_threads} \
-            --bfile ${genotype_input_dir}/${f} \
+            --bfile ${genotype_processed_dir}/symlinks/${f} \
             --remove ${genotype_processed_dir}/bfiles/sremove \
             --extract ${prunefile} \
             --exclude ${genotype_processed_dir}/bfiles/${f}_vremove \
@@ -120,7 +118,7 @@ then
         echo ${genotype_processed_dir}/scratch/${f}_indep >> ${genotype_processed_dir}/scratch/bfiles
     done
 
-    # Generate single bfile
+    echo "Generate single bfile for PCs etc"
     f1=`head -n 1 ${genotype_processed_dir}/scratch/bfiles`
     sed -i 1d ${genotype_processed_dir}/scratch/bfiles
     bin/plink2 \
@@ -142,7 +140,7 @@ fi
 ## use list of unrelateds as keeplist going forwards
 
 
-# Get relateds and unrelateds
+echo "Get relateds and unrelateds"
 
 if [ "$arg" = "relateds" ] || [ "$arg" = "all" ]
 then
@@ -176,7 +174,7 @@ then
     fi
 fi
 
-# Generate PCs
+echo "Generate PCs"
 
 if [ "$arg" = "pcs" ] || [ "$arg" = "all" ]
 then
@@ -228,35 +226,17 @@ then
     else
         if [ "${env_family_data}" = "true" ]
         then
-            # bin/king \
-            #     -b ${genotype_processed_dir}/scratch/indep_unrelated.bed,${genotype_processed_dir}/scratch/indep_related.bed \
-            #     --mds \
-            #     --pcs ${env_n_pcs} \
-            #     --cpus ${env_threads} \
-            #     --projection \
-            #     --prefix ${genotype_processed_dir}/${bfile_prefix}
-
             pcs_unrelated
             pcs_related            
             sed -i 1d ${genotype_processed_dir}/scratch/fastpca_pcs_related.txt
             cat ${genotype_processed_dir}/scratch/fastpca_pcs_unrelated.txt ${genotype_processed_dir}/scratch/fastpca_pcs_related.txt > ${genotype_processed_dir}/${bfile_prefix}pc.txt
 
         else
-            # bin/king \
-            #     -b ${genotype_processed_dir}/scratch/indep_unrelated.bed \
-            #     --mds ${env_n_pcs} \
-            #     --cpus ${env_threads} \
-            #     --prefix ${genotype_processed_dir}/${bfile_prefix}
-
             pcs_unrelated
             cp ${genotype_processed_dir}/scratch/fastpca_pcs_unrelated.txt ${genotype_processed_dir}/${bfile_prefix}pc.txt
         fi
 
-        # Remove unnecessary columns from pc file
-        # cut -d " " -f 1,2,7- ${genotype_processed_dir}/${bfile_prefix}pc.txt > ${genotype_processed_dir}/${bfile_prefix}pc.txt_formatted
-        # mv ${genotype_processed_dir}/${bfile_prefix}pc.txt_formatted ${genotype_processed_dir}/${bfile_prefix}pc.txt
-
-        # Check PCs e.g. by plotting them
+        echo "Check PCs e.g. by plotting them"
         Rscript resources/genotypes/genetic_outliers.r \
             ${genotype_processed_dir}/${bfile_prefix}pc.txt \
             ${env_pca_sd} \
@@ -270,7 +250,7 @@ then
         then
             echo "No genetic outliers detected"
         else
-            # Remove genetic outliers from data
+            echo "Remove genetic outliers from data"
             echo "Found ${n_outliers}. Removing them and recalculatin PCs"
             bin/plink2 \
                 --threads ${env_threads} \
@@ -288,36 +268,18 @@ then
                     --make-bed \
                     --out ${genotype_processed_dir}/scratch/indep_related
 
-                # bin/king \
-                #     -b ${genotype_processed_dir}/scratch/indep_unrelated.bed,${genotype_processed_dir}/scratch/indep_related.bed \
-                #     --mds ${env_n_pcs} \
-                #     --cpus ${env_threads} \
-                #     --projection \
-                #     --prefix ${genotype_processed_dir}/${bfile_prefix}
-
                 pcs_unrelated
                 pcs_related            
                 sed -i 1d ${genotype_processed_dir}/scratch/fastpca_pcs_related.txt
                 cat ${genotype_processed_dir}/scratch/fastpca_pcs_unrelated.txt ${genotype_processed_dir}/scratch/fastpca_pcs_related.txt > ${genotype_processed_dir}/${bfile_prefix}pc.txt
 
             else
-                # bin/king \
-                #     -b ${genotype_processed_dir}/scratch/indep_unrelated.bed \
-                #     --mds ${env_n_pcs} \
-                #     --cpus ${env_threads} \
-                #     --prefix ${genotype_processed_dir}/${bfile_prefix}
-
                 pcs_unrelated
                 cp ${genotype_processed_dir}/scratch/fastpca_pcs_unrelated.txt ${genotype_processed_dir}/${bfile_prefix}pc.txt
 
             fi
 
             mv ${results_dir}/01/pcaplot.png ${results_dir}/01/pcaplot_round1.png
-
-
-            # Remove unnecessary columns from pc file
-            # cut -d " " -f 1,2,7- ${genotype_processed_dir}/${bfile_prefix}pc.txt > ${genotype_processed_dir}/${bfile_prefix}pc.txt_formatted
-            # mv ${genotype_processed_dir}/${bfile_prefix}pc.txt_formatted ${genotype_processed_dir}/${bfile_prefix}pc.txt
 
             Rscript resources/genotypes/genetic_outliers.r \
                 ${genotype_processed_dir}/${bfile_prefix}pc.txt \
@@ -329,7 +291,7 @@ then
     fi
 fi
 
-# Generate sparse GRM
+echo "Generate sparse GRM"
 
 
 if [ "$arg" = "grm" ] || [ "$arg" = "all" ]
