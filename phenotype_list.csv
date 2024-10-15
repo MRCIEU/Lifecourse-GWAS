@@ -1,7 +1,7 @@
 Name,pheno_id,var_type,units,min,max,covs,transformation,standardisation,opengwasid
 Body mass index,bmi,cont,kg/m2,0,60,sex,log,yes,ukb-b-19953
 Height,height,cont,cm,10,250,sex,none,yes,ebi-a-GCST90029008
-Waist circumference,wc,cont,cm,0,20,sex,none,yes,ukb-b-9405
+Waist circumference,wc,cont,cm,0,250,sex,none,yes,ukb-b-9405
 Waist to hip ratio,whr,cont,ratio,0,20,sex,none,yes,ebi-a-GCST90029009
 Heel bone mineral density,bmd,cont,g/cm2,0,20,sex,none,yes,ukb-b-8875
 Forced expiratory volume in 1 second,fev1,cont,l,0,10,sex,none,yes,ukb-b-19657

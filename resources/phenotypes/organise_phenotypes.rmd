@@ -5,7 +5,7 @@ output: html_document
 ---
 
 Files needed to input into this:
- - environment
+ - configuration environment
  - phenotype description (name, id, units, min, max etc..)
  - genetic covariates (id, PC's, sex*)
  - phenotype file (id, age, phenotype value, covariates)
@@ -35,294 +35,107 @@ library(rmarkdown)
 library(dotenv)
 ```
 
-#Set up required enviroment and folders/files etc
+## Set up environment
 
 ```{r}
+source(here("resources", "phenotypes", "phenotype_functions.R"))
 readRenviron(here("config.env"))
-agebins <- fread(here("resources", "phenotypes", "agebins.csv")) %>% as_tibble()
 dir.create(Sys.getenv("results_dir"), showWarnings = FALSE)
 dir.create(Sys.getenv("phenotype_processed_dir"), showWarnings = FALSE)
+os <- list()
+```
 
-source(here("resources", "phenotypes", "phenotype_functions.R"))
+## Age parameters
 
+```{r}
+agebins <- fread(here("resources", "phenotypes", "agebins.csv")) %>% as_tibble()
+```
+
+## Phenotype parameters
+
+```{r}
 df <- fread(here("phenotype_list.csv")) %>% 
   as_tibble() %>%
   mutate(filepath = file.path(Sys.getenv("phenotype_input_dir"), paste0(pheno_id, ".txt"))) %>%
   filter(file.exists(filepath))
 df
 phenotypes <- df$pheno_id
-
-gen_covs <- fread(file.path(Sys.getenv("genotype_processed_dir"), paste0(Sys.getenv("bfile_prefix"), "pc.txt")))
-names(gen_covs)
-gen_covs$V1 <- NULL
+os$phenotypes <- phenotypes
 ```
 
-#Input Phenotype data, remove outliers, summarise the data and save age and sex specific files for the GWAS.
+## Genetic covariates
+
+```{r}
+gen_covs <- read_gen_covs(
+  file = file.path(Sys.getenv("genotype_processed_dir"), paste0(Sys.getenv("bfile_prefix"), "pc.txt")),
+  npcs = as.numeric(Sys.getenv("env_n_pcs"))
+)
+str(gen_covs)
+```
+
+Plot PCs
+
+```{r}
+temp1 <- subset(gen_covs, select=-c(PC1)) %>% tidyr::pivot_longer(cols=-c("FID", "IID"))
+temp2 <- subset(gen_covs, select=c(FID, IID, PC1))
+temp <- inner_join(temp1, temp2)
+ggplot(temp, aes(x=PC1, y=value)) +
+geom_point() +
+facet_wrap(~ name, scale="free")
+```
+
+## Static covariates
+
+```{r}
+cov_list <- strsplit(Sys.getenv("static_covariates"), split=" ")[[1]]
+covdat <- read_covariate_data(
+  file.path(Sys.getenv("phenotype_input_dir"), "pheno_covariates.txt"),
+  cov_list
+)
+# SENSITIVE, don't print any data
+```
+
+Age distribution
+
+```{r}
+covdat$deob <- cut(covdat$yob/10, breaks=seq(180,203, by=1))
+os$deob_summary <- table(covdat$deob)
+os$deob_summary
+```
+
+Sex distribution
+
+```{r}
+os$sex_table <- table(covdat$sex)
+os$sex_table
+```
+
+Sex x yob
+
+```{r}
+os$sex_yob <- covdat %>% 
+  group_by(sex) %>% 
+  summarise(
+      yob_mean = mean(yob, na.rm=T), 
+      yob_sd = sd(yob, na.rm=T)
+  )
+os$sex_yob
+saveRDS(os, file = file.path(Sys.getenv("results_dir"), "summary.rds"))
+```
+
+## Processing phenotypes
+
+- Input Phenotype data
+- Remove outliers
+- Summarise the data
+- Save age and sex specific files for the GWAS
 
 ```{r, echo=FALSE}
 for(i in 1:length(phenotypes)){
-  phecode <- phenotypes[i]
-  print(phecode)
-  type <- filter(df, pheno_id == phecode)$var_type
-  print(type)
-  cs <- list()
-  phen <- read_phenotype_data(phecode, Sys.getenv("phenotype_input_dir"), agebins)
-  
-  if(is.null(phen)) {
-    return(NULL)
-  }
-  
-  #Only one genetic observation per person
-  setequal(unique(gen_covs$IID), gen_covs$IID)
-  
-  dat <- phen %>%
-    left_join(gen_covs, by = c("FID", "IID")) %>%
-    na.exclude
-
-  ##age and ancestry distribution
-  hist(dat$age, breaks=length(unique(round(dat$age))))
-  cs$age_summary <- summary(dat$age)
-  cs$age_quantile <- dat$age %>% quantile(probs=seq(0, 1, 0.01))
-
-  dat$deob <- cut(dat$yob/10, breaks=seq(190,203, by=1))
-  cs$deob_summary <- table(dat$deob)
-  cs$deob_summary
-
-  hist(dat$yob, breaks=length(unique(round(dat$yob))))
-
-  cs$sex_table <- table(dat$sex)
-  cs$sex_table
-
-  cs$sex_yob <- dat %>% 
-    group_by(sex) %>% 
-    summarise(
-        yob_mean = mean(yob, na.rm=T), 
-        yob_sd = sd(yob, na.rm=T)
-    )
-  cs$sex_yob
-
-
-  #remove outliers and plot the remaining data
-  #The Jitter applied to the plot so no actual observations are plotted
-
-  outliers <- detect_outliers(dat, phecode)
-  analysis_data <- remove_outliers(dat, phecode)
-  
-  if(length(analysis_data$value) == 0){
-    stop(paste(phecode,"All observations removed as outliers"))
-  }
-
-  age_range = max(analysis_data$age) - min(analysis_data$age)
-  y_sd = sd(analysis_data$value)
-
-phenoplot(analysis_data$value, analysis_data$age, Quantiles=c(0.05,0.25,0.5,0.75,0.95), knots=NA, Nknots=5, jitter_X=0.5, jitter_Y=0.1, plotname="")
-  
-  #medication adjustment - note this assumes that the value in the phenotype covariates is the same as the column name
-  
-
-if(grepl("cholesterol_med", filter(df, pheno_id == phecode)$covs) == TRUE){
-    analysis_data$value <- analysis_data$value +   (0.40*analysis_data$value*analysis_data$cholesterol_med)
-  }
-  
-  if(grepl("bp_med", filter(df, pheno_id == phecode)$covs) == TRUE){
-    analysis_data$value <- analysis_data$value + (15*analysis_data$bp_med)
-  }
-
-  
-    if (filter(df, pheno_id == phecode)$transformation=="log") {
-        print("log transformed")
-        } else if(filter(df, pheno_id == phecode)$transformation=="rank") {
-         print("rank transformed")
-        } else if(filter(df, pheno_id == phecode)$transformation=="none") {
-         print("no transformation")
-        }
-  
-  
-  if (filter(df, pheno_id == phecode)$standardisation=="yes") {
-        print("standardised")
-        } else if(filter(df, pheno_id == phecode)$transformation=="no") {
-         print("no standardisation")
-        }
-
-
-  #counts of sample size in each age group
-  
-  cats_sexspec <- analysis_data %>% 
-    group_by(agebin,sex) %>%
-    filter(!duplicated(paste(FID, IID))) %>%
-    summarize(n())
-
-    colnames(cats_sexspec) <- c("agebin", "sex", "n")
-  
-   cats <- analysis_data %>% 
-    group_by(agebin) %>%
-    filter(!duplicated(paste(FID, IID))) %>% 
-    summarize(n())
-   
-  colnames(cats) <- c("agebin", "n")
-
-  cats <- bind_rows(cats_sexspec, cats)
-  cs$categories <- cats 
-
-  cats <- filter(cats, n >= as.numeric(Sys.getenv("env_minumum_strat_n"))) %>%
-   replace_na(list(sex=3))
-  
-  
-  summary_output <- list()
-  
-  
-  
-if(length(cats$n>=1)){
-  for(k in 1:length(cats$n)){
-    
-    age_group <- cats$agebin[k]
-    sex_group <- cats$sex[k] 
-    
-  
-    if(sex_group < 3) {
-    pheno_out <- filter(analysis_data, (agebin == cats$agebin[k])) %>% 
-      filter(sex == cats$sex[k]) %>%
-      filter(!duplicated(paste(FID, IID))) %>% 
-      select(FID, IID, value, age, sex)
-    } else if(sex_group == 3) {
-      pheno_out <- filter(analysis_data, (agebin == cats$agebin[k])) %>% 
-      filter(!duplicated(paste(FID, IID))) %>% 
-      select(FID, IID, value, age, sex)
-    }
-   
-    
-    #summarise the pretransformed variable 
-    sumstats <- summarise_phen(pheno_out)
-  
-    ## apply transformation and standardisation if required
-       if (filter(df, pheno_id == phecode)$transformation=="log") {
-        pheno_out$value <- log(pheno_out$value)
-        } else if(filter(df, pheno_id == phecode)$transformation=="rank") {
-         pheno_out$value <- rank(pheno_out$value, ties.method = "average")
-        } else if(filter(df, pheno_id == phecode)$transformation=="none") {
-         pheno_out$value <- pheno_out$value
-        }
-
-    
-     if (filter(df, pheno_id == phecode)$standardisation=="yes") {
-           pheno_out$value <- pheno_out$value/sd(pheno_out$value)
-        } else if(filter(df, pheno_id == phecode)$standardisation=="no") {
-          pheno_out$value <- pheno_out$value
-        }
-
-    
-         if(sex_group == 1){
-      sex_out = "m"
-    } else if (sex_group == 2){
-      sex_out = "f"
-    } else if (sex_group == 3){
-      sex_out = "both"
-    }
-    
-    
-    write.table(pheno_out, file=file.path(Sys.getenv("phenotype_processed_dir"), paste0(phecode, "_", age_group, "_", sex_out, ".phen")), row=FALSE, col=FALSE, qu=FALSE)
-
-    
-    cov_ids <- subset(df, pheno_id == phecode)$covs %>% strsplit(., ":") %>% {.[[1]]}
-    covs <- dat %>% select(all_of(c(names(gen_covs), cov_ids))) %>% filter(IID %in% pheno_out$IID) %>% filter(!duplicated(paste(FID, IID)))
-    
-    write.table(covs, file=file.path(Sys.getenv("phenotype_processed_dir"), paste0(phecode, "_", age_group, "_", sex_out, ".covs")), row=FALSE, col=FALSE, qu=FALSE)
-   
-    sumstats_t <- summarise_phen_msd(pheno_out)
-    summary_output[[k]] <- cbind(age_group, sex_group, length(outliers$value), sumstats, sumstats_t)
-  }
-  
-  cs$sums <- bind_rows(summary_output)
-  print(cs$sums)
-  
-}
-   
-  #counts of sample size in each lifestage group
-  
-  catsls_ss <- analysis_data %>% 
-    group_by(lsbin, sex) %>%
-    filter(!duplicated(paste(FID, IID))) %>%
-    summarize(n())
-  colnames(catsls_ss) <- c("lsbin", "sex", "n") 
-  
-  catsls <- analysis_data %>% 
-    group_by(lsbin) %>%
-    filter(!duplicated(paste(FID, IID))) %>%
-    summarize(n())
-  colnames(catsls) <- c("lsbin", "n")
-
-  catsls <- bind_rows(catsls_ss, catsls)
-  cs$categories_ls <- catsls
-
-  catsls <- filter(catsls, n >= as.numeric(Sys.getenv("env_minumum_strat_n"))) %>%
-   replace_na(list(sex=3))
-  
-  summary_output <- list()
-
-  if(length(catsls$n>=1)){
-  for(k in 1:length(catsls$n)){
-    
-    age_group <- catsls$lsbin[k]
-    
-    sex_group <- catsls$sex[k] 
-    
-  
-    
-    if(sex_group < 3) {
-      pheno_out <- filter(analysis_data, (lsbin == catsls$lsbin[k])) %>% 
-      filter(sex == catsls$sex[k]) %>%
-      filter(!duplicated(paste(FID, IID))) %>% 
-      select(FID, IID, value, age,sex)
-    } else if(sex_group == 3) {
-      pheno_out <- filter(analysis_data, (lsbin == catsls$lsbin[k])) %>% 
-      filter(!duplicated(paste(FID, IID))) %>% 
-      select(FID, IID, value, age, sex)
-    }
-    
-    
-       if (filter(df, pheno_id == phecode)$transformation=="log") {
-        pheno_out$value <- log(pheno_out$value)
-        } else if(filter(df, pheno_id == phecode)$transformation=="rank") {
-         pheno_out$value <- rank(pheno_out$value, ties.method = "average")
-        } else if(filter(df, pheno_id == phecode)$transformation=="none") {
-         pheno_out$value <- pheno_out$value
-        }
-        
-    ## apply standardisation if required
-     if (filter(df, pheno_id == phecode)$standardisation=="yes") {
-           pheno_out$value <- pheno_out$value/sd(pheno_out$value)
-        } else if(filter(df, pheno_id == phecode)$standardisation=="no") {
-          pheno_out$value <- pheno_out$value
-        }
-
-      if(sex_group == 1){
-      sex_out = "m"
-    } else if (sex_group == 2){
-      sex_out = "f"
-    } else if (sex_group == 3){
-      sex_out = "both"
-    }
-    
-     write.table(pheno_out, file=file.path(Sys.getenv("phenotype_processed_dir"), paste0(phecode, "_", age_group, "_", sex_out, ".phen")), row=FALSE, col=FALSE, qu=FALSE)
-
-    cov_ids <- subset(df, pheno_id == phecode)$covs %>% strsplit(., ":") %>% {.[[1]]}
-    covs <- dat %>% select(all_of(c(names(gen_covs), cov_ids, "age"))) %>% filter(IID %in% pheno_out$IID) %>% filter(!duplicated(paste(FID, IID)))
-    
-    write.table(covs, file=file.path(Sys.getenv("phenotype_processed_dir"), paste0(phecode, "_", age_group, "_", sex_out, ".covs")), row=FALSE, col=FALSE, qu=FALSE)
-   
-    sumstats <- summarise_phen(pheno_out)
-    summary_output[[k]] <- cbind(age_group, sex_group, length(outliers$value), sumstats)
-  }
-
-  cs$sums_ls <- bind_rows(summary_output)
-  print(cs$sums_ls)
-}
-  
-  
-  saveRDS(cs, file=file.path(Sys.getenv("results_dir"), paste0(phecode,"_summary.rds")))
+  cat("\n### ", phenotypes[i], "\n\n")
+  organise_phenotype(phenotypes[i], phenotypes, df, gen_covs, covdat, agebins, pl=TRUE)
 }
 ```
-
 
 ## Run details
 
