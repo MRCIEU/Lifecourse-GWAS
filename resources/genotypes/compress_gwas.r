@@ -1,50 +1,68 @@
 library(data.table)
-library(fst)
+library(dplyr)
+library(R.utils)
 
-fn <- ""
+# fn <- "/local-scratch/projects/Lifecourse-GWAS/gib/alspac/results/03/bmi_10-11.fastGWA"
 fn <- commandArgs(T)[1]
+ref <- commandArgs(T)[2]
+rem <- commandArgs(T)[3]
 stopifnot(file.exists(fn))
-a <- data.table::fread(fn, header=TRUE)
+stopifnot(file.exists(ref))
+stopifnot(file.exists(rem))
+
+message("reading gwas")
+a <- data.table::fread(fn, header=TRUE) %>% as_tibble()
+message("reading reference")
+v <- data.table::fread(ref) %>% as_tibble()
+
+# Sometimes GCTA doesn't remove all the variants that it's supposed to
+# Do this manually
+rem <- scan(rem, "character")
+remflag <- sum(rem %in% a$SNP)
+if(remflag > 0) {
+    message(sum(remflag), " flagged variants need to be removed from GWAS")
+}
+a <- subset(a, !SNP %in% rem)
+
+check_against_reference <- function(v, a) {
+    if(all(a$SNP == v$SNP)) {
+        message("gwas matches reference")
+        return(a)
+    } else {
+        message("aligning gwas with reference")
+        print(dim(a))
+        a <- subset(a, SNP %in% v$SNP)
+        print(dim(a))
+        dum <- subset(v, !SNP %in% a$SNP)
+        print(dum)
+        dum$BETA <- NA_real_
+        dum$SE <- NA_real_
+        dum$P <- NA_real_
+        dum$N <- NA_real_
+        dum$CHR <- as.character(dum$CHR)
+        a$CHR <- as.character(a$CHR)
+        dum <- tibble(CHR=as.character(dum$CHR), SNP=dum$SNP, A2=dum$EA, A1=dum$OA, AF1=dum$EAF)
+        print(dum)
+        a <- bind_rows(a, dum)
+        m <- match(v$SNP, a$SNP)
+        a <- a[m,]
+        stopifnot(all(a$SNP == v$SNP))
+        return(a)
+    }
+}
+
+a <- check_against_reference(v, a)
 
 # Harmonise alleles to alphabetical
-
+message("harmonising")
 ord <- a$A1 > a$A2
 table(ord)
 a$BETA[ord] <- a$BETA[ord] * -1
 a$AF1[ord] <- 1-a$AF1[ord]
+temp <- a$A1[ord]
+a$A1[ord] <- a$A2[ord]
+a$A2[ord] <- temp
 
-b <- a[, .(SNP, BETA, SE, AF1, N)]
-head(b)
-# p <- paste0(fn, ".fst")
-# fst::write_fst(a, path=p, compress=100)
-p <- paste0(fn, ".rds")
-saveRDS(b, p)
-
-## Note
-# Was previously using fst but finding it can be cumbersome to install
-# So reverting to using rds as it
-
-## redundant - these are bigger than compressed files
-# writebingwas <- function(a, fn) {
-#     con <- file(fn, "wb")
-#     n <- nrow(a)
-#     writeBin(n, con)
-#     writeBin(a[, BETA], con)
-#     writeBin(a[, SE], con)
-#     writeBin(a[, AF1], con)
-#     writeBin(a[, N], con)
-#     close(con)
-# }
-
-# readbingwas <- function(fn) {
-#     con <- file(fn, "rb")
-#     n <- readBin(con, integer(), n = 1)
-#     tibble(
-#         BETA = readBin(con, numeric(), n=n),
-#         SE = readBin(con, numeric(), n=n),
-#         AF1 = readBin(con, numeric(), n=n),
-#         N = readBin(con, integer(), n=n)
-#     )
-#     close(con)
-# }
-# writebingwas(a, "temp.bin")
+message("writing")
+b <- a %>% dplyr::select(BETA, SE)
+saveRDS(b, file=paste0(fn, ".fst"))

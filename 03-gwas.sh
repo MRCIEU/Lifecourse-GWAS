@@ -116,12 +116,10 @@ do
                 --out ${results_dir}/03/${filename}
         fi
         # compress GWAS
-        # keep only b, se, af, n because all other info is constant across GWASs
-        # if space is a real issue could sacrifice af and n
-        # add variantid
+        # keep only b, se because all other info is constant across GWASs
         echo "Compressing output..."
-        # Rscript resources/genotypes/compress_gwas.r ${results_dir}/03/${filename}.fastGWA
-        # rm ${results_dir}/03/${filename}.fastGWA
+        Rscript resources/genotypes/compress_gwas.r ${results_dir}/03/${filename}.fastGWA ${results_dir}/00/variants.txt ${genotype_processed_dir}/bfiles/vremove
+        rm ${results_dir}/03/${filename}.fastGWA
     fi
     i=$((i+1))
 done

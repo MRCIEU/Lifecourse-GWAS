@@ -52,6 +52,9 @@ echo "Cleaning each chromosome"
 > ${genotype_processed_dir}/bfiles/sremove
 > ${genotype_processed_dir}/bfiles/vremove
 
+rm -f ${genotype_processed_dir}/bfiles/afreqlist
+touch ${genotype_processed_dir}/bfiles/afreqlist
+
 for f in ${bfiles[@]}
 do
     echo $f
@@ -78,6 +81,8 @@ do
 
     awk -v maf=${env_minmaf} '($6 < maf || $6 > (1-maf)) {print $2}' ${genotype_processed_dir}/bfiles/${f}_temp.afreq > ${genotype_processed_dir}/bfiles/${f}_temp_mafsnps
 
+    echo "${genotype_processed_dir}/bfiles/${f}_temp.afreq" >> ${genotype_processed_dir}/bfiles/afreqlist
+
     if test -f ${genotype_processed_dir}/bfiles/${f}_temp.hardy; then
         awk -v hwe=${env_hwe} '($10 < hwe) {print $2}' ${genotype_processed_dir}/bfiles/${f}_temp.hardy > ${genotype_processed_dir}/bfiles/${f}_temp_hardysnps
     fi
@@ -101,5 +106,7 @@ mv temp ${genotype_processed_dir}/bfiles/sremove
 echo "Removing $(cat ${genotype_processed_dir}/bfiles/sremove | wc -l) individuals due to missing data"
 echo "Removing $(cat ${genotype_processed_dir}/bfiles/vremove | wc -l) variants in total"
 
+# Generate variant list and frequencies
+Rscript resources/genotypes/generate_variant_reference.r ${genotype_processed_dir}/bfiles/vremove ${results_dir}/00/variants.txt ${genotype_processed_dir}/bfiles/afreqlist
 
 echo "Successfully completed 00-check-data.sh"
