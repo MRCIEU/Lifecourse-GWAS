@@ -59,20 +59,21 @@ for f in ${bfiles[@]}
 do
     echo $f
 
-    if test -f ${genotype_input_dir}/${f}.bim.orig; then
-        echo "bim file previously updated. Restoring..."
-        mv ${genotype_input_dir}/${f}.bim.orig ${genotype_input_dir}/${f}.bim
-    fi
+    echo "Create symlinks"
+    mkdir -p ${genotype_processed_dir}/symlinks
+    ln -s ${genotype_input_dir}/${f}.bed ${genotype_processed_dir}/symlinks/${f}.bed
+    ln -s ${genotype_input_dir}/${f}.fam ${genotype_processed_dir}/symlinks/${f}.fam
+    cp ${genotype_input_dir}/${f}.bim ${genotype_processed_dir}/symlinks/${f}.bim.orig
 
-    # Update variant IDs and effect allele coding
-    Rscript resources/genotypes/variant_ids_bim.r ${genotype_input_dir}/${f}
+    echo "Update variant IDs and effect allele coding"
+    Rscript resources/genotypes/variant_ids_bim.r ${genotype_processed_dir}/symlinks/${f}
     echo "Updated variant IDs"
 
-    cat ${genotype_input_dir}/${f}.bim | { grep "_duplicate" || true; } > ${genotype_processed_dir}/bfiles/${f}_temp_duplicate
+    cat ${genotype_processed_dir}/symlinks/${f}.bim | { grep "_duplicate" || true; } > ${genotype_processed_dir}/bfiles/${f}_temp_duplicate
 
-    # Clean data
+    echo "Clean genotype data"
     bin/plink2 \
-        --bfile ${genotype_input_dir}/${f} \
+        --bfile ${genotype_processed_dir}/symlinks/${f} \
         --freq \
         --hardy \
         --missing \
@@ -97,16 +98,17 @@ do
     cat ${genotype_processed_dir}/bfiles/${f}_temp_duplicate ${genotype_processed_dir}/bfiles/${f}_temp_mafsnps ${genotype_processed_dir}/bfiles/${f}_temp_hardysnps ${genotype_processed_dir}/bfiles/${f}_temp_vmiss | sort | uniq > ${genotype_processed_dir}/bfiles/${f}_vremove
     cat ${genotype_processed_dir}/bfiles/${f}_vremove >> ${genotype_processed_dir}/bfiles/vremove
 
-    echo "${genotype_input_dir}/${f}" >> ${genotype_processed_dir}/geno_chrs.txt
+    echo "${genotype_processed_dir}/symlinks/${f}" >> ${genotype_processed_dir}/geno_chrs.txt
     echo "Removing $(cat ${genotype_processed_dir}/bfiles/${f}_vremove | wc -l) variants"
 done
 
+echo "Arranging variant and sample removals"
 sort ${genotype_processed_dir}/bfiles/sremove | uniq > temp
 mv temp ${genotype_processed_dir}/bfiles/sremove
 echo "Removing $(cat ${genotype_processed_dir}/bfiles/sremove | wc -l) individuals due to missing data"
 echo "Removing $(cat ${genotype_processed_dir}/bfiles/vremove | wc -l) variants in total"
 
-# Generate variant list and frequencies
+echo "Generating variant list and frequencies"
 Rscript resources/genotypes/generate_variant_reference.r ${genotype_processed_dir}/bfiles/vremove ${results_dir}/00/variants.txt ${genotype_processed_dir}/bfiles/afreqlist
 
 echo "Successfully completed 00-check-data.sh"

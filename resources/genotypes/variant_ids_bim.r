@@ -25,7 +25,7 @@ compress_alleles <- function(a) {
 # )
 
 # update orig bim
-bim <- data.table::fread(paste0(bfile, ".bim"))
+bim <- data.table::fread(paste0(bfile, ".bim.orig"))
 bim$switch <- bim$V5 > bim$V6
 temp <- bim$V5[bim$switch]
 bim$A1 <- bim$V5
@@ -33,11 +33,7 @@ bim$A2 <- bim$V6
 bim$A1[bim$switch] <- bim$A2[bim$switch]
 bim$A2[bim$switch] <- temp
 table(bim$switch)
-bim
-# make copy of original bim file
-if(!file.exists(paste0(bfile, ".bim.orig"))) {
-	file.copy(from=paste0(bfile, ".bim"), to=paste0(bfile, ".bim.orig"))
-}
+str(bim)
 
 # update variant IDs
 ch <- bim$A1 < bim$A2
