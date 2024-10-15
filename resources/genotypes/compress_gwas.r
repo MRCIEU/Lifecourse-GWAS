@@ -65,4 +65,4 @@ a$A2[ord] <- temp
 
 message("writing")
 b <- a %>% dplyr::select(BETA, SE)
-saveRDS(b, file=paste0(fn, ".fst"))
+saveRDS(b, file=paste0(fn, ".rds"))
