@@ -24,7 +24,8 @@ dat <- tibble(
 
 for(i in 1:nrow(dat)) {
     a <- fread(dat$fn[i])
-    names(a) <- c("FID", "IID", "value")
+    a <- a[,1:3]
+    names(a)[1:3] <- c("FID", "IID", "value")
     cf <- gsub(".phen$", ".covs", dat$fn[i])
     covs <- fread(cf)
     a <- inner_join(a, covs, by=c("FID"="V1", "IID"="V2"))
