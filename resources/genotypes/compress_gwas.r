@@ -6,15 +6,15 @@ library(R.utils)
 fn <- commandArgs(T)[1]
 ref <- commandArgs(T)[2]
 rem <- commandArgs(T)[3]
-nthread <- as.numeric(commandArgs(T)[4])
+nthreads <- as.numeric(Sys.getenv("env_threads"))
 stopifnot(file.exists(fn))
 stopifnot(file.exists(ref))
 stopifnot(file.exists(rem))
 
 message("reading gwas")
-a <- data.table::fread(fn, header=TRUE, nThreads = nthread) %>% as_tibble()
+a <- data.table::fread(fn, header=TRUE, nThread = nthreads) %>% as_tibble()
 message("reading reference")
-v <- data.table::fread(ref, header=TRUE, nThreads = nthread) %>% as_tibble()
+v <- data.table::fread(ref, header=TRUE, nThread = nthreads) %>% as_tibble()
 
 # Sometimes GCTA doesn't remove all the variants that it's supposed to
 # Do this manually

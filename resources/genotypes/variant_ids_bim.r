@@ -2,9 +2,9 @@ library(data.table)
 library(dplyr)
 library(here)
 library(digest)
+nthreads <- as.numeric(Sys.getenv("env_threads"))
 
 # read in bim file
-
 args <- commandArgs(T)
 bfile <- args[1]
 # bfile <- "/mnt/storage/private/mrcieu/research/scratch/Lifecourse-GWAS/gib/alspac/geno_input/subset/data_chr22"
@@ -25,7 +25,7 @@ compress_alleles <- function(a) {
 # )
 
 # update orig bim
-bim <- data.table::fread(paste0(bfile, ".bim.orig"))
+bim <- data.table::fread(paste0(bfile, ".bim.orig"), nThread = nthreads)
 bim$switch <- bim$V5 > bim$V6
 temp <- bim$V5[bim$switch]
 bim$A1 <- bim$V5
@@ -65,6 +65,6 @@ rename.duplicate <- function (x, sep="_", verbose=FALSE) {
 
 bim$V2 <- rename.duplicate(bim$V2, "_duplicate")
 
-data.table::fwrite(bim, file=paste0(bfile, ".bim"), quote=FALSE, col.names=FALSE, sep=" ")
+data.table::fwrite(bim, file=paste0(bfile, ".bim"), quote=FALSE, col.names=FALSE, sep=" ", nThread = nthreads)
 
 

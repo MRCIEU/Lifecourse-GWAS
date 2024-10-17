@@ -17,7 +17,7 @@ main <- function()
 	message("There are ", sum(index), " genetic outliers")
 	genetic_outliers <- pca[index,1:2]
 
-	write.table(genetic_outliers, file=outliers, row=F, col=F, qu=F)
+	write.table(genetic_outliers, file=outliers, row=F, col=F, qu=F, sep="\t")
 
 	thresh1a <- mean(pca[,3],na.rm=T) + pcasd*(sd(pca[,3],na.rm=T))
 	thresh1b <- mean(pca[,3],na.rm=T) - pcasd*(sd(pca[,3],na.rm=T))

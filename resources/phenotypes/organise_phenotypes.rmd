@@ -33,6 +33,7 @@ library(data.table)
 library(here)
 library(rmarkdown)
 library(dotenv)
+nthreads <- as.numeric(Sys.getenv("env_threads"))
 ```
 
 ## Set up environment
@@ -48,13 +49,13 @@ os <- list()
 ## Age parameters
 
 ```{r}
-agebins <- fread(here("resources", "phenotypes", "agebins.csv")) %>% as_tibble()
+agebins <- fread(here("resources", "phenotypes", "agebins.csv"), nThread = nthreads) %>% as_tibble()
 ```
 
 ## Phenotype parameters
 
 ```{r}
-df <- fread(here("phenotype_list.csv")) %>% 
+df <- fread(here("phenotype_list.csv"), nThread = nthreads) %>% 
   as_tibble() %>%
   mutate(filepath = file.path(Sys.getenv("phenotype_input_dir"), paste0(pheno_id, ".txt"))) %>%
   filter(file.exists(filepath))
