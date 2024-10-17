@@ -133,7 +133,7 @@ do
             --threads ${env_threads} \
             --keep ${genotype_processed_dir}/scratch/ldmats/keeptemp \
             --bfile ${genotype_processed_dir}/scratch/tophits/${ph} \
-            --r2-phased bin4 yes-really \
+            --r2-unphased ref-based bin4 yes-really \
             --out ${results_dir}/02/ldmat/${filename}
 
         rm -r ${genotype_processed_dir}/scratch/ldmats
