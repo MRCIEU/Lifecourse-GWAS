@@ -30,6 +30,8 @@ exec &> >(tee ${results_dir}/03/logfile${1})
 #     - results/03/phen_<phencode>_<ancestry>_<age>.*
 
 
+phenolist=( $(cat ${phenotype_processed_dir}/phenolist) )
+
 # Allow specific analysis to be run
 # Can take any number between 1:ngwas where ngwas is the number of rows in ${phenotype_processed_dir}/phenolist
 index=$1
@@ -38,32 +40,37 @@ nphen=`cat ${phenotype_processed_dir}/phenolist | wc -l`
 if [ -z $index ]
 then
     echo "Running all $nphen GWASs"
-else
+elif [ ! -z $index ]; then
     re='^[0-9]+$'
     if ! [[ $index =~ $re ]] ; then
-        echo "error: Index variable is not a number"
-        echo "Usage: ${0} [index number]"
-        exit 1
+        # check if $index is in the phenolist array
+        if [[ " ${phenolist[@]} " =~ " ${index} " ]]; then
+            echo "Running GWAS for phenotype $index"
+        else
+            echo "error: Index is not a number or a valid phenotype"
+            echo "Usage: ${0} [index number]"
+            exit 1
+        fi
+    else
+        if [ "$index" -gt "$nphen" ] ; then
+            echo "error: Index is larger than number of phenotypes"
+            echo "Usage: ${0} [index number]"
+            exit 1
+        fi
+        echo "Running $index of $nphen GWASs"
     fi
-
-    if [ "$index" -gt "$nphen" ] ; then
-        echo "error: Index is larger than number of phenotypes"
-        echo "Usage: ${0} [index number]"
-        exit 1
-    fi
-    echo "Running $index of $nphen GWASs"
 fi
 
+echo $index
 
 ## TODO
 # copy bim files over to results/03
 
 # Do GWAS for each phenotype
 i=1
-phenolist=( $(cat ${phenotype_processed_dir}/phenolist) )
 for phen in ${phenolist[@]}
 do
-    if [ -z $index ] || [ "$index" -eq "$i" ] ; then            
+    if [ -z $index ] || [[ "$index" == "$phen" ]] || [[ "$index" == "$i" ]] ; then
         filename=$(basename -- ${phen})
         filename="${filename%.*}"
         echo $filename
@@ -125,4 +132,9 @@ do
     i=$((i+1))
 done
 
-echo "Successfully performed GWAS of all phenotypes!"
+if [ -z $index ]
+then
+    echo "Successfully performed GWAS of all phenotypes!"
+else
+    echo "Successfully performed GWAS of phenotype $index!"
+fi

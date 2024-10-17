@@ -1,4 +1,4 @@
-FROM rocker/r-ver:latest
+FROM rocker/r-ver:latest as renv_base
 
 WORKDIR /usr/local/src/myscripts
 RUN apt-get update && \
@@ -42,3 +42,4 @@ RUN R -e 'options( \
           R.version["os"]))); \
     install.packages("renv", dependencies = TRUE); \
     renv::restore()'
+
