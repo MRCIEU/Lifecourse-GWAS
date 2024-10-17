@@ -48,7 +48,7 @@ echo "Cleaning each chromosome"
 # Make mbfile - list of all the per-chr bfiles for each ancestry
 # List of samples to remove
 # List of variants to remove
-> ${genotype_processed_dir}/geno_chrs.txt
+> ${genotype_processed_dir}/geno_chrs.txt.temp
 > ${genotype_processed_dir}/bfiles/sremove
 > ${genotype_processed_dir}/bfiles/vremove
 
@@ -61,9 +61,9 @@ do
 
     echo "Create symlinks"
     mkdir -p ${genotype_processed_dir}/symlinks
-    ln -s ${genotype_input_dir}/${f}.bed ${genotype_processed_dir}/symlinks/${f}.bed
-    ln -s ${genotype_input_dir}/${f}.fam ${genotype_processed_dir}/symlinks/${f}.fam
-    cp ${genotype_input_dir}/${f}.bim ${genotype_processed_dir}/symlinks/${f}.bim.orig
+    ln -sf ${genotype_input_dir}/${f}.bed ${genotype_processed_dir}/symlinks/${f}.bed
+    ln -sf ${genotype_input_dir}/${f}.fam ${genotype_processed_dir}/symlinks/${f}.fam
+    ln -sf ${genotype_input_dir}/${f}.bim ${genotype_processed_dir}/symlinks/${f}.bim.orig
 
     echo "Update variant IDs and effect allele coding"
     Rscript resources/genotypes/variant_ids_bim.r ${genotype_processed_dir}/symlinks/${f}
@@ -93,14 +93,16 @@ do
     fi
     
     awk -v miss=${env_miss} '($5 > miss) {print $2}' ${genotype_processed_dir}/bfiles/${f}_temp.vmiss | { grep -wv "ID" || true; } > ${genotype_processed_dir}/bfiles/${f}_temp_vmiss
-    awk -v miss=${env_imiss} '($5 > miss) {print $1, $2}' ${genotype_processed_dir}/bfiles/${f}_temp.smiss | { grep -wv "#FID IID" || true; } >> ${genotype_processed_dir}/bfiles/sremove
+    awk -v miss=${env_imiss} '($5 > miss) {print $1, $2}' ${genotype_processed_dir}/bfiles/${f}_temp.smiss | { grep -v "#FID" || true; } >> ${genotype_processed_dir}/bfiles/sremove
 
     cat ${genotype_processed_dir}/bfiles/${f}_temp_duplicate ${genotype_processed_dir}/bfiles/${f}_temp_mafsnps ${genotype_processed_dir}/bfiles/${f}_temp_hardysnps ${genotype_processed_dir}/bfiles/${f}_temp_vmiss | sort | uniq > ${genotype_processed_dir}/bfiles/${f}_vremove
     cat ${genotype_processed_dir}/bfiles/${f}_vremove >> ${genotype_processed_dir}/bfiles/vremove
 
-    echo "${genotype_processed_dir}/symlinks/${f}" >> ${genotype_processed_dir}/geno_chrs.txt
+    echo "${genotype_processed_dir}/symlinks/${f}" >> ${genotype_processed_dir}/geno_chrs.txt.temp
     echo "Removing $(cat ${genotype_processed_dir}/bfiles/${f}_vremove | wc -l) variants"
 done
+
+mv ${genotype_processed_dir}/geno_chrs.txt.temp ${genotype_processed_dir}/geno_chrs.txt
 
 echo "Arranging variant and sample removals"
 sort ${genotype_processed_dir}/bfiles/sremove | uniq > temp
