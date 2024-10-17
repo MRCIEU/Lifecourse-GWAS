@@ -78,6 +78,7 @@ do
                 --fastGWA-mlm \
                 --grm-sparse ${genotype_processed_dir}/${bfile_prefix} \
                 --exclude ${genotype_processed_dir}/bfiles/vremove \
+                --keep ${genotype_processed_dir}/related_keep.txt \
                 --pheno ${phen} \
                 --qcovar ${covs} \
                 --thread-num ${env_threads} \
@@ -93,7 +94,7 @@ do
                     --mbfile ${genotype_processed_dir}/geno_chrs.txt \
                     --fastGWA-lr \
                     --exclude ${genotype_processed_dir}/bfiles/vremove \
-                    --keep ${genotype_processed_dir}/scratch/kingunrelated.txt \
+                    --keep ${genotype_processed_dir}/unrelated_keep.txt \
                     --pheno ${phen} \
                     --qcovar ${covs} \
                     --thread-num ${env_threads} \
@@ -108,7 +109,7 @@ do
                 --fastGWA-lr \
                 --pheno ${phen} \
                 --exclude ${genotype_processed_dir}/bfiles/vremove \
-                --keep ${genotype_processed_dir}/scratch/kingunrelated.txt \
+                --keep ${genotype_processed_dir}/related_keep.txt \
                 --qcovar ${covs} \
                 --thread-num ${env_threads} \
                 --maf 0 \

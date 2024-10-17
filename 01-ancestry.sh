@@ -317,4 +317,24 @@ then
     fi
 fi
 
+echo "Final keep lists"
+# Unrelateds
+# +kingunrelated.txt
+# -genetic_outliers.txt
+# -sremove
+
+grep -vw -f ${genotype_processed_dir}/bfiles/sremove ${genotype_processed_dir}/kingunrelated.txt | grep -vw -f ${genotype_processed_dir}/${bfile_prefix}_genetic_outliers.txt > ${genotype_processed_dir}/unrelated_keep.txt
+
+# Relateds
+# +fam file
+# -genetic_outliers.txt
+# -sremove
+
+if [ "${env_family_data}" = "true" ]
+then
+    awk '{ print $1"\t"$2 }' ${genotype_processed_dir}/scratch/indep.fam | grep -vw -f ${genotype_processed_dir}/bfiles/sremove | grep -vw -f ${genotype_processed_dir}/${bfile_prefix}_genetic_outliers.txt > ${genotype_processed_dir}/related_keep.txt
+fi
+
 echo "Successfully generated PCs etc!"
+
+
