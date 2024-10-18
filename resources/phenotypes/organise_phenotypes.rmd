@@ -121,7 +121,7 @@ os$sex_yob <- covdat %>%
       yob_sd = sd(yob, na.rm=T)
   )
 os$sex_yob
-saveRDS(os, file = file.path(Sys.getenv("results_dir"), "summary.rds"))
+saveRDS(os, file = file.path(Sys.getenv("results_dir"), "02", "summary.rds"))
 ```
 
 ## Processing phenotypes

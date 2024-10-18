@@ -29,51 +29,9 @@ rule all:
         expand("{resdir}/00/variants.txt", resdir=resdir),
         expand("{resdir}/00/logfile", resdir=resdir),
         expand("{resdir}/01/pcaplot.png", resdir=resdir),
-        # expand("{resdir}/02/{phen}_summary.rds", resdir=resdir, phen=phen),
-        # dynamic("{resdir}/02/{phen}_summary.rds"),
-        # expand("{resdir}/02/organise_phenotypes.html", resdir=resdir),
-        dynamic(f"{resdir}/05/{{gwas}}.fastGWA.rds"),
-        dynamic(f"{resdir}/03/{{gwas}}.unphased.vcor2.bin"),
-        f"{resdir}/04/scores.rds"
-
-
-rule phenotypes:
-    input: 
-        f"{geno_proc}/{bfile_prefix}pc.txt",
-        # f"{phen_input}/{{phen}}.txt",
-        f"{phen_input}/pheno_covariates.txt",
-    output:
-        # f"{resdir}/02/{{phen}}_summary.rds",
-        dynamic(f"{phen_proc}/{{gwas}}.phen")
-        # expand("{resdir}/02/organise_phenotypes.html", resdir=resdir),
-        # expand("{resdir}/02/scores.rds", resdir=resdir),
-        # expand("{resdir}/02/summary.rds", resdir=resdir)
-    shell:
-        "./02-phenotype-organisation.sh"
-
-rule scores:
-    input:
-        f"{phen_proc}/{{gwas}}.phen"
-    output:
-        f"{resdir}/03/{{gwas}}.unphased.vcor2.bin"
-    shell:
-        "./03-prs.sh {input}"
-
-rule aggregate_scores:
-    input:
-        dynamic(f"{resdir}/03/{{gwas}}.unphased.vcor2.bin")
-    output:
-        f"{resdir}/04/scores.rds"
-    shell:
-        "./04-prs-aggregate.sh"
-
-rule gwas:
-    input: 
-        f"{phen_proc}/{{gwas}}.phen"
-    output:
-        f"{resdir}/05/{{gwas}}.fastGWA.rds"
-    shell:
-        "./05-gwas.sh {input}"
+        expand("{resdir}/02/{phen}_summary.rds", resdir=resdir, phen=phen),
+        expand("{resdir}/02/summary.rds", resdir=resdir, phen=phen),
+        expand("{resdir}/02/organise_phenotypes.html", resdir=resdir),
 
 rule check_data:
     input: 
@@ -102,3 +60,15 @@ rule ancestry:
         expand("{resdir}/01/pcaplot.png", resdir=resdir)
     shell:
         "./01-ancestry.sh"
+
+rule phenotypes:
+    input: 
+        f"{geno_proc}/{bfile_prefix}pc.txt",
+        expand("{phen_input}/{phen}.txt", phen_input=phen_input, phen=phen),
+        f"{phen_input}/pheno_covariates.txt"
+    output:
+        expand("{resdir}/02/{phen}_summary.rds", resdir=resdir, phen=phen),
+        expand("{resdir}/02/summary.rds", resdir=resdir, phen=phen),
+        expand("{resdir}/02/organise_phenotypes.html", resdir=resdir),
+    shell:
+        "./02-phenotype-organisation.sh"

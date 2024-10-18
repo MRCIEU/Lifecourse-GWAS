@@ -1,0 +1,50 @@
+from dotenv import dotenv_values
+import glob
+
+config = dotenv_values("config.env")
+
+geno_input = config['genotype_input_dir']
+geno_proc = config['genotype_processed_dir']
+bfile_prefix = config['bfile_prefix']
+resdir = config['results_dir']
+phen_input = config['phenotype_input_dir']
+phen_proc = config['phenotype_processed_dir']
+
+# Get list of chr values that matches "geno_input/bfile_prefix{chr}.bed"
+chr_files = glob.glob(f"{geno_input}/{bfile_prefix}*.bed")
+
+# Extract the wildcard values from chr_files
+chr = [x.split("/")[-1].split(".")[0].split(bfile_prefix)[1] for x in chr_files]
+
+# Find the phenotypes available in the study
+phen = [x.split(",")[1] for x in open("phenotype_list.csv").read().split("\n") if x]
+phen.pop(0)
+phen = [x for x in phen if phen_input + "/" + x + ".txt" in glob.glob(f"{phen_input}/*.txt")]
+
+# Find the GWASs that need to be done
+gwas = [x for x in open(phen_proc + "/phenolist").read().split("\n") if x]
+gwas = [x.split("/")[-1].split(".")[0] for x in gwas]
+
+rule all:
+    input:
+        expand("{resdir}/03/{gwas}.unphased.vcor2.bin", gwas=gwas, resdir=resdir),
+        f"{resdir}/04/scores.rds",
+        expand("{resdir}/05/{gwas}.fastGWA.rds", gwas=gwas, resdir=resdir)
+
+rule aggregate_scores:
+    input:
+        expand("{phen_proc}/{gwas}.phen", phen_proc=phen_proc, gwas=gwas)
+    output:
+        expand("{resdir}/03/{gwas}.unphased.vcor2.bin", gwas=gwas, resdir=resdir),
+        f"{resdir}/04/scores.rds"
+    shell:
+        "./03-prs.sh; ./04-prs-aggregate.sh"
+
+rule gwas:
+    input: 
+        f"{resdir}/04/scores.rds",
+        gwas=f"{phen_proc}/{{gwas}}.phen"
+    output:
+        f"{resdir}/05/{{gwas}}.fastGWA.rds"
+    shell:
+        "./05-gwas.sh {input.gwas}"
