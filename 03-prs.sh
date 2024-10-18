@@ -137,9 +137,7 @@ do
     i=$((i+1))
 done
 
-if [ -z $index ]
-then
-    echo "Successfully generated scores and ld matrices!"
-else
-    echo "Successfully generated score and ld matrix for $index!"
-fi
+echo "Successfully generated correlation matrices for each phenotype!"
+echo "Generating PRS-phenotype associations for each subset"
+Rscript resources/phenotypes/score.r ${phenotype_processed_dir}/phenolist ${genotype_processed_dir}/scratch/tophits ${results_dir}/04
+echo "Successfully generated scores!"

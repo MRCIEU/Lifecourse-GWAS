@@ -28,23 +28,23 @@ gwas = [x.split("/")[-1].split(".")[0] for x in gwas]
 rule all:
     input:
         expand("{resdir}/03/{gwas}.unphased.vcor2.bin", gwas=gwas, resdir=resdir),
-        f"{resdir}/04/scores.rds",
-        expand("{resdir}/05/{gwas}.fastGWA.rds", gwas=gwas, resdir=resdir)
+        f"{resdir}/03/scores.rds",
+        expand("{resdir}/04/{gwas}.fastGWA.rds", gwas=gwas, resdir=resdir)
 
 rule aggregate_scores:
     input:
         expand("{phen_proc}/{gwas}.phen", phen_proc=phen_proc, gwas=gwas)
     output:
         expand("{resdir}/03/{gwas}.unphased.vcor2.bin", gwas=gwas, resdir=resdir),
-        f"{resdir}/04/scores.rds"
+        f"{resdir}/03/scores.rds"
     shell:
-        "./03-prs.sh; ./04-prs-aggregate.sh"
+        "./03-prs.sh"
 
 rule gwas:
     input: 
         f"{resdir}/04/scores.rds",
         gwas=f"{phen_proc}/{{gwas}}.phen"
     output:
-        f"{resdir}/05/{{gwas}}.fastGWA.rds"
+        f"{resdir}/04/{{gwas}}.fastGWA.rds"
     shell:
-        "./05-gwas.sh {input.gwas}"
+        "./04-gwas.sh {input.gwas}"

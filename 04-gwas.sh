@@ -7,10 +7,10 @@ set -e
 source config.env
 
 # create results directory
-mkdir -p ${results_dir}/05
+mkdir -p ${results_dir}/04
 
 # log everything from this script to a logfile in the results director
-exec &> >(tee ${results_dir}/05/logfile${1})
+exec &> >(tee ${results_dir}/04/logfile${1})
 
 # Inputs:
 
@@ -27,7 +27,7 @@ exec &> >(tee ${results_dir}/05/logfile${1})
 # Output:
 
 # - GWAS summary stats per phen x age x ancestry
-#     - results/05/phen_<phencode>_<ancestry>_<age>.*
+#     - results/04/phen_<phencode>_<ancestry>_<age>.*
 
 
 phenolist=( $(cat ${phenotype_processed_dir}/phenolist) )
@@ -64,7 +64,7 @@ fi
 echo $index
 
 ## TODO
-# copy bim files over to results/05
+# copy bim files over to results/04
 
 # Do GWAS for each phenotype
 i=1
@@ -91,7 +91,7 @@ do
                 --thread-num ${env_threads} \
                 --maf 0 \
                 --geno 1 \
-                --out ${results_dir}/05/${filename} ) \
+                --out ${results_dir}/04/${filename} ) \
                 || ( echo "1" > ${phen}.flag )
             flag=`cat ${phen}.flag`
             echo $flag
@@ -107,7 +107,7 @@ do
                     --thread-num ${env_threads} \
                     --maf 0 \
                     --geno 1 \
-                    --out ${results_dir}/05/${filename}
+                    --out ${results_dir}/04/${filename}
             fi
         else
             echo "not family"
@@ -121,13 +121,13 @@ do
                 --thread-num ${env_threads} \
                 --maf 0 \
                 --geno 1 \
-                --out ${results_dir}/05/${filename}
+                --out ${results_dir}/04/${filename}
         fi
         # compress GWAS
         # keep only b, se because all other info is constant across GWASs
         echo "Compressing output..."
-        Rscript resources/genotypes/compress_gwas.r ${results_dir}/05/${filename}.fastGWA ${results_dir}/00/variants.txt ${genotype_processed_dir}/bfiles/vremove
-        rm ${results_dir}/05/${filename}.fastGWA
+        Rscript resources/genotypes/compress_gwas.r ${results_dir}/04/${filename}.fastGWA ${results_dir}/00/variants.txt ${genotype_processed_dir}/bfiles/vremove
+        rm ${results_dir}/04/${filename}.fastGWA
     fi
     i=$((i+1))
 done
