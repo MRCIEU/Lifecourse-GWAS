@@ -1,0 +1,19 @@
+{
+    "__default__" :
+    {
+            "name": "{rule}",
+            "partition": "partition1,partition2",
+            "account": "accountname",
+            "nodes": "1",
+            "ncpu": "1",
+            "ntask": "1",
+            "time": "01:00:00",
+            "mem": "20G",
+            "output": "logs/{rule}.out"
+    },
+    "gwas" :
+    {
+            "name": "{rule}.{wildcards.ids}",
+            "output": "job_reports/{rule}.{wildcards.ids}.out"
+    }
+}
