@@ -13,9 +13,11 @@ mkdir -p ${results_dir}/00
 exec &> >(tee ${results_dir}/00/logfile)
 
 
-## Check that the software all runs
-
-
+## Check that $cohort_name is alphanumeric with no spaces etc
+if [[ ! $cohort_name =~ ^[a-zA-Z0-9_]+$ ]]; then
+    echo "Error: Please check your config.env. The variable cohort_name must be alphanumeric with no spaces. It will be used to generate your results files."
+    exit 1
+fi
 
 ## Genotype cleaning
 
