@@ -1,0 +1,66 @@
+#!/bin/bash
+
+source config.env
+
+bin/regenie_v3.6.gz_x86_64_Linux_mkl \
+  --step 1 \
+  --bed ${genotype_processed_dir}/scratch/indep \
+  --phenoFile test.phen \
+  --exclude ${genotype_processed_dir}/bfiles/vremove \
+  --remove ${genotype_processed_dir}/bfiles/sremove \
+  --bsize 100 \
+  --lowmem \
+  --lowmem-prefix tmp_rg \
+  --out regenie_test
+
+
+
+bin/regenie_v3.6.gz_x86_64_Linux_mkl \
+  --step 2 \
+  --bed ${genotype_processed_dir}/symlinks/${bfile_prefix}22 \
+  --phenoFile test.phen \
+  --exclude ${genotype_processed_dir}/bfiles/vremove \
+  --remove ${genotype_processed_dir}/bfiles/sremove \
+  --bsize 200 \
+  --firth --approx \
+  --pThresh 0.01 \
+  --pred regenie_test_pred.list \
+  --out regenie_test
+
+
+library(data.table)
+library(dplyr)
+
+a <- readRDS("/local-scratch/projects/Lifecourse-GWAS/gib/alspac/results2/05/whr_youngadulthood_both.fastGWA.rds")
+b <- read.table("regenie_test_value.regenie", he=T)
+v <- fread("/local-scratch/projects/Lifecourse-GWAS/gib/alspac/results2/00/variants.txt", he=T)
+
+ind <- v$SNP %in% b$ind
+table(ind)
+
+c22 <- bind_cols(v[ind,], a[ind,])
+
+dim(b)
+dim(c22)
+
+all(c22$SNP == b$ID)
+
+b$BETA[c22$flipped] <- -b$BETA[c22$flipped]
+
+cor(b$BETA, c22$BETA)
+cor(b$SE, c22$SE)
+
+png("comp.png")
+plot(b$BETA, c22$BETA)
+abline(0,1)
+abline(lm(c22$BETA ~ b$BETA), col="red")
+dev.off()
+
+
+
+png("compse.png")
+plot(b$SE, c22$SE)
+abline(0,1)
+abline(lm(c22$SE ~ b$SE), col="red")
+dev.off()
+
