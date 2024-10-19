@@ -43,3 +43,4 @@ RUN R -e 'options( \
     install.packages("renv", dependencies = TRUE); \
     renv::restore()'
 
+COPY . .
