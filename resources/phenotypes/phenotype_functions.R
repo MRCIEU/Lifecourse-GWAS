@@ -77,6 +77,12 @@ read_covariate_data <- function(fn, covariate_list=c("sex", "yob")) {
   dat <- subset(dat, select=c("FID", "IID", covariate_list))
   dat <- subset(dat, !duplicated(paste(FID, IID)))
   dat$deob <- cut(dat$yob/10, breaks=seq(180,203, by=1))
+  if("sex" %in% covariate_list) {
+    s <- unique(dat$sex[!is.na(dat$sex)])
+    if(!setequal(c(1,2), s)) {
+      stop("sex values must be 1=male and 2=female. Found: ", s)
+    }
+  }
 
   dat$FID <- as.character(dat$FID)
   dat$IID <- as.character(dat$IID)

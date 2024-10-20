@@ -22,7 +22,7 @@ Other notes:
  - If ALL observations for a trait are removed as outliers the code will crash. Outliers are removed based on pre-transformed variables.
 
 
-```{r, include=FALSE, message=FALSE}
+```{r libraries, include=FALSE, message=FALSE}
 library(rms)
 library(quantreg)
 library(git2r)
@@ -38,7 +38,7 @@ nthreads <- as.numeric(Sys.getenv("env_threads"))
 
 ## Set up environment
 
-```{r}
+```{r environment}
 source(here("resources", "phenotypes", "phenotype_functions.R"))
 readRenviron(here("config.env"))
 dir.create(Sys.getenv("results_dir"), showWarnings = FALSE)
@@ -48,13 +48,13 @@ os <- list()
 
 ## Age parameters
 
-```{r}
+```{r agebins}
 agebins <- fread(here("resources", "phenotypes", "agebins.csv"), nThread = nthreads) %>% as_tibble()
 ```
 
 ## Phenotype parameters
 
-```{r}
+```{r phenotypes}
 df <- fread(here("phenotype_list.csv"), nThread = nthreads) %>% 
   as_tibble() %>%
   mutate(filepath = file.path(Sys.getenv("phenotype_input_dir"), paste0(pheno_id, ".txt"))) %>%
@@ -66,7 +66,7 @@ os$phenotypes <- phenotypes
 
 ## Genetic covariates
 
-```{r}
+```{r genetic_covariates}
 gen_covs <- read_gen_covs(
   file = file.path(Sys.getenv("genotype_processed_dir"), paste0("pcs.txt")),
   npcs = as.numeric(Sys.getenv("env_n_pcs"))
@@ -76,7 +76,7 @@ str(gen_covs)
 
 Plot PCs
 
-```{r}
+```{r plot_pcs}
 temp1 <- subset(gen_covs, select=-c(PC1)) %>% tidyr::pivot_longer(cols=-c("FID", "IID"))
 temp2 <- subset(gen_covs, select=c(FID, IID, PC1))
 temp <- inner_join(temp1, temp2)
@@ -87,7 +87,7 @@ facet_wrap(~ name, scale="free")
 
 ## Static covariates
 
-```{r}
+```{r static_covariates}
 cov_list <- strsplit(Sys.getenv("static_covariates"), split=" ")[[1]]
 covdat <- read_covariate_data(
   file.path(Sys.getenv("phenotype_input_dir"), "pheno_covariates.txt"),
@@ -98,7 +98,7 @@ covdat <- read_covariate_data(
 
 Age distribution
 
-```{r}
+```{r age_distribution}
 covdat$deob <- cut(covdat$yob/10, breaks=seq(180,203, by=1))
 os$deob_summary <- table(covdat$deob)
 os$deob_summary
@@ -106,14 +106,14 @@ os$deob_summary
 
 Sex distribution
 
-```{r}
+```{r sex_distribution}
 os$sex_table <- table(covdat$sex)
 os$sex_table
 ```
 
 Sex x yob
 
-```{r}
+```{r sex_yob}
 os$sex_yob <- covdat %>% 
   group_by(sex) %>% 
   summarise(
@@ -131,7 +131,7 @@ saveRDS(os, file = file.path(Sys.getenv("results_dir"), "02", "summary.rds"))
 - Summarise the data
 - Save age and sex specific files for the GWAS
 
-```{r, echo=FALSE}
+```{r phenotype_processing, echo=FALSE}
 for(i in 1:length(phenotypes)){
   cat("\n### ", phenotypes[i], "\n\n")
   organise_phenotype(phenotypes[i], phenotypes, df, gen_covs, covdat, agebins, pl=TRUE)
@@ -142,13 +142,13 @@ for(i in 1:length(phenotypes)){
 
 Get git version
 
-```{r}
+```{r version}
 g <- git2r::revparse_single(here(), "HEAD")
 g
 ```
 
 Session info
 
-```{r}
+```{r session_info}
 sessionInfo()
 ```

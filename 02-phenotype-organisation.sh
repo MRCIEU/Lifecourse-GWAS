@@ -39,4 +39,9 @@ exec &> >(tee ${results_dir}/02/logfile)
 echo "Organising phenotypes"
 Rscript resources/render.r resources/phenotypes/organise_phenotypes.rmd ${results_dir}/02
 
+echo "Generating list of phenotypes"
+ls ${phenotype_processed_dir}/*.phen > ${phenotype_processed_dir}/phenolist
+nphen=`cat ${phenotype_processed_dir}/phenolist | wc -l`
+echo "Generated ${nphen} phenotype subsets"
+
 echo "Successfully organised phenotypes!"
