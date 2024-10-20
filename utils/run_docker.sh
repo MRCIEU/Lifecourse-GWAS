@@ -14,5 +14,5 @@ docker run \
     -v ${genotype_input_dir}:${genotype_input_dir} \
     -v ${genotype_processed_dir}:${genotype_processed_dir} \
     -v ${results_dir}:${results_dir} \
-    MRCIEU/lifecourse-gwas:latest \
+    mrcieu/lifecourse-gwas:latest \
     "$@"

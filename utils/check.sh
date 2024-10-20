@@ -31,7 +31,7 @@ else
     cat $tf
 fi
 
-echo "Checking gcta..."
+echo "Checking king..."
 
 ./bin/king > $tf 2>&1
 if cat $tf | grep -q "KING"; then
