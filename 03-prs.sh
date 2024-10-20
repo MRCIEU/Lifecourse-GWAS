@@ -139,5 +139,5 @@ done
 
 echo "Successfully generated correlation matrices for each phenotype!"
 echo "Generating PRS-phenotype associations for each subset"
-Rscript resources/phenotypes/score.r ${phenotype_processed_dir}/phenolist ${genotype_processed_dir}/scratch/tophits ${results_dir}/04
+Rscript resources/phenotypes/score.r ${phenotype_processed_dir}/phenolist ${genotype_processed_dir}/scratch/tophits ${results_dir}/03
 echo "Successfully generated scores!"
