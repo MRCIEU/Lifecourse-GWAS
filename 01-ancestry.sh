@@ -205,10 +205,10 @@ then
 
     section_message "pcs"
 
-    if test -f "${genotype_processed_dir}/${bfile_prefix}pc.txt"; then
+    if test -f "${genotype_processed_dir}/pcs.txt"; then
         echo "pcafile already provided"
         Rscript resources/genotypes/genetic_outliers.r \
-            ${genotype_processed_dir}/${bfile_prefix}pc.txt \
+            ${genotype_processed_dir}/pcs.txt \
             ${env_pca_sd} \
             ${env_n_pcs} \
             ${genotype_processed_dir}/${bfile_prefix}_genetic_outliers.txt \
@@ -229,16 +229,16 @@ then
             pcs_unrelated
             pcs_related            
             sed -i 1d ${genotype_processed_dir}/scratch/fastpca_pcs_related.txt
-            cat ${genotype_processed_dir}/scratch/fastpca_pcs_unrelated.txt ${genotype_processed_dir}/scratch/fastpca_pcs_related.txt > ${genotype_processed_dir}/${bfile_prefix}pc.txt
+            cat ${genotype_processed_dir}/scratch/fastpca_pcs_unrelated.txt ${genotype_processed_dir}/scratch/fastpca_pcs_related.txt > ${genotype_processed_dir}/pcs.txt
 
         else
             pcs_unrelated
-            cp ${genotype_processed_dir}/scratch/fastpca_pcs_unrelated.txt ${genotype_processed_dir}/${bfile_prefix}pc.txt
+            cp ${genotype_processed_dir}/scratch/fastpca_pcs_unrelated.txt ${genotype_processed_dir}/pcs.txt
         fi
 
         echo "Check PCs e.g. by plotting them"
         Rscript resources/genotypes/genetic_outliers.r \
-            ${genotype_processed_dir}/${bfile_prefix}pc.txt \
+            ${genotype_processed_dir}/pcs.txt \
             ${env_pca_sd} \
             ${env_n_pcs} \
             ${genotype_processed_dir}/${bfile_prefix}_genetic_outliers.txt \
@@ -271,18 +271,18 @@ then
                 pcs_unrelated
                 pcs_related            
                 sed -i 1d ${genotype_processed_dir}/scratch/fastpca_pcs_related.txt
-                cat ${genotype_processed_dir}/scratch/fastpca_pcs_unrelated.txt ${genotype_processed_dir}/scratch/fastpca_pcs_related.txt > ${genotype_processed_dir}/${bfile_prefix}pc.txt
+                cat ${genotype_processed_dir}/scratch/fastpca_pcs_unrelated.txt ${genotype_processed_dir}/scratch/fastpca_pcs_related.txt > ${genotype_processed_dir}/pcs.txt
 
             else
                 pcs_unrelated
-                cp ${genotype_processed_dir}/scratch/fastpca_pcs_unrelated.txt ${genotype_processed_dir}/${bfile_prefix}pc.txt
+                cp ${genotype_processed_dir}/scratch/fastpca_pcs_unrelated.txt ${genotype_processed_dir}/pcs.txt
 
             fi
 
             mv ${results_dir}/01/pcaplot.png ${results_dir}/01/pcaplot_round1.png
 
             Rscript resources/genotypes/genetic_outliers.r \
-                ${genotype_processed_dir}/${bfile_prefix}pc.txt \
+                ${genotype_processed_dir}/pcs.txt \
                 ${env_pca_sd} \
                 ${env_n_pcs} \
                 ${genotype_processed_dir}/${bfile_prefix}_genetic_outliers.txt \

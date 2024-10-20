@@ -68,7 +68,7 @@ os$phenotypes <- phenotypes
 
 ```{r}
 gen_covs <- read_gen_covs(
-  file = file.path(Sys.getenv("genotype_processed_dir"), paste0(Sys.getenv("bfile_prefix"), "pc.txt")),
+  file = file.path(Sys.getenv("genotype_processed_dir"), paste0("pcs.txt")),
   npcs = as.numeric(Sys.getenv("env_n_pcs"))
 )
 str(gen_covs)

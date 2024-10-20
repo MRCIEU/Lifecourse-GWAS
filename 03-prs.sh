@@ -8,6 +8,7 @@ source config.env
 
 # create results directory
 mkdir -p ${results_dir}/03
+mkdir -p ${results_dir}/03/ldmats
 
 # log everything from this script to a logfile in the results director
 exec &> >(tee ${results_dir}/03/logfile)
@@ -130,7 +131,7 @@ do
             --keep ${genotype_processed_dir}/scratch/ldmats/keeptemp \
             --bfile ${genotype_processed_dir}/scratch/tophits/${ph} \
             --r2-unphased ref-based bin4 yes-really \
-            --out ${results_dir}/03/${filename}
+            --out ${results_dir}/03/ldmats/${filename}
 
         rm -r ${genotype_processed_dir}/scratch/ldmats
     fi
