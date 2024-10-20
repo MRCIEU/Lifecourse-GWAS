@@ -71,7 +71,7 @@ do
     Rscript resources/genotypes/variant_ids_bim.r ${genotype_processed_dir}/symlinks/${f}
     echo "Updated variant IDs"
 
-    cat ${genotype_processed_dir}/symlinks/${f}.bim | { grep "_duplicate" || true; } > ${genotype_processed_dir}/bfiles/${f}_temp_duplicate
+    awk '{print $2 }' ${genotype_processed_dir}/symlinks/${f}.bim | { grep "_duplicate" || true; } > ${genotype_processed_dir}/bfiles/${f}_temp_duplicate
 
     echo "Clean genotype data"
     bin/plink2 \
