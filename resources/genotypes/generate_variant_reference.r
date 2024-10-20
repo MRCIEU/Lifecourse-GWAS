@@ -21,6 +21,8 @@ l <- lapply(afreqlist, \(fn) {
     a$EA[a$flipped] <- a$OA[a$flipped]
     a$OA[a$flipped] <- temp
     a$CHR <- as.character(a$CHR)
+    a$POS <- as.numeric(sub(".*:(.*)_(.*)_(.*)", "\\1", a$SNP))    
+    a <- dplyr::select(a, CHR, POS, SNP, OA, EA, EAF, OBS_CT, flipped, POS)
     str(a)
     a
 }) %>% bind_rows()
