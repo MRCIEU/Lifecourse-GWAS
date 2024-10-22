@@ -44,4 +44,7 @@ ls ${phenotype_processed_dir}/*.phen > ${phenotype_processed_dir}/phenolist
 nphen=`cat ${phenotype_processed_dir}/phenolist | wc -l`
 echo "Generated ${nphen} phenotype subsets"
 
+echo "Formatting for regenie"
+Rscript resources/phenotypes/regenie.r ${phenotype_processed_dir}/phenolist
+
 echo "Successfully organised phenotypes!"
