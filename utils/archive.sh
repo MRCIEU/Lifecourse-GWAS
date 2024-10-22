@@ -38,6 +38,18 @@ if [ ! $step -eq "04" ]; then
     fi
 fi
 
+if [ $step -eq "04" ]; then
+  
+	nphen=`cat ${phenotype_processed_dir}/phenolist | wc -l`
+	nsuccess=`tail -n 1 ${results_dir}/04/logfile* | grep -i "Success" | wc -l`
+	if [ "${nphen}" = "${nsuccess}" ]; then
+		echo "GWAS completed successfully for all ${nphen} phenotypes"
+	else
+		echo "Problem: only ${nsuccess} of ${nphen} expected phenotypes completed. Please check logs in ${results_dir}/04"
+		exit 1
+	fi
+fi
+
 echo "Tarballing results for step $step"
 
 ## Check that $cohort_name is alphanumeric with no spaces etc
