@@ -13,6 +13,8 @@ mkdir -p ${results_dir}/03/ldmats
 # log everything from this script to a logfile in the results director
 exec &> >(tee ${results_dir}/03/logfile)
 
+echo "Updating plink file to have aligned effect alleles"
+Rscript resources/genotypes/variant_ids.r ${genotype_processed_dir}/scratch/indep ${genotype_processed_dir}/scratch/indep2 bin/plink2 ${env_threads}
 
 phenolist=( $(cat ${phenotype_processed_dir}/phenolist) )
 
@@ -69,7 +71,7 @@ do
 
         if [ ! -f ${genotype_processed_dir}/scratch/tophits/${ph}.bed ]; then
             bin/plink2 \
-                --bfile ${genotype_processed_dir}/scratch/indep \
+                --bfile ${genotype_processed_dir}/scratch/indep2 \
                 --score resources/genotypes/tophits/${ph}.txt \
                 --out ${genotype_processed_dir}/scratch/tophits/${ph}
         fi
@@ -83,8 +85,9 @@ do
         bin/plink2 \
             --threads ${env_threads} \
             --keep ${genotype_processed_dir}/scratch/ldmats/keeptemp \
-            --bfile ${genotype_processed_dir}/scratch/indep \
-            --r2-unphased ref-based bin4 yes-really \
+            --bfile ${genotype_processed_dir}/scratch/indep2 \
+            --extract ${genotype_processed_dir}/scratch/tophits/${ph}.hits \
+            --r-unphased ref-based bin4 yes-really \
             --out ${results_dir}/03/ldmats/${filename}
 
         rm -r ${genotype_processed_dir}/scratch/ldmats
