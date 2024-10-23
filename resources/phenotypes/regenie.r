@@ -8,7 +8,7 @@ phenolist_file <- args[1]
 
 dir.create(file.path(dirname(phenolist_file), "regenie"), showWarnings = F)
 
-phenolist <- scan(phenolist_file, what="character") %>% grep("bmi", ., value=T)
+phenolist <- scan(phenolist_file, what="character")
 
 dat <- tibble(fn=phenolist, phen=basename(fn) %>% gsub(".phen", "", .))
 a <- fread(phenolist[1], he=F)
@@ -24,10 +24,15 @@ dat2 <- dat
 dat2$fn <- gsub(".phen$", ".covs", dat2$fn)
 
 covs <- lapply(1:nrow(dat2), \(i) {
+  message(i)
   b <- fread(dat2$fn[i], he=F)
+  if(ncol(b) == 14) {
+    print(dat2$fn[i])
+  }
   names(b)[1:2] <- c("FID", "IID")
   b
-}) %>% bind_rows() %>% filter(!duplicated(paste(FID, IID)))
+}) %>% bind_rows() 
+covs <- covs[complete.cases(covs), ] %>% filter(!duplicated(paste(FID, IID)))
 
 write.table(phen, file = file.path(dirname(phenolist_file), "regenie", "phen.txt"), quote = F, row.names = F, sep=" ", col.names = T)
 write.table(covs, file = file.path(dirname(phenolist_file), "regenie", "covs.txt"), quote = F, row.names = F, sep=" ", col.names = T)
