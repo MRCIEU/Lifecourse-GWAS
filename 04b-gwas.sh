@@ -59,7 +59,7 @@ bin/regenie_v3.6.gz_x86_64_Linux_mkl \
   --remove ${genotype_processed_dir}/bfiles/sremove \
   --bsize 200 \
   --pred ${phenotype_processed_dir}/regenie/step1_pred.list \
-  --out ${phenotype_processed_dir}/regenie/step2 \
+  --out ${phenotype_processed_dir}/regenie/step2_${chr} \
   --threads ${env_threads}
 
 echo "Successfully performed regenie step 1"
