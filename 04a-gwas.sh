@@ -35,14 +35,13 @@ exec &> >(tee ${results_dir}/04/logfile${1})
 bin/regenie_v3.6.gz_x86_64_Linux_mkl \
   --step 1 \
   --bed ${genotype_processed_dir}/scratch/indep \
-  --phenoFile ${phenotype_processed_dir}/regenie_test/phen.txt \
-  --covarFile ${phenotype_processed_dir}/regenie_test/covs.txt \
-  --exclude ${genotype_processed_dir}/bfiles/vremove \
-  --remove ${genotype_processed_dir}/bfiles/sremove \
-  --bsize 100 \
+  --phenoFile ${phenotype_processed_dir}/regenie/phen.txt \
+  --covarFile ${phenotype_processed_dir}/regenie/covs.txt \
+  --bsize 1000 \
   --lowmem \
   --lowmem-prefix ${phenotype_processed_dir}/regenie/tmp_rg \
   --out ${phenotype_processed_dir}/regenie/step1 \
-  --threads ${env_threads}
+  --threads ${env_threads} \
+  --force-qt
 
 echo "Successfully performed regenie step 1"

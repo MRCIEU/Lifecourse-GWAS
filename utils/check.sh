@@ -30,14 +30,6 @@ else
     cat $tf
 fi
 
-echo "Checking king..."
-./bin/king > $tf 2>&1
-if cat $tf | grep -q "KING"; then
-    echo "All good!"
-else
-    cat $tf
-fi
-
 echo "Checking regenie..."
 if ./bin/regenie_v3.6.gz_x86_64_Linux_mkl --version > $tf 2>&1; then
     echo "All good!"

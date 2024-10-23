@@ -96,6 +96,7 @@ sed -i 1d ${genotype_processed_dir}/bgen_extract/mergelist
     --make-bed \
     --max-alleles 2 \
     --out ${genotype_processed_dir}/scratch/indep \
+    --maf 0.05 \
     --maj-ref
 
 rm -r ${genotype_processed_dir}/bgen_extract
