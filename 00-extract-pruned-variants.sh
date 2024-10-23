@@ -100,6 +100,6 @@ sed -i 1d ${genotype_processed_dir}/bgen_extract/mergelist
 
 rm -r ${genotype_processed_dir}/bgen_extract
 
-Rscript resources/genotypes/variant_ids.r ${genotype_processed_dir}/scratch/indep ${genotype_processed_dir}/scratch/indep bin/plink2 ${env_threads}
+Rscript resources/genotypes/variant_ids_bim.r ${genotype_processed_dir}/scratch/indep
 
 echo "Successfully extracted pruned variants from bgen files"

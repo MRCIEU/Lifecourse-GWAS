@@ -14,7 +14,6 @@ dat <- tibble(fn=phenolist, phen=basename(fn) %>% gsub(".phen", "", .))
 a <- fread(phenolist[1], he=F)
 names(a) <- c("FID", "IID", dat$phen[1])
 for(i in 2:nrow(dat)) {
-  message(i)
   b <- fread(phenolist[i], he=F)
   names(b) <- c("FID", "IID", dat$phen[i])
   a <- full_join(a, b, by=c("FID", "IID"))
@@ -25,7 +24,6 @@ dat2 <- dat
 dat2$fn <- gsub(".phen$", ".covs", dat2$fn)
 
 covs <- lapply(1:nrow(dat2), \(i) {
-  message(i)
   b <- fread(dat2$fn[i], he=F)
   names(b)[1:2] <- c("FID", "IID")
   b
