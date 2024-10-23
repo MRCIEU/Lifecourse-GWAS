@@ -137,5 +137,38 @@ bin/regenie_v3.6.gz_x86_64_Linux_mkl \
 
 
 
+get_lambda <- function(pvector) {
+    pvector <- pvector[!is.na(pvector) & !is.nan(pvector) & !is.null(pvector) & is.finite(pvector) & pvector<1 & pvector>0]
+    o <- -log10(sort(pvector, decreasing=FALSE))
+    e <- -log10(ppoints(length(pvector)))
+    cs <- qchisq(1-pvector, 1)
+    lambda <- median(cs, na.rm=TRUE) / qchisq(0.5, 1)
+    return(lambda)
+}
 
+
+library(data.table)
+library(dplyr)
+library(tidyr)
+# 
+dat <- list.files(".")  %>% grep(".regenie", ., value=TRUE) %>% tibble(fn=.) %>% 
+  mutate(temp= fn %>% gsub(".regenie", "", .) %>% gsub("step2_", "", .)) %>% 
+  separate(temp, sep="_", into=c("chr", "phen", "age", "sex")) %>%
+  filter(!is.na(sex)) 
+
+
+o <- group_by(dat, phen, age, sex) %>%
+  do({
+    message(.$fn[1])
+    x <- lapply(.$fn, fread, he=T) %>% bind_rows()
+    tibble(lambda = get_lambda(10^-x$LOG10P), nsnp=nrow(x), max_n=max(x$N))
+  })
+
+
+o1 <- subset(o, !grepl("gz", sex))
+
+
+png("~/repo/Lifecourse-GWAS-ukb/temp/regenie_lambda.png")
+plot(lambda ~ max_n, o1)
+dev.off()
 
