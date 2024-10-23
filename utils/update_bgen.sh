@@ -16,7 +16,7 @@ do
     bn=$(basename $bgen .bgen)
     dn=$(dirname $bgen)
 
-    ./bin/plink2 --bgen ${bgen} ref-first --sample ${sample} --export bgen-1.2 --out ${dn}/bgen1.2/${bn}
+    ./bin/plink2 --bgen ${bgen} ref-first --sample ${sample} --export bgen-1.2 --out ${dn}/bgen1.2/${bn} --threads ${env_threads}
     ./bin/bgenix -g ${dn}/bgen1.2/${bn}.bgen -index -clobber
     echo "${dn}/bgen1.2/${bn}.bgen ${dn}/bgen1.2/${bn}.sample" >> $tf
 done

@@ -31,7 +31,13 @@ cut -d "_" -f 1 ${prunefile} | tr ":" " " | awk '{ print $1, $2, $2, $1":"$2 }' 
 
 
 # Get list of bgen files
+echo "Checking genotype input list..."
 nchr=$(cat ${genotype_input_list} | grep -c '^')
+# Check nchr = 22 or 23
+if [[ $nchr -ne 22 && $nchr -ne 23 ]]; then
+    echo "Error: Expected 22 or 23 chromosomes, but found $nchr"
+    exit 1
+fi
 
 echo "Checking $nchr bgen files exist"
 for i in $(seq 1 $nchr)
@@ -60,6 +66,7 @@ do
         exit 1
     fi
 done
+echo "All good!"
 
 mkdir -p ${genotype_processed_dir}/bgen_extract
 
@@ -69,22 +76,25 @@ for i in $(seq 1 $nchr)
 do
     bgen=$(awk -v i=$i 'NR==i { print $1 }' ${genotype_input_list})
     sample=$(awk -v i=$i 'NR==i { print $2 }' ${genotype_input_list})
-    plink2 \
+    ./bin/plink2 \
         --bgen ${bgen} ref-first \
         --sample ${sample} \
         --extract ${prunefile}_range \
         --make-bed \
-        --out ${genotype_processed_dir}/bgen_extract/$(basename ${bgen} .bgen)
+        --out ${genotype_processed_dir}/bgen_extract/$(basename ${bgen} .bgen) \
+        --max-alleles 2 \
+        --threads ${env_threads}
     echo "${genotype_processed_dir}/bgen_extract/$(basename ${bgen} .bgen)" >> ${genotype_processed_dir}/bgen_extract/mergelist
 done
 
 f1=`head -n 1 ${genotype_processed_dir}/bgen_extract/mergelist`
 sed -i 1d ${genotype_processed_dir}/bgen_extract/mergelist
-bin/plink2 \
+./bin/plink2 \
     --threads ${env_threads} \
     --bfile $f1 \
     --pmerge-list bfile ${genotype_processed_dir}/bgen_extract/mergelist \
     --make-bed \
+    --max-alleles 2 \
     --out ${genotype_processed_dir}/scratch/indep \
     --maj-ref
 
