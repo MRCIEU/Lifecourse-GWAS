@@ -98,6 +98,6 @@ ugwas <- unique(gwass$gwas)
 gwas_summary <- mclapply(ugwas, \(x) {
     message(x)
     parse_file(subset(gwass, gwas == x), resdir)
-}, mc.cores=as.numeric(Sys.getenv("env_threads")))
+}, mc.cores=as.numeric(Sys.getenv("env_threads"))) %>% bind_rows()
 
 saveRDS(gwas_summary, file=file.path(resdir, "gwas_summary.rds"))
