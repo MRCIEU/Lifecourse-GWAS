@@ -13,21 +13,11 @@ mkdir -p ${results_dir}/00
 exec &> >(tee ${results_dir}/00/logfile)
 
 echo "Get list of pruned SNPs"
-if test -f "resources/genotypes/${major_ancestry}_pruned_variants.txt.gz"; then
+if test -f "resources/genotypes/hm3_prune_th_${build}.bed.gz"; then
     echo "Found prune file"
     prunefile="${genotype_processed_dir}/scratch/indep.prune.in"
-    gunzip -c resources/genotypes/${major_ancestry}_pruned_variants.txt.gz > ${prunefile}
+    gunzip -c resources/genotypes/hm3_prune_th_${build}.bed.gz > ${prunefile}
 fi
-
-# Get list of tophits
-
-> ${genotype_processed_dir}/scratch/tophitsnps.txt
-for f in resources/genotypes/tophits/*.txt
-do
-    awk '{ print $1 }' $f >> ${genotype_processed_dir}/scratch/tophitsnps.txt
-done
-cat ${genotype_processed_dir}/scratch/tophitsnps.txt | sort | uniq >> ${prunefile}
-cut -d "_" -f 1 ${prunefile} | tr ":" " " | awk '{ print $1, $2, $2, $1":"$2 }' > ${prunefile}_range
 
 
 # Get list of bgen files
@@ -79,7 +69,7 @@ do
     ./bin/plink2 \
         --bgen ${bgen} ref-first \
         --sample ${sample} \
-        --extract ${prunefile}_range \
+        --extract ${prunefile} \
         --make-bed \
         --out ${genotype_processed_dir}/bgen_extract/$(basename ${bgen} .bgen) \
         --max-alleles 2 \
