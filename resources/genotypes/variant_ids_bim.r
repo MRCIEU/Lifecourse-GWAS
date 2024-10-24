@@ -25,6 +25,7 @@ compress_alleles <- function(a) {
 # )
 
 # update orig bim
+file.copy(paste0(bfile, ".bim"), paste0(bfile, ".bim.orig"))
 bim <- data.table::fread(paste0(bfile, ".bim.orig"), nThread = nthreads)
 bim$switch <- bim$V5 > bim$V6
 temp <- bim$V5[bim$switch]
