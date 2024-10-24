@@ -13,6 +13,8 @@ mkdir -p ${results_dir}/03/ldmats
 # log everything from this script to a logfile in the results director
 exec &> >(tee ${results_dir}/03/logfile)
 
+echo "Updating plink file to have aligned effect alleles"
+Rscript resources/genotypes/variant_ids.r ${genotype_processed_dir}/scratch/indep ${genotype_processed_dir}/scratch/indep2 bin/plink2 ${env_threads}
 
 phenolist=( $(cat ${phenotype_processed_dir}/phenolist) )
 
@@ -47,55 +49,6 @@ fi
 
 echo $index
 
-
-mk_phen_bfile () {
-    ph=$1
-    mkdir -p ${genotype_processed_dir}/scratch/tophits
-    # Get rsids to keep
-    awk '{ print $1 }' resources/genotypes/tophits/${ph}.txt > ${genotype_processed_dir}/scratch/tophits/${ph}.hits
-
-    # Make tophits data
-    > ${genotype_processed_dir}/scratch/tophits/${ph}.mergefile
-    while read bf; do
-        echo "${bf}"
-        fn=$(basename -- ${bf})
-
-        mkdir -p ${genotype_processed_dir}/scratch/tophits/temp
-        n=$(grep -wf ${genotype_processed_dir}/scratch/tophits/${ph}.hits ${bf}.bim | wc -l)
-
-        if [ "$n" -gt 0 ]; then
-            bin/plink2 \
-                --threads ${env_threads} \
-                --bfile ${bf} \
-                --extract ${genotype_processed_dir}/scratch/tophits/${ph}.hits \
-                --exclude ${genotype_processed_dir}/bfiles/${fn}_vremove \
-                --remove ${genotype_processed_dir}/bfiles/sremove \
-                --make-bed \
-                --out ${genotype_processed_dir}/scratch/tophits/temp/${fn}
-            
-            if test -f ${genotype_processed_dir}/scratch/tophits/temp/${fn}.bed; then
-                echo "${genotype_processed_dir}/scratch/tophits/temp/${fn}" >> ${genotype_processed_dir}/scratch/tophits/${ph}.mergefile
-            fi
-        fi
-    done < ${genotype_processed_dir}/geno_chrs.txt
-
-    f1=`head -n 1  ${genotype_processed_dir}/scratch/tophits/${ph}.mergefile`
-    sed -i 1d ${genotype_processed_dir}/scratch/tophits/${ph}.mergefile
-    bin/plink2 \
-        --threads ${env_threads} \
-        --bfile $f1 \
-        --pmerge-list bfile ${genotype_processed_dir}/scratch/tophits/${ph}.mergefile \
-        --make-bed \
-        --out ${genotype_processed_dir}/scratch/tophits/${ph}
-    rm -r ${genotype_processed_dir}/scratch/tophits/temp
-
-    # Generate score
-    bin/plink2 \
-        --bfile ${genotype_processed_dir}/scratch/tophits/${ph} \
-        --score resources/genotypes/tophits/${ph}.txt \
-        --out ${genotype_processed_dir}/scratch/tophits/${ph}
-}
-
 ls ${phenotype_processed_dir}/*.phen > ${phenotype_processed_dir}/phenolist
 nphen=`cat ${phenotype_processed_dir}/phenolist | wc -l`
 echo "Generated ${nphen} phenotype subsets"
@@ -117,7 +70,10 @@ do
         echo $ph
 
         if [ ! -f ${genotype_processed_dir}/scratch/tophits/${ph}.bed ]; then
-            mk_phen_bfile ${ph}
+            bin/plink2 \
+                --bfile ${genotype_processed_dir}/scratch/indep2 \
+                --score resources/genotypes/tophits/${ph}.txt \
+                --out ${genotype_processed_dir}/scratch/tophits/${ph}
         fi
 
         mkdir -p ${genotype_processed_dir}/scratch/ldmats
@@ -129,8 +85,9 @@ do
         bin/plink2 \
             --threads ${env_threads} \
             --keep ${genotype_processed_dir}/scratch/ldmats/keeptemp \
-            --bfile ${genotype_processed_dir}/scratch/tophits/${ph} \
-            --r2-unphased ref-based bin4 yes-really \
+            --bfile ${genotype_processed_dir}/scratch/indep2 \
+            --extract ${genotype_processed_dir}/scratch/tophits/${ph}.hits \
+            --r-unphased ref-based bin4 yes-really \
             --out ${results_dir}/03/ldmats/${filename}
 
         rm -r ${genotype_processed_dir}/scratch/ldmats
