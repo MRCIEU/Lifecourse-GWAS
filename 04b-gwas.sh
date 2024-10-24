@@ -51,36 +51,6 @@ if [[ $nchr -ne 22 && $nchr -ne 23 ]]; then
     exit 1
 fi
 
-echo "Checking $nchr bgen files exist"
-for i in $(seq 1 $nchr)
-do
-    bgen=$(awk -v i=$i 'NR==i { print $1 }' ${genotype_input_list})
-    sample=$(awk -v i=$i 'NR==i { print $2 }' ${genotype_input_list})
-    if [ ! -f "${bgen}" ]; then
-        echo "${bgen} not found"
-        exit 1
-    fi
-
-    if [ ! -f "${sample}" ]; then
-        echo "${sample} not found"
-        exit 1
-    fi
-
-    if [[ ! $bgen == *.bgen ]]
-    then
-        echo "$bgen should be a bgen file ending in .bgen"
-        exit 1
-    fi
-
-    if [[ ! $sample == *.sample ]]
-    then
-        echo "$sample should be a sample file ending in .sample"
-        exit 1
-    fi
-done
-echo "All good!"
-
-
 bgen=$(awk -v i=$chr 'NR==i { print $1 }' ${genotype_input_list})
 sample=$(awk -v i=$chr 'NR==i { print $2 }' ${genotype_input_list})
 
