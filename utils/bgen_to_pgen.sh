@@ -4,18 +4,18 @@ set -e
 
 source config.env
 
-newdir=$1
+pgendir=$1
 
-if [ -z $newdir ]; then
-    echo "Usage: ./bgen_to_pgen.sh <newdir>"
+if [ -z $pgendir ]; then
+    echo "Usage: ./bgen_to_pgen.sh <pgendir>"
     exit 1
 fi
 
-mkdir -p ${newdir}
+mkdir -p ${pgendir}
 
 nchr=$(cat ${genotype_input_list} | grep -c '^')
 dn=$(head -n 1 ${genotype_input_list} | awk '{ print $1 }' | xargs dirname)
-mkdir -p $dn/bgen1.2
+mkdir -p $dn/pgen
 
 tf=$(mktemp)
 for i in $(seq 1 ${nchr})
@@ -25,15 +25,14 @@ do
     bn=$(basename $bgen .bgen)
     dn=$(dirname $bgen)
 
-    ./bin/plink2 --bgen ${bgen} ref-first --sample ${sample} --export bgen-1.2 --out ${newdir}/${bn} --threads ${env_threads}
-    ./bin/bgenix -g ${newdir}/${bn}.bgen -index -clobber
-    echo "${newdir}/${bn}.bgen ${newdir}/${bn}.sample" >> $tf
+    ./bin/plink2 --bgen ${bgen} ref-first --sample ${sample} --make-pgen --out ${pgendir}/${bn} --threads ${env_threads}
+    echo "${pgendir}/${bn}" >> $tf
 done
 
 cp ${genotype_input_list} ${genotype_input_list}.original
 mv ${tf} ${genotype_input_list}
 
 echo "Original bgen files are now listed in ${genotype_input_list}.original"
-echo "New bgen files are now listed in ${genotype_input_list}"
+echo "New pgen files are now listed in ${genotype_input_list}"
 
-echo "Successfully converted to bgen1.2 and indexed"
+echo "Successfully converted to bgen files to pgen"

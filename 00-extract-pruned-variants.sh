@@ -71,14 +71,25 @@ for i in $(seq 1 $nchr)
 do
     bgen=$(awk -v i=$i 'NR==i { print $1 }' ${genotype_input_list})
     sample=$(awk -v i=$i 'NR==i { print $2 }' ${genotype_input_list})
-    ./bin/plink2 \
-        --bgen ${bgen} ref-first \
-        --sample ${sample} \
-        --extract range ${prunefile} \
-        --make-bed \
-        --out ${genotype_processed_dir}/bgen_extract/$(basename ${bgen} .bgen) \
-        --threads ${env_threads}
-    echo "${genotype_processed_dir}/bgen_extract/$(basename ${bgen} .bgen)" >> ${genotype_processed_dir}/bgen_extract/mergelist
+    # check if $sample is empty - this would mean it's a pgen fileset
+    if [ -z "$sample" ]; then
+        ./bin/plink2 \
+            --bgen ${bgen} \
+            --sample ${sample} \
+            --extract range ${prunefile} \
+            --make-bed \
+            --out ${genotype_processed_dir}/bgen_extract/$(basename ${bgen} .bgen) \
+            --threads ${env_threads}
+        echo "${genotype_processed_dir}/bgen_extract/$(basename ${bgen})" >> ${genotype_processed_dir}/bgen_extract/mergelist
+    else
+        ./bin/plink2 \
+            --bgen ${bgen} ref-first \
+            --sample ${sample} \
+            --extract range ${prunefile} \
+            --make-bed \
+            --out ${genotype_processed_dir}/bgen_extract/$(basename ${bgen} .bgen) \
+            --threads ${env_threads}
+        echo "${genotype_processed_dir}/bgen_extract/$(basename ${bgen} .bgen)" >> ${genotype_processed_dir}/bgen_extract/mergelist
 done
 
 ./bin/plink2 \
