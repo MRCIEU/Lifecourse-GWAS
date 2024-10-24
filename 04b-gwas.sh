@@ -10,7 +10,7 @@ source config.env
 mkdir -p ${results_dir}/04
 
 # log everything from this script to a logfile in the results director
-exec &> >(tee ${results_dir}/04/logfile${1})
+exec &> >(tee ${results_dir}/04/logfile_step2_${1})
 
 # Inputs:
 
@@ -33,6 +33,13 @@ exec &> >(tee ${results_dir}/04/logfile${1})
 # Run step 1
 
 chr=$1
+
+# Check chr is between 1-23
+if [[ $chr -lt 1 || $chr -gt 23 ]]; then
+    echo "Error: Expected chromosome number between 1-23, but found $chr"
+    echo "Usage: ./04b-gwas.sh <chr>"
+    exit 1
+fi
 
 
 # Get list of bgen files
@@ -77,25 +84,33 @@ echo "All good!"
 bgen=$(awk -v i=$chr 'NR==i { print $1 }' ${genotype_input_list})
 sample=$(awk -v i=$chr 'NR==i { print $2 }' ${genotype_input_list})
 
-
-# Calculate 0.01 * 50000
-nid=$(cat ${genotype_processed_dir}/scratch/indep.fam | wc -l)
-minMAC=$(($nid/100))
-echo $minMAC
-
-bin/regenie_v3.6.gz_x86_64_Linux_mkl \
-  --step 2 \
-  --qt \
-  --minINFO 0.8 \
-  --minMAC $minMAC \
-  --bgen ${bgen} \
-  --sample ${sample} \
-  --phenoFile ${phenotype_processed_dir}/regenie/phen.txt \
-  --covarFile ${phenotype_processed_dir}/regenie/covs.txt \
-  --bsize 1000 \
-  --pred ${phenotype_processed_dir}/regenie/step1_pred.list \
-  --out ${phenotype_processed_dir}/regenie/step2_${chr} \
-  --threads ${env_threads}
+# check if $sample is empty - this would mean it's a pgen fileset
+if [ -z "$sample" ]; then
+    bin/regenie_v3.6.gz_x86_64_Linux_mkl \
+    --step 2 \
+    --qt \
+    --minINFO 0.8 \
+    --pgen ${bgen} \
+    --phenoFile ${phenotype_processed_dir}/regenie/phen.txt \
+    --covarFile ${phenotype_processed_dir}/regenie/covs.txt \
+    --bsize 1000 \
+    --pred ${phenotype_processed_dir}/regenie/step1_pred.list \
+    --out ${phenotype_processed_dir}/regenie/step2_${chr} \
+    --threads ${env_threads}
+else
+    bin/regenie_v3.6.gz_x86_64_Linux_mkl \
+    --step 2 \
+    --qt \
+    --minINFO 0.8 \
+    --bgen ${bgen} \
+    --sample ${sample} \
+    --phenoFile ${phenotype_processed_dir}/regenie/phen.txt \
+    --covarFile ${phenotype_processed_dir}/regenie/covs.txt \
+    --bsize 1000 \
+    --pred ${phenotype_processed_dir}/regenie/step1_pred.list \
+    --out ${phenotype_processed_dir}/regenie/step2_${chr} \
+    --threads ${env_threads}
+fi
 
 gzip ${phenotype_processed_dir}/regenie/step2_${chr}_*.regenie
 
