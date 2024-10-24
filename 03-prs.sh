@@ -57,7 +57,8 @@ echo "Generating LD matrices for each phenotype subset"
 
 # Correlation matrix for each phenotype
 i=1
-mkdir -p ${results_dir}/03
+mkdir -p ${results_dir}/03/ldmats
+mkdir -p ${genotype_processed_dir}/scratch/tophits
 phenolist=( $(cat ${phenotype_processed_dir}/phenolist) )
 for phen in ${phenolist[@]}
 do
@@ -74,6 +75,10 @@ do
                 --bfile ${genotype_processed_dir}/scratch/indep2 \
                 --score resources/genotypes/tophits/${ph}.txt \
                 --out ${genotype_processed_dir}/scratch/tophits/${ph}
+        fi
+
+        if [ ! -f ${genotype_processed_dir}/scratch/tophits/${ph}.hits ]; then
+            awk '{ print $1 }' resources/genotypes/tophits/${ph}.txt > ${genotype_processed_dir}/scratch/tophits/${ph}.hits
         fi
 
         mkdir -p ${genotype_processed_dir}/scratch/ldmats
