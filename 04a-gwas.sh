@@ -34,7 +34,7 @@ exec &> >(tee ${results_dir}/04/logfile_step1)
 
 # For some reason regenie doesn't like variants with freq = 0.5
 bin/plink2 --bfile ${genotype_processed_dir}/scratch/indep --freq --out ${genotype_processed_dir}/scratch/indep
-awk '$6 == 0.5' ${genotype_processed_dir}/scratch/indep.afreq | awk '{print $2}' > ${genotype_processed_dir}/scratch/indep.remove
+awk '$6 > 0.49 && $6 < 0.51' ${genotype_processed_dir}/scratch/indep.afreq | awk '{print $2}' > ${genotype_processed_dir}/scratch/indep.remove
 
 
 bin/regenie_v3.6.gz_x86_64_Linux_mkl \
