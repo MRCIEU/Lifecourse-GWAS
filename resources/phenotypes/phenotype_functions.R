@@ -316,10 +316,36 @@ phenoplot <- function(Yvbl, Xvbl, Quantiles=c(0.25,0.5,0.75), knots=NA, Nknots=0
 }
 
 organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebins, pl=TRUE) {
+  
+  if(phecode != "pp"){
   type <- filter(df, pheno_id == phecode)$var_type
   str(filter(df, pheno_id == phecode))
   cs <- list()
   phen <- read_phenotype_data(phecode, Sys.getenv("phenotype_input_dir"), agebins)
+  }
+  
+  if(phecode == "pp") {
+    phecode1 <- sbp
+    phen1 <- read_phenotype_data(phecode1, Sys.getenv("phenotype_input_dir"), agebins)
+    if(is.null(phen1)) {
+      return(NULL)
+    }
+    phen1 <- rename(phen1, sbp = value)
+    phen1$value <- phen1$value + (15 * phen1$bp_med)
+    
+    phecode2 <- dbp
+    phen2 <- read_phenotype_data(phecode2, Sys.getenv("phenotype_input_dir"), agebins)
+    if(is.null(phen2)) {
+      return(NULL)
+    }
+    phen2 <- rename(phen2, dbp = value)
+    phen2$value <- phen2$value + (10 * phen2$bp_med)
+
+    phen <- inner_join(phen1, phen2)
+    phen$value <- sbp - dbp
+    phen <- phen %>%
+      select(!c(sbp, dbp))
+  }
   
   if(is.null(phen)) {
     return(NULL)
@@ -382,12 +408,16 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
   
   # medication adjustment - note this assumes that the value in the phenotype covariates is the same as the column name
   
-  if(grepl("cholesterol_med", filter(df, pheno_id == phecode)$covs) == TRUE){
+  if(phecode=="ldl"){
     analysis_data$value <- analysis_data$value + (0.40 * analysis_data$value * analysis_data$cholesterol_med)
   }
   
-  if(grepl("bp_med", filter(df, pheno_id == phecode)$covs) == TRUE){
+  if(phecode=="sbp"){
     analysis_data$value <- analysis_data$value + (15 * analysis_data$bp_med)
+  }
+  
+  if(phecode=="dbp"){
+    analysis_data$value <- analysis_data$value + (10 * analysis_data$bp_med)
   }
   
   if (filter(df, pheno_id == phecode)$transformation=="log") {
@@ -565,3 +595,5 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
 
   saveRDS(cs, file=file.path(Sys.getenv("results_dir"), "02", paste0(phecode,"_summary.rds")))
 }
+
+
