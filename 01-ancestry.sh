@@ -24,9 +24,6 @@ exec &> >(tee ${results_dir}/01/logfile)
 # - PCs for each ancestry
 # - mbfile for fastGWA
 
-
-
-
 containsElement () {
 	local e
 	for e in "${@:2}"; do [[ "$e" == "$1" ]] && return 0; done
@@ -225,5 +222,58 @@ then
     fi
 fi
 
+
+echo "Generate sparse GRM"
+
+if [ "$arg" = "grm" ] || [ "$arg" = "all" ]
+then
+
+    section_message "grm"
+
+    if [ "${env_family_data}" = "true" ]
+    then
+        bin/king \
+            -b ${genotype_processed_dir}/scratch/indep.bed \
+            --related \
+            --degree 3 \
+            --cpus ${env_threads} \
+            --prefix ${genotype_processed_dir}/scratch/king
+
+        awk '{ print $1, $3, $14 }' ${genotype_processed_dir}/scratch/king.kin0 | grep -v "4th" | sed 1d > ${genotype_processed_dir}/scratch/king.kin0.formatted
+
+        Rscript resources/genotypes/pedFAM.R \
+            ${genotype_processed_dir}/scratch/indep.fam \
+            ${genotype_processed_dir}/scratch/king.kin0.formatted \
+            ${genotype_processed_dir}/${bfile_prefix}
+    fi
+fi
+
+echo "Final keep lists"
+# Unrelateds
+# +kingunrelated.txt
+# -genetic_outliers.txt
+
+cat ${genotype_processed_dir}/kingunrelated.txt | \
+    grep -vw -f ${genotype_processed_dir}/${bfile_prefix}_genetic_outliers.txt > \
+    ${genotype_processed_dir}/unrelated_keep.txt
+
+nunrelated=$(cat ${genotype_processed_dir}/unrelated_keep.txt | wc -l)
+
+echo "N Unrelated: ${nunrelated}"
+
+# Relateds
+# +fam file (everyone)
+# -genetic_outliers.txt
+
+if [ "${env_family_data}" = "true" ]
+then
+    awk '{ print $1"\t"$2 }' ${genotype_processed_dir}/scratch/indep.fam | \
+    grep -vw -f ${genotype_processed_dir}/${bfile_prefix}_genetic_outliers.txt > \
+    ${genotype_processed_dir}/related_keep.txt
+fi
+
+nrelated=$(cat ${genotype_processed_dir}/related_keep.txt | wc -l)
+
+echo "N Related: ${nrelated}"
 
 echo "Successfully generated PCs etc!"
