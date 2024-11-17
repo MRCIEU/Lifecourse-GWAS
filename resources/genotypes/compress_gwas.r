@@ -56,6 +56,34 @@ standardise <- function(d, ea_col="ea", oa_col="oa", beta_col="beta", eaf_col="e
     d
 }
 
+get_lambda <- function(pvector) {
+    pvector <- pvector[!is.na(pvector) & !is.nan(pvector) & !is.null(pvector) & is.finite(pvector) & pvector<1 & pvector>0]
+    o <- -log10(sort(pvector, decreasing=FALSE))
+    e <- -log10(ppoints(length(pvector)))
+    cs <- qchisq(1-pvector, 1)
+    lambda <- median(cs, na.rm=TRUE) / qchisq(0.5, 1)
+    return(lambda)
+}
+
+process_gwas <- function(fn, a) {
+    fn2 <- basename(fn) %>% gsub(".fastGWA", "", .)
+    nom <- fn2 %>% strsplit("_") %>% unlist
+    
+    s <- tibble(
+        phen = nom[1],
+        age = nom[2],
+        sex = nom[3],
+        nsnp = nrow(a),
+        meanpval = mean(a$P, na.rm=TRUE),
+        medianpval = median(a$P, na.rm=TRUE),
+        lambda = qchisq(medianpval, df=1, low=FALSE) / qchisq(0.5, 1),
+        minp = min(a$P, na.rm=TRUE),
+        max_n = max(a$N, na.rm=TRUE),
+        min_n = min(a$N, na.rm=TRUE),
+        mean_n = mean(a$N, na.rm=TRUE)
+    )
+    return(s)
+}
 
 # fn <- "/local-scratch/projects/Lifecourse-GWAS/gib/alspac/results/03/bmi_10-11.fastGWA"
 fn <- commandArgs(T)[1]
@@ -66,15 +94,18 @@ stopifnot(file.exists(ref))
 
 message("reading gwas")
 a <- data.table::fread(fn, header=TRUE, nThread = nthreads) %>% as_tibble()
+a <- subset(a, !is.na(P) & !is.nan(P) & is.finite(P) & P <= 1 & P >= 0)
 
 if(Sys.getenv("genome_build") == "hg19") {
     message("reading reference")
     v <- data.table::fread(ref, header=TRUE, nThread = nthreads) %>% as_tibble()
     names(a)[names(a) == "POS"] <- "POS19"
-    a <- left_join(v, a)
+    a <- inner_join(v, a)
 }
 
 message("harmonising")
 a <- standardise(a, ea_col="A1", oa_col="A2", beta_col="BETA", eaf_col="AF1", chr_col="CHR", pos_col="POS", vid_col="VID")
+s <- process_gwas(fn, a)
 a <- a %>% dplyr::select(VID, BETA, SE, EAF=AF1, N, P)
 fwrite(a, file=paste0(fn, ".gz"))
+saveRDS(s, file=paste0(fn, ".summary.rds"))
