@@ -127,11 +127,12 @@ do
                 --geno 1 \
                 --out ${results_dir}/04/${filename}
         fi
+
         # compress GWAS
         # keep only b, se because all other info is constant across GWASs
         echo "Compressing output..."
-        # Rscript resources/genotypes/compress_gwas.r ${results_dir}/04/${filename}.fastGWA ${results_dir}/00/variants.txt ${genotype_processed_dir}/variant_inclusion.txt
-        # rm ${results_dir}/04/${filename}.fastGWA
+        Rscript resources/genotypes/compress_gwas.r ${results_dir}/04/${filename}.fastGWA ${genotype_processed_dir}/build_mapping.txt
+        rm ${results_dir}/04/${filename}.fastGWA
     fi
     i=$((i+1))
 done

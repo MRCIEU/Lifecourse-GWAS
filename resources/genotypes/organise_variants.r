@@ -80,6 +80,7 @@ args <- commandArgs(T)
 aname <- args[1]
 resdir <- args[2]
 inclist <- args[3]
+mapfile <- args[4]
 
 allvariants <- fread(aname, header=TRUE) %>% as_tibble() 
 
@@ -154,6 +155,8 @@ keepvars <- unique(selvariants$SNP)
 
 if(Sys.getenv("genome_build") == "hg19") {
   selvariants <- dplyr::select(selvariants, CHR, POS, POS19, VID, SNP, A1, A2, AF1, INFO)
+  map <- selvariants %>% dplyr::select(CHR, POS, POS19) %>% filter(!duplicated(paste(CHR, POS19)))
+  fwrite(map, file=mapfile, row=F, col=T, qu=F)
 } else {
   selvariants <- dplyr::select(selvariants, CHR, POS, VID, SNP, A1, A2, AF1, INFO)
 }

@@ -32,7 +32,8 @@ samplefile=$(head -n 1 ${genotype_input_list} | awk '{print $2}')
 Rscript resources/genotypes/organise_variants.r \
     ${genotype_processed_dir}/scratch/phenrand.fastGWA \
     ${results_dir}/00 \
-    ${genotype_processed_dir}/variant_inclusion.txt
+    ${genotype_processed_dir}/variant_inclusion.txt \
+    ${genotype_processed_dir}/build_mapping.txt
 
 
 echo "Successfully summarised and filtered variants"
