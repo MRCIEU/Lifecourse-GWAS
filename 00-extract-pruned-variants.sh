@@ -15,7 +15,7 @@ exec &> >(tee ${results_dir}/00/logfile)
 mkdir -p ${genotype_processed_dir}/scratch
 
 echo "Organise samples"
-Rscript resources/genotypes/organise_samples.r ${genotype_input_list} ${genotype_processed_dir}/inclusion.txt ${sample_inclusion_list}
+Rscript resources/genotypes/organise_samples.r ${genotype_input_list} ${genotype_processed_dir}/sample_inclusion.txt ${sample_inclusion_list}
 
 
 echo "Get list of pruned SNPs"
@@ -79,7 +79,7 @@ do
         --bgen ${bgen} ref-first \
         --sample ${sample} \
         --extract range ${prunefile} \
-        --keep ${genotype_processed_dir}/inclusion.txt \
+        --keep ${genotype_processed_dir}/sample_inclusion.txt \
         --make-bed \
         --out ${genotype_processed_dir}/bgen_extract/$(basename ${bgen} .bgen) \
         --threads ${env_threads}
@@ -97,3 +97,4 @@ done
 
 Rscript resources/genotypes/variant_ids_bim.r ${genotype_processed_dir}/scratch/indep
 
+echo "Successfully extracted pruned genotypes"
