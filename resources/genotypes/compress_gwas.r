@@ -1,69 +1,111 @@
 library(data.table)
 library(dplyr)
 library(R.utils)
+library(dotenv)
+load_dot_env("config.env")
+
+create_variantid <-function(chr,pos,a1,a2) {
+  toflip <- a1 > a2
+  temp <- a1[toflip]
+  a1[toflip] <- a2[toflip]
+  a2[toflip] <- temp
+
+  # create hashes when alleles nchar > 10
+  # allele ea
+  nch1 <- nchar(a1) > 10
+  nch2 <- nchar(a2) > 10
+  if(any(nch1)) {
+    index <- which(nch1)
+    a1[nch1] <- sapply(a1[nch1], \(allele) {
+        digest::digest(allele, algo="murmur32")
+    })
+  }
+
+  if(any(nch2)) {
+    index <- which(nch2)
+    a2[nch2] <- sapply(a2[nch2], \(allele) {
+        digest::digest(allele, algo="murmur32")
+    })
+  }
+
+  #  create variantid
+  variantid <- paste0(chr, ":", pos, "_", a1, "_", a2)
+
+  return(variantid)
+}
+
+# create_variantid(
+#     c(1,2,3),
+#     c(10000, 10000, 10000),
+#     c("G", "TACTGTGTGTGTGTGTGT", "AAAAA"),
+#     c("A", "GACTGTGTGTGTGTGTGT", "AAAAAG")
+# )
+
+standardise <- function(d, ea_col="ea", oa_col="oa", beta_col="beta", eaf_col="eaf", chr_col="chr", pos_col="pos", vid_col="vid")
+{
+    toflip <- d[[ea_col]] > d[[oa_col]]
+    d[[eaf_col]][toflip] <- 1 - d[[eaf_col]][toflip]
+    d[[beta_col]][toflip] <- d[[beta_col]][toflip] * -1
+    a1 <- d[[oa_col]]
+    a2 <- d[[ea_col]]
+    temp <- d[[oa_col]][toflip]
+    d[[oa_col]][toflip] <- d[[ea_col]][toflip]
+    d[[ea_col]][toflip] <- temp
+
+    d[[vid_col]] <- create_variantid(d[[chr_col]], d[[pos_col]], d[[ea_col]], d[[oa_col]])
+    d
+}
+
+get_lambda <- function(pvector) {
+    pvector <- pvector[!is.na(pvector) & !is.nan(pvector) & !is.null(pvector) & is.finite(pvector) & pvector<1 & pvector>0]
+    o <- -log10(sort(pvector, decreasing=FALSE))
+    e <- -log10(ppoints(length(pvector)))
+    cs <- qchisq(1-pvector, 1)
+    lambda <- median(cs, na.rm=TRUE) / qchisq(0.5, 1)
+    return(lambda)
+}
+
+process_gwas <- function(fn, a) {
+    fn2 <- basename(fn) %>% gsub(".fastGWA", "", .)
+    nom <- fn2 %>% strsplit("_") %>% unlist
+    
+    s <- tibble(
+        phen = nom[1],
+        age = nom[2],
+        sex = nom[3],
+        nsnp = nrow(a),
+        meanpval = mean(a$P, na.rm=TRUE),
+        medianpval = median(a$P, na.rm=TRUE),
+        lambda = qchisq(medianpval, df=1, low=FALSE) / qchisq(0.5, 1),
+        minp = min(a$P, na.rm=TRUE),
+        max_n = max(a$N, na.rm=TRUE),
+        min_n = min(a$N, na.rm=TRUE),
+        mean_n = mean(a$N, na.rm=TRUE)
+    )
+    return(s)
+}
 
 # fn <- "/local-scratch/projects/Lifecourse-GWAS/gib/alspac/results/03/bmi_10-11.fastGWA"
 fn <- commandArgs(T)[1]
 ref <- commandArgs(T)[2]
-rem <- commandArgs(T)[3]
 nthreads <- as.numeric(Sys.getenv("env_threads"))
 stopifnot(file.exists(fn))
 stopifnot(file.exists(ref))
-stopifnot(file.exists(rem))
 
 message("reading gwas")
 a <- data.table::fread(fn, header=TRUE, nThread = nthreads) %>% as_tibble()
-message("reading reference")
-v <- data.table::fread(ref, header=TRUE, nThread = nthreads) %>% as_tibble()
+a <- subset(a, !is.na(P) & !is.nan(P) & is.finite(P) & P <= 1 & P >= 0)
 
-# Sometimes GCTA doesn't remove all the variants that it's supposed to
-# Do this manually
-rem <- scan(rem, "character")
-remflag <- sum(rem %in% a$SNP)
-if(remflag > 0) {
-    message(sum(remflag), " flagged variants need to be removed from GWAS")
-}
-a <- subset(a, !SNP %in% rem)
-
-check_against_reference <- function(v, a) {
-    if(all(a$SNP == v$SNP)) {
-        message("gwas matches reference")
-        return(a)
-    } else {
-        message("aligning gwas with reference")
-        print(dim(a))
-        a <- subset(a, SNP %in% v$SNP)
-        print(dim(a))
-        dum <- subset(v, !SNP %in% a$SNP)
-        print(dum)
-        dum$BETA <- NA_real_
-        dum$SE <- NA_real_
-        dum$P <- NA_real_
-        dum$N <- NA_real_
-        dum$CHR <- as.character(dum$CHR)
-        a$CHR <- as.character(a$CHR)
-        dum <- tibble(CHR=as.character(dum$CHR), SNP=dum$SNP, A2=dum$EA, A1=dum$OA, AF1=dum$EAF)
-        print(dum)
-        a <- bind_rows(a, dum)
-        m <- match(v$SNP, a$SNP)
-        a <- a[m,]
-        stopifnot(all(a$SNP == v$SNP))
-        return(a)
-    }
+if(Sys.getenv("genome_build") == "hg19") {
+    message("reading reference")
+    v <- data.table::fread(ref, header=TRUE, nThread = nthreads) %>% as_tibble()
+    names(a)[names(a) == "POS"] <- "POS19"
+    a <- inner_join(v, a)
 }
 
-a <- check_against_reference(v, a)
-
-# Harmonise alleles to alphabetical
 message("harmonising")
-ord <- a$A1 > a$A2
-table(ord)
-a$BETA[ord] <- a$BETA[ord] * -1
-a$AF1[ord] <- 1-a$AF1[ord]
-temp <- a$A1[ord]
-a$A1[ord] <- a$A2[ord]
-a$A2[ord] <- temp
-
-message("writing")
-b <- a %>% dplyr::select(BETA, SE, EAF=AF1, N)
-saveRDS(b, file=paste0(fn, ".rds"))
+a <- standardise(a, ea_col="A1", oa_col="A2", beta_col="BETA", eaf_col="AF1", chr_col="CHR", pos_col="POS", vid_col="VID")
+s <- process_gwas(fn, a)
+a <- a %>% dplyr::select(VID, BETA, SE, EAF=AF1, N, P)
+fwrite(a, file=paste0(fn, ".gz"))
+saveRDS(s, file=paste0(fn, ".summary.rds"))

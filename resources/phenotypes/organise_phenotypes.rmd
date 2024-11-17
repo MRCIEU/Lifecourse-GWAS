@@ -137,9 +137,6 @@ for(i in 1:length(phenotypes)){
   cat("\n### ", phenotypes[i], "\n\n")
   organise_phenotype(phenotypes[i], phenotypes, df, gen_covs, covdat, agebins, pl=TRUE)
 }
-
-organise_phenotype(pp, phenotypes, df, gen_covs, covdat, agebins, pl=TRUE)
-
 ```
 
 ## Run details
