@@ -244,7 +244,7 @@ then
         Rscript resources/genotypes/pedFAM.R \
             ${genotype_processed_dir}/scratch/indep.fam \
             ${genotype_processed_dir}/scratch/king.kin0.formatted \
-            ${genotype_processed_dir}/${bfile_prefix}
+            ${genotype_processed_dir}/sparsegrm
     fi
 fi
 
@@ -254,7 +254,7 @@ echo "Final keep lists"
 # -genetic_outliers.txt
 
 cat ${genotype_processed_dir}/kingunrelated.txt | \
-    grep -vw -f ${genotype_processed_dir}/${bfile_prefix}_genetic_outliers.txt > \
+    grep -vw -f ${genotype_processed_dir}/genetic_outliers.txt > \
     ${genotype_processed_dir}/unrelated_keep.txt
 
 nunrelated=$(cat ${genotype_processed_dir}/unrelated_keep.txt | wc -l)
@@ -268,7 +268,7 @@ echo "N Unrelated: ${nunrelated}"
 if [ "${env_family_data}" = "true" ]
 then
     awk '{ print $1"\t"$2 }' ${genotype_processed_dir}/scratch/indep.fam | \
-    grep -vw -f ${genotype_processed_dir}/${bfile_prefix}_genetic_outliers.txt > \
+    grep -vw -f ${genotype_processed_dir}/genetic_outliers.txt > \
     ${genotype_processed_dir}/related_keep.txt
 fi
 
