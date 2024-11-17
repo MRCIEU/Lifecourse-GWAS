@@ -2,6 +2,7 @@ library(data.table)
 library(dplyr)
 library(dotenv)
 library(digest)
+library(glue)
 
 create_variantid <-function(chr,pos,a1,a2) {
   toflip <- a1 > a2
@@ -106,19 +107,49 @@ table(selvariants$CHR) %>% as.data.frame
 
 min(selvariants$P, na.rm=T)
 
-selvariants <- standardise(selvariants, ea_col="A1", oa_col="A2", beta_col="BETA", eaf_col="AF1", chr_col="CHR", pos_col="POS", vid_col="VID")
-
 get_lambda(selvariants$P, file.path(resdir, "null_qq.png"))
+
+if(Sys.getenv("genome_build") == "hg19") {
+  names(selvariants)[names(selvariants) == "POS"] <- "POS19"
+  system("gunzip -c bin/liftOver.gz > bin/liftOver")
+  system("chmod 755 bin/liftOver")
+  a <- dplyr::select(selvariants, CHR, POS1=POS19, POS2=POS19, SNP) %>% mutate(CHR = paste0("chr", CHR))
+  tf <- tempfile()
+  fwrite(a, file=tf, row=F, col=F, qu=F, sep="\t")
+  cmd <- glue("./bin/liftOver {tf} resources/genotypes/hg19ToHg38.over.chain {tf}.out {tf}.unlifted")
+  system(cmd)
+  b <- fread(glue("{tf}.out"), he=F)
+  b <- b %>% filter(V1 %in% paste0("chr", c(1:22, "X"))) %>% mutate(V1 = gsub("chr", "", V1))
+  table(b$V1) %>% as.data.frame()
+  ab <- left_join(b, a, by=c("V4"="SNP"))
+  ab$CHR <- gsub("chr", "", ab$CHR)
+  ab$CHR[ab$CHR == 23] <- "X"
+
+  # Remove variants that don't match the same chromosome
+  ab <- subset(ab, ab$CHR == ab$V1)
+  ab <- ab %>% dplyr::select(SNP=V4, POS=V2)
+  ab <- subset(ab, !duplicated(SNP))
+  selvariants <- left_join(ab, selvariants, by="SNP")
+  selvariants
+}
+
+selvariants <- standardise(selvariants, ea_col="A1", oa_col="A2", beta_col="BETA", eaf_col="AF1", chr_col="CHR", pos_col="POS", vid_col="VID")
+selvariants <- selvariants %>%
+  arrange(desc(INFO)) %>%
+  filter(!duplicated(VID)) %>%
+  arrange(CHR, POS)
 
 table(duplicated(selvariants$SNP))
 table(duplicated(selvariants$VID))
-
 head(selvariants)
 
 keepvars <- unique(selvariants$SNP)
 
-selvariants <- dplyr::select(selvariants, CHR, POS, VID, SNP, A1, A2, AF1, INFO)
+if(Sys.getenv("genome_build") == "hg19") {
+  selvariants <- dplyr::select(selvariants, CHR, POS, POS19, VID, SNP, A1, A2, AF1, INFO)
+} else {
+  selvariants <- dplyr::select(selvariants, CHR, POS, VID, SNP, A1, A2, AF1, INFO)
+}
 fwrite(selvariants, file=file.path(resdir, "variants.txt.gz"), row.names=F, col.names=T, quote=F, sep="\t")
 
 write.table(keepvars, file=inclist, row.names=F, col.names=F, quote=F)
-
