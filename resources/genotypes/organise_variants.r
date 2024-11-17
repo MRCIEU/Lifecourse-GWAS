@@ -113,7 +113,12 @@ if(Sys.getenv("genome_build") == "hg19") {
   names(selvariants)[names(selvariants) == "POS"] <- "POS19"
   system("gunzip -c bin/liftOver.gz > bin/liftOver")
   system("chmod 755 bin/liftOver")
-  a <- dplyr::select(selvariants, CHR, POS1=POS19, POS2=POS19, SNP) %>% mutate(CHR = paste0("chr", CHR))
+  a <- dplyr::select(selvariants, CHR, POS1=POS19, POS2=POS19, SNP)
+
+  if(!grepl("chr", selvariants$CHR[1])) {
+    a <- a %>% mutate(CHR = paste0("chr", CHR))
+  }
+
   tf <- tempfile()
   fwrite(a, file=tf, row=F, col=F, qu=F, sep="\t")
   cmd <- glue("./bin/liftOver {tf} resources/genotypes/hg19ToHg38.over.chain {tf}.out {tf}.unlifted")
@@ -135,9 +140,11 @@ if(Sys.getenv("genome_build") == "hg19") {
 
 selvariants <- standardise(selvariants, ea_col="A1", oa_col="A2", beta_col="BETA", eaf_col="AF1", chr_col="CHR", pos_col="POS", vid_col="VID")
 selvariants <- selvariants %>%
+  mutate(ord=1:n()) %>%
   arrange(desc(INFO)) %>%
   filter(!duplicated(VID)) %>%
-  arrange(CHR, POS)
+  arrange(ord) %>%
+  dplyr::select(-ord)
 
 table(duplicated(selvariants$SNP))
 table(duplicated(selvariants$VID))
