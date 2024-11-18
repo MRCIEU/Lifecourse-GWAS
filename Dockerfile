@@ -14,15 +14,13 @@ RUN apt-get update && \
         libharfbuzz-dev \
         libtiff-dev \
         libzstd-dev \
+        git \
         libgit2-dev \
-        libfribidi-dev
-
-# Wait until MRCIEU R-Universe has built latest version of the TwoSampleMR binary
-# Should be 1 hour or maybe overnight
-# Check https://mrcieu.r-universe.dev/TwoSampleMR
-# I set the HTTPUserAgent option in order to obtain binary packages from the
-# Public Posit Package Manager (otherwise source packages which will have to 
-# be built will be obtained).
+        libfribidi-dev \
+        wget && \
+        wget https://launchpad.net/ubuntu/+source/icu/70.1-2/+build/23145450/+files/libicu70_70.1-2_amd64.deb && \
+        dpkg -i libicu70_70.1-2_amd64.deb && \
+        ln -s /usr/lib/x86_64-linux-gnu/libgit2.so.1.7 /usr/lib/x86_64-linux-gnu/libgit2.so.1.1
 
 WORKDIR /project
 COPY renv.lock renv.lock
@@ -41,7 +39,7 @@ RUN R -e 'options( \
           R.version["platform"], \
           R.version["arch"], \
           R.version["os"]))); \
-    renv::install("stringi"); \
+    renv::install(c("stringi", "git2r")); \
     renv::restore(repos = c(CRAN = "https://packagemanager.posit.co/cran/__linux__/jammy/latest"))'
 
 COPY . .
