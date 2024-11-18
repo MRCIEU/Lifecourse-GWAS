@@ -13,8 +13,7 @@ RUN apt-get update && \
         libxt-dev \
         libharfbuzz-dev \
         libtiff-dev \
-        libzstd-dev \
-        libtiff5
+        libzstd-dev
 
 # Wait until MRCIEU R-Universe has built latest version of the TwoSampleMR binary
 # Should be 1 hour or maybe overnight
