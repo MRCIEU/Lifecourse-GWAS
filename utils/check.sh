@@ -30,21 +30,6 @@ else
     cat $tf
 fi
 
-echo "Checking regenie..."
-if ./bin/regenie_v3.6.gz_x86_64_Linux_mkl --version > $tf 2>&1; then
-    echo "All good!"
-else
-    cat $tf
-fi
-
-echo "Checking bgenix..."
-if ./bin/bgenix -help > $tf 2>&1; then
-    echo "All good!"
-else
-    cat $tf
-fi
-
-
 echo "Checking cohort name..."
 if [[ ! $cohort_name =~ ^[a-zA-Z0-9_]+$ ]]; then
     echo "Error: Please check your config.env. The variable cohort_name must be alphanumeric with no spaces. It will be used to generate your results files."
@@ -55,7 +40,7 @@ fi
 
 
 # check build = hg19 or hg38
-if [[ $build != "hg19" && $build != "hg38" ]]; then
+if [[ $genome_build != "hg19" && $genome_build != "hg38" ]]; then
     echo "Error: build specified in config.env must be 'hg19' or 'hg38'"
     exit 1
 fi

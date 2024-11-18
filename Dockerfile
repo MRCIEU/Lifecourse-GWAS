@@ -1,4 +1,4 @@
-FROM rocker/r-ver:latest as renv_base
+FROM rocker/r-ver:latest AS renv_base
 
 WORKDIR /usr/local/src/myscripts
 RUN apt-get update && \
@@ -13,7 +13,8 @@ RUN apt-get update && \
         libxt-dev \
         libharfbuzz-dev \
         libtiff-dev \
-        libzstd-dev
+        libzstd-dev \
+        libtiff5
 
 # Wait until MRCIEU R-Universe has built latest version of the TwoSampleMR binary
 # Should be 1 hour or maybe overnight
