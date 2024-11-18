@@ -13,7 +13,9 @@ RUN apt-get update && \
         libxt-dev \
         libharfbuzz-dev \
         libtiff-dev \
-        libzstd-dev
+        libzstd-dev \
+        libgit2-dev \
+        libfribidi-dev
 
 # Wait until MRCIEU R-Universe has built latest version of the TwoSampleMR binary
 # Should be 1 hour or maybe overnight
@@ -31,8 +33,7 @@ COPY renv/activate.R renv/activate.R
 COPY renv/settings.json renv/settings.json
 
 RUN R -e 'options( \
-    repos = c(universe = "https://mrcieu.r-universe.dev/bin/linux/jammy/4.3/", \
-        CRAN = "https://packagemanager.posit.co/cran/__linux__/jammy/latest"), \
+    repos = c(CRAN = "https://packagemanager.posit.co/cran/__linux__/jammy/latest"), \
     HTTPUserAgent = sprintf( \
         "R/%s R (%s)", \
         getRversion(), \
@@ -40,7 +41,6 @@ RUN R -e 'options( \
           R.version["platform"], \
           R.version["arch"], \
           R.version["os"]))); \
-    install.packages("renv", dependencies = TRUE); \
-    renv::restore()'
+    renv::restore(repos = c(CRAN = "https://packagemanager.posit.co/cran/__linux__/jammy/latest"))'
 
 COPY . .
