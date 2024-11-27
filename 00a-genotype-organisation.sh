@@ -19,12 +19,12 @@ Rscript resources/genotypes/organise_samples.r ${genotype_input_list} ${genotype
 
 
 echo "Get list of pruned SNPs"
-if test -f "resources/genotypes/hm3_prune_th_${build}.bed.gz"; then
+if test -f "resources/genotypes/hm3_prune_th_${genome_build}.bed.gz"; then
     echo "Found prune file"
     prunefile="${genotype_processed_dir}/scratch/indep.prune.in"
-    gunzip -c resources/genotypes/hm3_prune_th_${build}.bed.gz > ${prunefile}
+    gunzip -c resources/genotypes/hm3_prune_th_${genome_build}.bed.gz > ${prunefile}
 else
-    echo "Error: Prune file resources/genotypes/hm3_prune_th_${build}.bed.gz not found"
+    echo "Error: Prune file resources/genotypes/hm3_prune_th_${genome_build}.bed.gz not found"
     exit 1
 fi
 
@@ -84,7 +84,12 @@ do
         --out ${genotype_processed_dir}/bgen_extract/$(basename ${bgen} .bgen) \
         --threads ${env_threads}
     echo "${genotype_processed_dir}/bgen_extract/$(basename ${bgen} .bgen)" >> ${genotype_processed_dir}/bgen_extract/mergelist
+
+    # rename any duplicates to be unique
+    Rscript resources/genotypes/dups_bim.r "${genotype_processed_dir}/bgen_extract/$(basename ${bgen} .bgen).bim"
 done
+
+
 
 ./bin/plink2 \
     --threads ${env_threads} \
