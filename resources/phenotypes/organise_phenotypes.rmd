@@ -33,7 +33,6 @@ library(data.table)
 library(here)
 library(rmarkdown)
 library(dotenv)
-nthreads <- as.numeric(Sys.getenv("env_threads"))
 ```
 
 ## Set up environment
@@ -41,6 +40,7 @@ nthreads <- as.numeric(Sys.getenv("env_threads"))
 ```{r environment}
 source(here("resources", "phenotypes", "phenotype_functions.R"))
 readRenviron(here("config.env"))
+nthreads <- as.numeric(Sys.getenv("env_threads"))
 dir.create(Sys.getenv("results_dir"), showWarnings = FALSE)
 dir.create(Sys.getenv("phenotype_processed_dir"), showWarnings = FALSE)
 os <- list()
@@ -130,13 +130,16 @@ saveRDS(os, file = file.path(Sys.getenv("results_dir"), "02", "summary.rds"))
 - Remove outliers
 - Summarise the data
 - Save age and sex specific files for the GWAS
-- Note: Pulse pressure will be calculated if both sbp and dbp are avaliable - it does not need to be included in the phenotypes list.
+- Note: Pulse pressure will be calculated if both sbp and dbp are avaliable, BMI-Z will be calculated if bmi is available for individuals under 20
 
 ```{r phenotype_processing, echo=FALSE}
 for(i in 1:length(phenotypes)){
   cat("\n### ", phenotypes[i], "\n\n")
   organise_phenotype(phenotypes[i], phenotypes, df, gen_covs, covdat, agebins, pl=TRUE)
 }
+
+organise_phenotype("pp", phenotypes, df, gen_covs, covdat, agebins, pl=TRUE)
+organise_phenotype("bmiz", phenotypes, df, gen_covs, covdat, agebins, pl=TRUE)
 ```
 
 ## Run details

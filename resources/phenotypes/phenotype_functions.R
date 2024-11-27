@@ -317,7 +317,7 @@ phenoplot <- function(Yvbl, Xvbl, Quantiles=c(0.25,0.5,0.75), knots=NA, Nknots=0
 
 organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebins, pl=TRUE) {
   
-  if(phecode != "pp"){
+  if(phecode != "pp" & phecode != "bmiz"){
   type <- filter(df, pheno_id == phecode)$var_type
   str(filter(df, pheno_id == phecode))
   cs <- list()
@@ -325,6 +325,8 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
   }
   
   if(phecode == "pp") {
+    type <- cont
+    cs <- list()
     phecode1 <- sbp
     phen1 <- read_phenotype_data(phecode1, Sys.getenv("phenotype_input_dir"), agebins)
     if(is.null(phen1)) {
@@ -332,6 +334,7 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
     }
     phen1 <- rename(phen1, sbp = value)
     phen1$value <- phen1$value + (15 * phen1$bp_med)
+    phen1$value <- remove_outliers(dat, phecode1)
     
     phecode2 <- dbp
     phen2 <- read_phenotype_data(phecode2, Sys.getenv("phenotype_input_dir"), agebins)
@@ -340,12 +343,42 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
     }
     phen2 <- rename(phen2, dbp = value)
     phen2$value <- phen2$value + (10 * phen2$bp_med)
+    phen2$value <- remove_outliers(dat, phecode2)
 
     phen <- inner_join(phen1, phen2)
     phen$value <- sbp - dbp
     phen <- phen %>%
       select(!c(sbp, dbp))
   }
+  
+  if(phecode=="bmiz"){
+    type <- "cont"
+    cs <- list()
+    phen <- read_phenotype_data("bmi", Sys.getenv("phenotype_input_dir"), agebins)
+    
+    phen <- filter(phen, age <= 18)
+    phen$Month <- round(phen$age*12)
+    
+    filename <- here("resources", "phenotypes", "bmi-z-who-2007.csv")
+    z_dat <- data.table::fread(filename, nThread = nthreads)
+
+    phen <- inner_join(phen, covdat, by = join_by(FID, IID))
+    
+    phen <- left_join(phen,z_dat, by=join_by(Month))
+    phen$bmiz_girls <- (((phen$value/phen$MG)^phen$LG) - 1)/(phen$SG*phen$LG)
+    phen$bmiz_boys <- (((phen$value/phen$MB)^phen$LB) - 1)/(phen$SB*phen$LB)
+    phen <- phen %>% 
+      mutate(bmiz = case_when(sex==1 ~ bmiz_boys, sex==2 ~ bmiz_girls))
+    
+    phen <- phen %>% 
+      select(FID, IID, age, bmiz) %>%
+      rename(value = bmiz)
+    
+    phen <- phen %>% 
+      filter(between(phen$value, -5, 5))
+    
+  }
+  
   
   if(is.null(phen)) {
     return(NULL)
@@ -394,8 +427,13 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
   #remove outliers and plot the remaining data
   #The Jitter applied to the plot so no actual observations are plotted
 
+  if(phecode != "pp" & phecode != "bmiz"){
   outliers <- detect_outliers(dat, phecode)
   analysis_data <- remove_outliers(dat, phecode)
+  } else {
+    analysis_data <- dat
+  }
+  
   
   if(length(analysis_data$value) == 0){
     stop(paste(phecode,"All observations removed as outliers"))
@@ -426,12 +464,18 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
     print("rank transformed")
   } else if(filter(df, pheno_id == phecode)$transformation=="none") {
     print("no transformation")
+  } else {
+    print("no transformation")
   }
   
   
   if (filter(df, pheno_id == phecode)$standardisation=="yes") {
     print("standardised")
   } else if(filter(df, pheno_id == phecode)$transformation=="no") {
+    print("no standardisation")
+  } else if(phecode == "pp") {
+    print("standardised")
+  } else {
     print("no standardisation")
   }
 
@@ -487,11 +531,17 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
         pheno_out$value <- rank(pheno_out$value, ties.method = "average")
       } else if(filter(df, pheno_id == phecode)$transformation=="none") {
         pheno_out$value <- pheno_out$value
-      }
+      } else {
+        pheno_out$value <- pheno_out$value
+      } 
 
       if (filter(df, pheno_id == phecode)$standardisation=="yes") {
         pheno_out$value <- pheno_out$value/sd(pheno_out$value)
       } else if(filter(df, pheno_id == phecode)$standardisation=="no") {
+        pheno_out$value <- pheno_out$value
+      } else if(phecode == "pp") {
+        pheno_out$value <- pheno_out$value/sd(pheno_out$value)
+      } else {
         pheno_out$value <- pheno_out$value
       }
     
