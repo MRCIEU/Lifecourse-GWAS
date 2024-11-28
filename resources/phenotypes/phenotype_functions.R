@@ -174,7 +174,9 @@ summarise_phen <- function(data) {
       male_sex1=sum(as.numeric(data$sex==1)),
       female_sex2=sum(as.numeric(data$sex==2)),
       m_age=mean(age, na.rm=T),
-      sd_age=sd(age, na.rm=T)
+      sd_age=sd(age, na.rm=T),
+      m_age2=mean(age^2,na.rm=T),
+      m_age3=mean(age^3,na.rm=T)
     )
 }
 
@@ -355,6 +357,9 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
     type <- "cont"
     cs <- list()
     phen <- read_phenotype_data("bmi", Sys.getenv("phenotype_input_dir"), agebins)
+    if(is.null(phen)) {
+      return(NULL)
+    }
     
     phen <- filter(phen, age <= 18)
     phen$Month <- round(phen$age*12)
@@ -458,26 +463,27 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
     analysis_data$value <- analysis_data$value + (10 * analysis_data$bp_med)
   }
   
+  if(phecode != "pp" & phecode != "bmiz"){
   if (filter(df, pheno_id == phecode)$transformation=="log") {
     print("log transformed")
   } else if(filter(df, pheno_id == phecode)$transformation=="rank") {
     print("rank transformed")
   } else if(filter(df, pheno_id == phecode)$transformation=="none") {
     print("no transformation")
-  } else {
-    print("no transformation")
+  }
   }
   
-  
+  if(phecode != "pp" & phecode != "bmiz"){
   if (filter(df, pheno_id == phecode)$standardisation=="yes") {
     print("standardised")
   } else if(filter(df, pheno_id == phecode)$transformation=="no") {
     print("no standardisation")
-  } else if(phecode == "pp") {
-    print("standardised")
-  } else {
-    print("no standardisation")
+  } 
   }
+  if(phecode == "pp") {
+    print("standardised")
+  } 
+  
 
   # Counts of sample size in each age group
   
@@ -525,25 +531,26 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
       sumstats <- summarise_phen(pheno_out)
   
       ## apply transformation and standardisation if required
+      if(phecode != "pp" & phecode != "bmiz"){
       if (filter(df, pheno_id == phecode)$transformation=="log") {
         pheno_out$value <- log(pheno_out$value)
       } else if(filter(df, pheno_id == phecode)$transformation=="rank") {
         pheno_out$value <- rank(pheno_out$value, ties.method = "average")
       } else if(filter(df, pheno_id == phecode)$transformation=="none") {
         pheno_out$value <- pheno_out$value
-      } else {
-        pheno_out$value <- pheno_out$value
       } 
+      }
 
+      if(phecode != "pp" & phecode != "bmiz"){
       if (filter(df, pheno_id == phecode)$standardisation=="yes") {
         pheno_out$value <- pheno_out$value/sd(pheno_out$value)
       } else if(filter(df, pheno_id == phecode)$standardisation=="no") {
         pheno_out$value <- pheno_out$value
-      } else if(phecode == "pp") {
-        pheno_out$value <- pheno_out$value/sd(pheno_out$value)
-      } else {
-        pheno_out$value <- pheno_out$value
+      } 
       }
+      if(phecode == "pp") {
+        pheno_out$value <- pheno_out$value/sd(pheno_out$value)
+      } 
     
       if(sex_group == 1){
         sex_out = "m"
@@ -606,6 +613,8 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
         filter(!duplicated(paste(FID, IID))) %>% 
         select(FID, IID, value, age, sex)
       }
+      
+      if(phecode != "pp" & phecode != "bmiz"){
       if (filter(df, pheno_id == phecode)$transformation=="log") {
         pheno_out$value <- log(pheno_out$value)
       } else if(filter(df, pheno_id == phecode)$transformation=="rank") {
@@ -613,12 +622,18 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
       } else if(filter(df, pheno_id == phecode)$transformation=="none") {
         pheno_out$value <- pheno_out$value
       }
+      }
           
       ## apply standardisation if required
+      if(phecode != "pp" & phecode != "bmiz"){
       if (filter(df, pheno_id == phecode)$standardisation=="yes") {
         pheno_out$value <- pheno_out$value/sd(pheno_out$value)
       } else if(filter(df, pheno_id == phecode)$standardisation=="no") {
         pheno_out$value <- pheno_out$value
+      }
+      }
+      if(phecode == "pp"){
+        pheno_out$value <- pheno_out$value/sd(pheno_out$value)
       }
 
       if(sex_group == 1){
