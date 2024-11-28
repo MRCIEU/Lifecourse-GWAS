@@ -327,9 +327,9 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
   }
   
   if(phecode == "pp") {
-    type <- cont
+    type <- "cont"
     cs <- list()
-    phecode1 <- sbp
+    phecode1 <- "sbp"
     phen1 <- read_phenotype_data(phecode1, Sys.getenv("phenotype_input_dir"), agebins)
     if(is.null(phen1)) {
       return(NULL)
@@ -338,7 +338,7 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
     phen1$value <- phen1$value + (15 * phen1$bp_med)
     phen1$value <- remove_outliers(dat, phecode1)
     
-    phecode2 <- dbp
+    phecode2 <- "dbp"
     phen2 <- read_phenotype_data(phecode2, Sys.getenv("phenotype_input_dir"), agebins)
     if(is.null(phen2)) {
       return(NULL)
@@ -346,11 +346,17 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
     phen2 <- rename(phen2, dbp = value)
     phen2$value <- phen2$value + (10 * phen2$bp_med)
     phen2$value <- remove_outliers(dat, phecode2)
-
+    
+   
     phen <- inner_join(phen1, phen2)
     phen$value <- sbp - dbp
     phen <- phen %>%
       select(!c(sbp, dbp))
+    
+    outliers <-  phen %>% 
+      filter(!between(phen$value, -5, 5)) %>% 
+      select('value')
+    
   }
   
   if(phecode=="bmiz"){
@@ -376,8 +382,13 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
       mutate(bmiz = case_when(sex==1 ~ bmiz_boys, sex==2 ~ bmiz_girls))
     
     phen <- phen %>% 
-      select(FID, IID, age, bmiz) %>%
+      select(FID, IID, age, bmiz, agebin, lsbin) %>%
       rename(value = bmiz)
+    
+    
+    outliers <- phen %>% 
+      filter(!between(phen$value, -5, 5)) %>% 
+      select('value')
     
     phen <- phen %>% 
       filter(between(phen$value, -5, 5))
@@ -562,7 +573,15 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
     
       write.table(subset(pheno_out, select=c("FID", "IID", "value")), file=file.path(Sys.getenv("phenotype_processed_dir"), paste0(phecode, "_", age_group, "_", sex_out, ".phen")), row=FALSE, col=FALSE, qu=FALSE)
 
+      if(phecode != "pp" & phecode != "bmiz"){
       cov_ids <- subset(df, pheno_id == phecode)$covs %>% strsplit(., ":") %>% {.[[1]]}
+      }
+      if(phecode == "pp"){
+        cov_ids <- "sex"
+      }
+      if(phecode == "bmiz"){
+        cov_ids <- "sex"
+      }
       covs <- dat %>% select(all_of(c(names(gen_covs), cov_ids))) %>% filter(IID %in% pheno_out$IID) %>% filter(!duplicated(paste(FID, IID)))
     
       write.table(covs, file=file.path(Sys.getenv("phenotype_processed_dir"), paste0(phecode, "_", age_group, "_", sex_out, ".covs")), row=FALSE, col=FALSE, qu=FALSE)
@@ -644,9 +663,18 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
         sex_out = "both"
       }
       
+      
       write.table(subset(pheno_out, select=c("FID", "IID", "value")), file=file.path(Sys.getenv("phenotype_processed_dir"), paste0(phecode, "_", age_group, "_", sex_out, ".phen")), row=FALSE, col=FALSE, qu=FALSE)
 
+      if(phecode != "pp" & phecode != "bmiz"){
       cov_ids <- subset(df, pheno_id == phecode)$covs %>% strsplit(., ":") %>% {.[[1]]}
+      }
+      if(phecode == "pp"){
+        cov_ids <- "sex"
+      }
+      if(phecode == "bmiz"){
+        cov_ids <- "sex"
+      }
       covs <- dat %>% select(all_of(c(names(gen_covs), cov_ids, "age"))) %>% filter(IID %in% pheno_out$IID) %>% filter(!duplicated(paste(FID, IID)))
       
       write.table(covs, file=file.path(Sys.getenv("phenotype_processed_dir"), paste0(phecode, "_", age_group, "_", sex_out, ".covs")), row=FALSE, col=FALSE, qu=FALSE)
