@@ -14,8 +14,9 @@ standardise <- function(d, ea_col="ea", oa_col="oa", beta_col="beta", eaf_col="e
 }
 
 traits <- read.csv(here("phenotype_list.csv"))
-
-lapply(13:nrow(traits), \(i) {
+traits <- bind_rows(traits, tibble(Name = "Pulse pressure", "pheno_id" = "pp", "opengwasid" = "ebi-a-GCST90018970"))
+i <- 23
+lapply(1:nrow(traits), \(i) {
     of <- here("resources", "genotypes", "tophits", paste0(traits$pheno_id[i], ".txt"))
     if(traits$pheno_id[i] == "depression") {
         return(NULL)
@@ -23,7 +24,7 @@ lapply(13:nrow(traits), \(i) {
     if(!file.exists(of)) {
         message(i, " " , of)
         a <- try(tophits(traits$opengwasid[i]))
-        if(class(a) != "try-error") 
+        if(! "try-error" %in% class(a)) 
         {
             if(nrow(a) > 0) {
                 a <- a %>% 
@@ -31,8 +32,13 @@ lapply(13:nrow(traits), \(i) {
                     select(vid, ea, beta)
                 write.table(a, file=of, row=F, col=F, qu=F)
             }
+            if(traits$pheno_id[i] == "bmi") {
+                of <- here("resources", "genotypes", "tophits", paste0("bmiz.txt"))
+                write.table(a, file=of, row=F, col=F, qu=F)
+            }
         }
     }
 })
+
 
 
