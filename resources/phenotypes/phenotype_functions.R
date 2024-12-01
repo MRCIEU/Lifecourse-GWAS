@@ -320,10 +320,10 @@ phenoplot <- function(Yvbl, Xvbl, Quantiles=c(0.25,0.5,0.75), knots=NA, Nknots=0
 organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebins, pl=TRUE) {
   
   if(phecode != "pp" & phecode != "bmiz"){
-  type <- filter(df, pheno_id == phecode)$var_type
-  str(filter(df, pheno_id == phecode))
-  cs <- list()
-  phen <- read_phenotype_data(phecode, Sys.getenv("phenotype_input_dir"), agebins)
+    type <- filter(df, pheno_id == phecode)$var_type
+    str(filter(df, pheno_id == phecode))
+    cs <- list()
+    phen <- read_phenotype_data(phecode, Sys.getenv("phenotype_input_dir"), agebins)
   }
   
   if(phecode == "pp") {
@@ -368,6 +368,9 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
     }
     
     phen <- filter(phen, age <= 18)
+    if(nrow(phen) == 0) {
+      return(NULL)
+    }
     phen$Month <- round(phen$age*12)
     
     filename <- here("resources", "phenotypes", "bmi-z-who-2007.csv")
