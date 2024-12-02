@@ -74,6 +74,7 @@ do
             bin/plink2 \
                 --bfile ${genotype_processed_dir}/scratch/indep2 \
                 --score resources/genotypes/tophits/${ph}.txt \
+                --threads ${env_threads} \
                 --out ${genotype_processed_dir}/scratch/tophits/${ph}
         fi
 
