@@ -354,7 +354,7 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
       select(!c(sbp, dbp))
     
     outliers <-  phen %>% 
-      filter(!between(phen$value, -5, 5)) %>% 
+      filter(!between(phen$value, 10, 180)) %>% 
       select('value')
     
   }
