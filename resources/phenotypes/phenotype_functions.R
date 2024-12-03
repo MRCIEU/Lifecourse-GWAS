@@ -323,39 +323,47 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
     type <- filter(df, pheno_id == phecode)$var_type
     str(filter(df, pheno_id == phecode))
     cs <- list()
-    phen <- read_phenotype_data(phecode, Sys.getenv("phenotype_input_dir"), agebins)
+    adjust_covs <- NULL
+    if(phecode == "ldl"){
+      adjust_covs <- "cholesterol_med"
+      }
+    phen <- read_phenotype_data(phecode, Sys.getenv("phenotype_input_dir"), agebins, adjust_covs)
   }
   
   if(phecode == "pp") {
     type <- "cont"
     cs <- list()
     phecode1 <- "sbp"
-    phen1 <- read_phenotype_data(phecode1, Sys.getenv("phenotype_input_dir"), agebins)
+    phen1 <- read_phenotype_data(phecode1, Sys.getenv("phenotype_input_dir"), agebins, "bp_med")
     if(is.null(phen1)) {
       return(NULL)
     }
-    phen1 <- rename(phen1, sbp = value)
+    
     phen1$value <- phen1$value + (15 * phen1$bp_med)
-    phen1$value <- remove_outliers(dat, phecode1)
+    phen1 <- remove_outliers(phen1, phecode1)
+    phen1 <- rename(phen1, sbp = value)
     
     phecode2 <- "dbp"
-    phen2 <- read_phenotype_data(phecode2, Sys.getenv("phenotype_input_dir"), agebins)
+    phen2 <- read_phenotype_data(phecode2, Sys.getenv("phenotype_input_dir"), agebins, "bp_med")
     if(is.null(phen2)) {
       return(NULL)
     }
-    phen2 <- rename(phen2, dbp = value)
-    phen2$value <- phen2$value + (10 * phen2$bp_med)
-    phen2$value <- remove_outliers(dat, phecode2)
     
+    phen2$value <- phen2$value + (10 * phen2$bp_med)
+    phen2 <- remove_outliers(phen2, phecode2)
+    phen2 <- rename(phen2, dbp = value)
    
     phen <- inner_join(phen1, phen2)
-    phen$value <- sbp - dbp
+    phen$value <- phen$sbp - phen$dbp
     phen <- phen %>%
       select(!c(sbp, dbp))
     
     outliers <-  phen %>% 
       filter(!between(phen$value, 10, 180)) %>% 
       select('value')
+    
+    phen <- phen %>%
+      filter(between(phen$value, 10, 180))
     
   }
   
