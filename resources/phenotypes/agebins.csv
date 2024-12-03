@@ -1,12 +1,13 @@
 category,min,max
-infancytoddlerhood,0,3
+birth,0,0.25
+infancytoddlerhood,0.25,3
 earlychildhood,3,8
 middlechildhoodprepubertal,8,12
 adolescence,12,18
 youngadulthood,18,40
 middleadulthood,40,65
 lateadulthood,65,125
-0-1,0,1
+0-1,0.25,1
 1-2,1,2
 2-3,2,3
 3-4,3,4
