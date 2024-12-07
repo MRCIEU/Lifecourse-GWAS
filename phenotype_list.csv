@@ -9,16 +9,16 @@ FEV1/FVC ratio,fev1fvc,cont,l,0,10,sex,none,yes,ebi-a-GCST90029026
 Systolic blood pressure,sbp,cont,mmHg,0,250,sex:bp_med,none,yes,ukb-b-20175
 Diastolic blood pressure,dbp,cont,mmHg,0,250,sex:bp_med,none,yes,
 LDL cholesterol,ldl,cont,mmol/L,0,10,sex:cholesterol_med,none,yes,ieu-b-110
-HDL cholesterol,hdl,cont,mmol/L,0,10,sex,none,yes,ieu-b-109
-Triglycerides,trig,cont,mmol/L,0,20,sex,none,yes,ieu-b-111
+HDL cholesterol,hdl,cont,mmol/L,0,10,sex:cholesterol_med,none,yes,ieu-b-109
+Triglycerides,trig,cont,mmol/L,0,20,sex:cholesterol_med,none,yes,ieu-b-111
 C-reactive protein,crp,cont,mg/L,0,100,sex,none,yes,ebi-a-GCST90014002
 Interleukin 6,il6,cont,pg/ml,0,100,sex,none,yes,ebi-a-GCST90012005
 Leptin,leptin,cont,ng/ml,0,100,sex,none,yes,ebi-a-GCST90007307
-Glycated haemoglobin,hba1c,cont,mmol/mol,0,70,sex,none,yes,ebi-a-GCST90014006
-Insulin,insulin,cont,pmol/L,0,200,sex,none,yes,ukb-b-15445
+Glycated haemoglobin,hba1c,cont,mmol/mol,0,70,sex:insulin_med,none,yes,ebi-a-GCST90014006
+Insulin,insulin,cont,pmol/L,0,200,sex:insulin_med,none,yes,ukb-b-15445
 Adiponectin,adiponectin,cont,ug/ml,0,100,sex,none,yes,ieu-a-1
-Calcium,calcium,cont,mmol/L,0,10,sex,none,yes,ebi-a-GCST90013999
+Calcium,calcium,cont,mmol/L,0,10,sex:cholesterol_med,none,yes,ebi-a-GCST90013999
 Vitamin D,vitd,cont,nmol/L,0,400,sex,none,yes,ebi-a-GCST90000618
-Estradiol,estradiol,cont,pmol/L,0,15000,sex,none,yes,ebi-a-GCST90012105
-Testosterone,testosterone,cont,nmol/L,0,60,sex,none,yes,ebi-a-GCST90012114
-Sex hormone binding globulin,shbg,cont,nmol/L,0,300,sex,none,yes,ieu-b-4870
+Estradiol,estradiol,cont,pmol/L,0,15000,sex:hormone_med,none,yes,ebi-a-GCST90012105
+Testosterone,testosterone,cont,nmol/L,0,60,sex:hormone_med,none,yes,ebi-a-GCST90012114
+Sex hormone binding globulin,shbg,cont,nmol/L,0,300,sex:hormone_med,none,yes,ieu-b-4870
