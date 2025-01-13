@@ -8,11 +8,12 @@ Files needed to input into this:
  - configuration environment
  - phenotype description (name, id, units, min, max etc..)
  - genetic covariates (id, PC's, sex*)
- - phenotype file (id, age, phenotype value, covariates)
+ - phenotype file (id, age, phenotype value, age varying covariates)
  
-Minimum phenotype columns required: 'FID' 'IID' 'age' 'value' then any covariates. Value is the value of the trait, column name should be 'value' and the file name the id of the trait (e.g. 'bmi.txt' for body mass index). Phenotypic covariates (and column names) required for each trait are described in "phenotypes_list" csv file. 
+Minimum phenotype columns required: 'FID' 'IID' 'age' 'value' then any required covariates**. Value is the value of the trait, column name should be 'value' and the file name the id of the trait (e.g. 'bmi.txt' for body mass index). Phenotypic covariates (and column names) required for each trait are described in "phenotypes_list" csv file. 
 
-*Sex can be input in either genetic covariates file or phenotype data file but is assumed to be coded as 1 - male, 2 - female.
+*Sex is assumed to be coded as 1 - male, 2 - female.
+**If observations for either blood pressure or cholesterol medication are missing they should be included as 0. If this information has not been recorded (or is assumed to be 0 for all individuals) please include a column of 0's with the appropriate heading in the phenotypic data. 
  
 Other notes:
 

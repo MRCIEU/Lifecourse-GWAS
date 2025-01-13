@@ -22,9 +22,6 @@ read_phenotype_data <- function(phecode, input_dir, agebins, covlist=NULL) {
     stop("expect 'FID', 'IID', 'age', 'value' columns to be present")
   }
 
-  # Keep only required columns
-  #phen <- phen %>% dplyr::select(all_of(column_names))
-
   # Remove duplicates by FID,IID,age
   phen <- subset(phen, !duplicated(paste(FID, IID, age)))
   
@@ -46,8 +43,6 @@ read_phenotype_data <- function(phecode, input_dir, agebins, covlist=NULL) {
   phen <- subset(phen, select=c("FID", "IID", "age", "value", covlist))
 
   # Cut into age bins
-  # phen$agebin <- cut(phen$age+1, breaks=c(0:19, seq(20, 120, by=5)))
-  # levels(phen$agebin) <- levels(phen$agebin) %>% gsub("\\(", "", .) %>% gsub("]", "", .) %>% gsub(",", "-", .)
   phen <- make_agebin(phen, agebins)
 
   return(phen)
@@ -176,7 +171,9 @@ summarise_phen <- function(data) {
       m_age=mean(age, na.rm=T),
       sd_age=sd(age, na.rm=T),
       m_age2=mean(age^2,na.rm=T),
-      m_age3=mean(age^3,na.rm=T)
+      sd_age2=sd(age^2, na.rm=T),
+      m_age3=mean(age^3,na.rm=T),
+      sd_age3=sd(age^3, na.rm=T)
     )
 }
 
@@ -317,7 +314,26 @@ phenoplot <- function(Yvbl, Xvbl, Quantiles=c(0.25,0.5,0.75), knots=NA, Nknots=0
   if (plotname!="") dev.off()
 }
 
+
+###############################
+##Function to convert the phenotype data into what we need for the GWAS
+#includes:
+#-importing the phenotype data
+#-categorising age groups
+#-removing outliers
+#-data transformation
+#-dividing the data into the approprate age groups
+#-checking sample size for each group
+#-saving the file for the GWAS for each group that passes the threshold
+
+
+##For most phenotypes outlier removal and transformation is done based on the phenotypes list csv file
+##Pulse pressure and bmiz are generated from other data provided and the outlier removal values and transformations are set in this code. 
+
+
 organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebins, pl=TRUE) {
+  
+  ##read in the data and any age varying covariates (that are in the same file as the phenotypic data)
   
   if(phecode != "pp" & phecode != "bmiz"){
     type <- filter(df, pheno_id == phecode)$var_type
@@ -326,9 +342,15 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
     adjust_covs <- NULL
     if(phecode == "ldl"){
       adjust_covs <- "cholesterol_med"
-      }
+    }
+    if(phecode == "sbp" | phecode == "dbp"){
+      adjust_covs <- "bp_med"
+    }
     phen <- read_phenotype_data(phecode, Sys.getenv("phenotype_input_dir"), agebins, adjust_covs)
   }
+  
+  ##read in data for dpb and sbp and generate pulse pressure
+  #exclude outliers based on dbp, sbp or pp
   
   if(phecode == "pp") {
     type <- "cont"
@@ -353,6 +375,7 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
     phen2 <- remove_outliers(phen2, phecode2)
     phen2 <- rename(phen2, dbp = value)
    
+    #join together the dbp and sbp data - these should only match if all of the other variables match (i.e. ID value, age and bp_med need to match for the variables to be merged)
     phen <- inner_join(phen1, phen2)
     phen$value <- phen$sbp - phen$dbp
     phen <- phen %>%
@@ -366,6 +389,9 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
       filter(between(phen$value, 10, 180))
     
   }
+  
+  ##read in bmi data and generate bmiz for children - only keeps data for <= 18, adults are excluded for bmiz
+  #outliers for bmiz are excluded based on having a bmiz <-5 or >5
   
   if(phecode=="bmiz"){
     type <- "cont"
@@ -406,6 +432,7 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
     
   }
   
+  ##return null and move on to the next trait if this one is missing
   
   if(is.null(phen)) {
     return(NULL)
@@ -414,7 +441,7 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
   # Only one genetic observation per person
   setequal(unique(gen_covs$IID), gen_covs$IID)
   
-  # Merge covariates with data
+  # Merge genetic covariates with phenotypic data
   dat <- phen %>%
     left_join(gen_covs, by = c("FID", "IID")) %>%
     na.exclude
@@ -452,8 +479,11 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
 
 
   #remove outliers and plot the remaining data
-  #The Jitter applied to the plot so no actual observations are plotted
+  #A jitter is applied to the plot so no actual observations are plotted
 
+  #remove outliers based on values in the phenotypes description for every trait except pp and bmiz
+  #outliers for pp and bmiz are removed at the point the data is imported. 
+  
   if(phecode != "pp" & phecode != "bmiz"){
   outliers <- detect_outliers(dat, phecode)
   analysis_data <- remove_outliers(dat, phecode)
@@ -462,16 +492,21 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
   }
   
   
+  ##This will break the code if all values are removed as outliers - this breaks rather than moving on to the next trait as it should only happen if there is an error
+  #e.g. incorrectly defined outliers, phenotype values entered in the wrong units etc. 
+  
   if(length(analysis_data$value) == 0){
     stop(paste(phecode,"All observations removed as outliers"))
   }
 
+  #generate the plot 
   age_range = max(analysis_data$age) - min(analysis_data$age)
   y_sd = sd(analysis_data$value)
 
   phenoplot(analysis_data$value, analysis_data$age, Quantiles=c(0.05,0.25,0.5,0.75,0.95), knots=NA, Nknots=5, jitter_X=0.5, jitter_Y=0.1, plotname=ifelse(pl, "", phecode), title=phecode)
   
-  # medication adjustment - note this assumes that the value in the phenotype covariates is the same as the column name
+  
+  # medication adjustment for ldl, sbp and dbp
   
   if(phecode=="ldl"){
     analysis_data$value <- analysis_data$value + (0.40 * analysis_data$value * analysis_data$cholesterol_med)
@@ -484,6 +519,10 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
   if(phecode=="dbp"){
     analysis_data$value <- analysis_data$value + (10 * analysis_data$bp_med)
   }
+  
+  
+  ##state the transformation that will be applied
+  #no transformation is applied to bmiz as its already a standardised variable
   
   if(phecode != "pp" & phecode != "bmiz"){
   if (filter(df, pheno_id == phecode)$transformation=="log") {
@@ -507,7 +546,10 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
   } 
   
 
-  # Counts of sample size in each age group
+  ####By age group (1 year <20, 5 years >= 20)
+  ############################################
+  
+  # Generate counts of sample size in each age group by sex and combined
   
   cats_sexspec <- analysis_data %>% 
     group_by(agebin, sex) %>%
@@ -526,18 +568,21 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
   cats <- bind_rows(cats_sexspec, cats)
   cs$categories <- cats 
 
+  #filter so know which age group have a large enough sample and make the sex combined sex=3
   cats <- filter(cats, n >= as.numeric(Sys.getenv("env_minumum_strat_n"))) %>%
     replace_na(list(sex=3))
   
   summary_output <- list()
   
-  
+  ###this section operates on each age/sex (including sex combined) group individually
   if(length(cats$n>=1)){
     for(k in 1:length(cats$n)){
     
       age_group <- cats$agebin[k]
       sex_group <- cats$sex[k]
   
+      #select the individual observations from the phenotypes file that are the desired age/sex
+      #check and remove one of any duplicated individuals in that group
       if(sex_group < 3) {
         pheno_out <- filter(analysis_data, (agebin == cats$agebin[k])) %>% 
           filter(sex == cats$sex[k]) %>%
@@ -549,10 +594,12 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
           select(FID, IID, value, age, sex)
       }
 
+      
       #summarise the pretransformed variable 
       sumstats <- summarise_phen(pheno_out)
   
       ## apply transformation and standardisation if required
+      #applied to all traits except pp and bmiz based on phenotypes description file
       if(phecode != "pp" & phecode != "bmiz"){
       if (filter(df, pheno_id == phecode)$transformation=="log") {
         pheno_out$value <- log(pheno_out$value)
@@ -570,10 +617,13 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
         pheno_out$value <- pheno_out$value
       } 
       }
+      
+      #pp is standardised bit not transformed
       if(phecode == "pp") {
         pheno_out$value <- pheno_out$value/sd(pheno_out$value)
       } 
     
+      #define the sex groups for saving 
       if(sex_group == 1){
         sex_out = "m"
       } else if (sex_group == 2){
@@ -582,18 +632,26 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
         sex_out = "both"
       }
     
+      #save the (transformed) phenotype values for the GWAS
       write.table(subset(pheno_out, select=c("FID", "IID", "value")), file=file.path(Sys.getenv("phenotype_processed_dir"), paste0(phecode, "_", age_group, "_", sex_out, ".phen")), row=FALSE, col=FALSE, qu=FALSE)
 
+      #define the covariates that are saved as adjustments for the GWAS
       if(phecode != "pp" & phecode != "bmiz"){
       cov_ids <- subset(df, pheno_id == phecode)$covs %>% strsplit(., ":") %>% {.[[1]]}
       }
       if(phecode == "pp"){
-        cov_ids <- "sex"
+        cov_ids <- c("sex", "bp_med")
       }
       if(phecode == "bmiz"){
         cov_ids <- "sex"
       }
-      covs <- dat %>% select(all_of(c(names(gen_covs), cov_ids))) %>% filter(IID %in% pheno_out$IID) %>% filter(!duplicated(paste(FID, IID)))
+      
+      #select these observations from the original data and remove 
+      covs <- analysis_dat %>% 
+        select(all_of(c(names(gen_covs), cov_ids))) %>% 
+        filter(agebin == age_group) %>%
+        filter(IID %in% pheno_out$IID) %>% 
+        filter(!duplicated(paste(FID, IID)))
     
       write.table(covs, file=file.path(Sys.getenv("phenotype_processed_dir"), paste0(phecode, "_", age_group, "_", sex_out, ".covs")), row=FALSE, col=FALSE, qu=FALSE)
   
@@ -605,7 +663,13 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
     print(cs$sums)
   }
    
-  # counts of sample size in each lifestage group
+  
+  ####By lifestage category
+  ############################################
+  #This section repeats the section above but for each lifestage category rather than each age group
+  
+  
+  #generate counts of sample size in each lifestage group by sex and combined
 
   catsls_ss <- analysis_data %>% 
     group_by(lsbin, sex) %>%
@@ -621,18 +685,23 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
 
   catsls <- bind_rows(catsls_ss, catsls)
   cs$categories_ls <- catsls
-
+  
+  #keep the categories where the sample size is greater than the minimum
   catsls <- filter(catsls, n >= as.numeric(Sys.getenv("env_minumum_strat_n"))) %>%
    replace_na(list(sex=3))
   
   summary_output <- list()
 
+  
+  ##From here the code is applied to keep age bin and sex combination
+  
   if(length(catsls$n>=1)){
     for(k in 1:length(catsls$n)){
       
       age_group <- catsls$lsbin[k]    
       sex_group <- catsls$sex[k] 
 
+      #keep the data from the main dataset that is part of this group and ensure that no individuals are repeated. 
       if(sex_group < 3) {
         pheno_out <- filter(analysis_data, (lsbin == catsls$lsbin[k])) %>% 
         filter(sex == catsls$sex[k]) %>%
@@ -644,6 +713,8 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
         select(FID, IID, value, age, sex)
       }
       
+      #apply the required transformation to the data based on the phenotypes info file 
+      #pp is standardised below, nothing is done to bmiz as it is already standardised
       if(phecode != "pp" & phecode != "bmiz"){
       if (filter(df, pheno_id == phecode)$transformation=="log") {
         pheno_out$value <- log(pheno_out$value)
@@ -654,7 +725,7 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
       }
       }
           
-      ## apply standardisation if required
+      ## apply standardisation if required for traits other than bmiz and pp
       if(phecode != "pp" & phecode != "bmiz"){
       if (filter(df, pheno_id == phecode)$standardisation=="yes") {
         pheno_out$value <- pheno_out$value/sd(pheno_out$value)
@@ -662,10 +733,12 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
         pheno_out$value <- pheno_out$value
       }
       }
+      #for pp the data is standardised but not transformed
       if(phecode == "pp"){
         pheno_out$value <- pheno_out$value/sd(pheno_out$value)
       }
 
+      #define the sex based on the code 
       if(sex_group == 1){
         sex_out = "m"
       } else if (sex_group == 2){
@@ -674,20 +747,25 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
         sex_out = "both"
       }
       
-      
+      ##save the phenotype data for the GWAS
       write.table(subset(pheno_out, select=c("FID", "IID", "value")), file=file.path(Sys.getenv("phenotype_processed_dir"), paste0(phecode, "_", age_group, "_", sex_out, ".phen")), row=FALSE, col=FALSE, qu=FALSE)
 
       if(phecode != "pp" & phecode != "bmiz"){
       cov_ids <- subset(df, pheno_id == phecode)$covs %>% strsplit(., ":") %>% {.[[1]]}
       }
       if(phecode == "pp"){
-        cov_ids <- "sex"
+        cov_ids <- c("sex", "bp_med")
       }
       if(phecode == "bmiz"){
         cov_ids <- "sex"
       }
-      covs <- dat %>% select(all_of(c(names(gen_covs), cov_ids, "age"))) %>% filter(IID %in% pheno_out$IID) %>% filter(!duplicated(paste(FID, IID)))
+      covs <- analysis_dat %>% 
+        select(all_of(c(names(gen_covs), cov_ids, "age"))) %>% 
+        filter(agebin == age_group) %>%
+        filter(IID %in% pheno_out$IID) %>% 
+        filter(!duplicated(paste(FID, IID)))
       
+      #save the covariates for the GWAS
       write.table(covs, file=file.path(Sys.getenv("phenotype_processed_dir"), paste0(phecode, "_", age_group, "_", sex_out, ".covs")), row=FALSE, col=FALSE, qu=FALSE)
     
       sumstats <- summarise_phen(pheno_out)
