@@ -7,7 +7,6 @@ nthreads <- as.numeric(Sys.getenv("env_threads"))
 # read in bim file
 args <- commandArgs(T)
 bfile <- args[1]
-# bfile <- "/mnt/storage/private/mrcieu/research/scratch/Lifecourse-GWAS/gib/alspac/geno_input/subset/data_chr22"
 compress_alleles <- function(a) {
     i <- nchar(a) > 10
     if(any(i)) {
