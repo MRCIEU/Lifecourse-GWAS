@@ -116,6 +116,8 @@ if(Sys.getenv("genome_build") == "hg19") {
   system("chmod 755 bin/liftOver")
   a <- dplyr::select(selvariants, CHR, POS1=POS19, POS2=POS19, SNP)
 
+  # make all instances of Chr* etc to lower case chr*
+  a$CHR <- gsub("chr", "chr", a$CHR, ignore.case=TRUE)
   if(!grepl("chr", selvariants$CHR[1])) {
     a <- a %>% mutate(CHR = paste0("chr", CHR))
   }
