@@ -32,9 +32,8 @@ d=$(pwd)
 cd ${results_dir}
 md5sum -c ${cohort_name}_${step}.tar.gz.md5
 
-
-sftp_address="lifecoursesftp.blob.core.windows.net"
-sftp_username_full="lifecoursesftp.lifecourse-gwas.${sftp_username}"
+sftp_address="lcgwassftp.blob.core.windows.net"
+sftp_username_full="lcgwassftp.analysts.${sftp_username}"
 
 read -s -p "Ready to upload? Press enter to continue: " anykey
 echo ""
