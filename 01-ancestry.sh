@@ -36,7 +36,7 @@ containsElement () {
 }
 
 arg="all"
-declare -a sections=('all' 'prune' 'relateds' 'pcs')
+declare -a sections=('all' 'relateds' 'pcs' 'grm' 'keeplists')
 
 if [ -n "${1}" ]; then
 	arg="${1}"
@@ -68,36 +68,11 @@ section_message () {
 ## use list of unrelateds as keeplist going forwards
 
 
-
-
-if test -f "${genotype_processed_dir}/pcs.txt"; then
-    echo "pcafile already provided"
-    Rscript resources/genotypes/genetic_outliers.r \
-        ${genotype_processed_dir}/pcs.txt \
-        ${env_pca_sd} \
-        ${env_n_pcs} \
-        ${genotype_processed_dir}/genetic_outliers.txt \
-        ${results_dir}/01/pcaplot.png
-
-    n_outliers=`wc -l ${genotype_processed_dir}/genetic_outliers.txt | awk '{ print $1 }'`
-    if [ "${n_outliers}" != "0" ]; then
-        echo "WARNING: there are $n_outliers genetic outliers based on the user-provided PCs"
-        echo "We recommend one of the following"
-        echo "- changing the env_pca_sd threshold"
-        echo "- removing those outliers in ${genotype_processed_dir}/genetic_outliers.txt and recalculating the PCs"
-        echo "- delete the ${genotype_processed_dir}/pcs.txt file and allow the pipeline to calculate the PCs and remove outliers itself"
-        exit 1
-    fi
-    echo "Success - PCs already calculated and no outliers detected"
-    exit 0
-fi
-
-
-echo "Get relateds and unrelateds"
-
 if [ "$arg" = "relateds" ] || [ "$arg" = "all" ]
 then
     section_message "relateds"
+    echo "Get relateds and unrelateds"
+
     bin/king \
         -b ${genotype_processed_dir}/scratch/indep.bed \
         --unrelated \
@@ -126,10 +101,36 @@ then
 
 fi
 
-echo "Generate PCs"
-
 if [ "$arg" = "pcs" ] || [ "$arg" = "all" ]
 then
+
+    section_message "pcs"
+    echo "Generate PCs"
+
+    if test -f "${genotype_processed_dir}/pcs.txt"; then
+        echo "pcafile already provided"
+        Rscript resources/genotypes/genetic_outliers.r \
+            ${genotype_processed_dir}/pcs.txt \
+            ${env_pca_sd} \
+            ${env_n_pcs} \
+            ${genotype_processed_dir}/genetic_outliers.txt \
+            ${results_dir}/01/pcaplot.png
+
+        n_outliers=`wc -l ${genotype_processed_dir}/genetic_outliers.txt | awk '{ print $1 }'`
+        if [ "${n_outliers}" != "0" ]; then
+            echo "WARNING: there are $n_outliers genetic outliers based on the user-provided PCs"
+            echo "We recommend one of the following"
+            echo "- changing the env_pca_sd threshold"
+            echo "- removing those outliers in ${genotype_processed_dir}/genetic_outliers.txt and recalculatingg the PCs"
+            echo "- delete the ${genotype_processed_dir}/pcs.txt file and allow the pipeline to calculate the PCs and remove outliers itself"
+            exit 1
+        fi
+        echo "Success - PCs already calculated and no outliers detected"
+
+        if [ ! "$arg" = "all" ]; then
+            exit 0
+        fi
+    fi
 
     pcs_unrelated () {
         bin/flashpca \
@@ -153,9 +154,6 @@ then
             --inload ${genotype_processed_dir}/scratch/fastpca_loadings.txt \
             --numthreads ${env_threads}
     }
-
-
-    section_message "pcs"
 
     if [ "${env_family_data}" = "true" ]
     then
@@ -184,7 +182,7 @@ then
         echo "No genetic outliers detected"
     else
         echo "Remove genetic outliers from data"
-        echo "Found ${n_outliers}. Removing them and recalculatin PCs"
+        echo "Found ${n_outliers}. Removing them and recalculating PCs"
         bin/plink2 \
             --threads ${env_threads} \
             --bfile ${genotype_processed_dir}/scratch/indep_unrelated \
@@ -222,11 +220,9 @@ then
     fi
 fi
 
-
-echo "Generate sparse GRM"
-
 if [ "$arg" = "grm" ] || [ "$arg" = "all" ]
 then
+echo "Generate sparse GRM"
 
     section_message "grm"
 
@@ -248,32 +244,38 @@ then
     fi
 fi
 
-echo "Final keep lists"
-# Unrelateds
-# +kingunrelated.txt
-# -genetic_outliers.txt
-
-cat ${genotype_processed_dir}/kingunrelated.txt | \
-    grep -vw -f ${genotype_processed_dir}/genetic_outliers.txt > \
-    ${genotype_processed_dir}/unrelated_keep.txt
-
-nunrelated=$(cat ${genotype_processed_dir}/unrelated_keep.txt | wc -l)
-
-echo "N Unrelated: ${nunrelated}"
-
-# Relateds
-# +fam file (everyone)
-# -genetic_outliers.txt
-
-if [ "${env_family_data}" = "true" ]
+if [ "$arg" = "keeplists" ] || [ "$arg" = "all" ]
 then
-    awk '{ print $1"\t"$2 }' ${genotype_processed_dir}/scratch/indep.fam | \
-    grep -vw -f ${genotype_processed_dir}/genetic_outliers.txt > \
-    ${genotype_processed_dir}/related_keep.txt
+    section_message "keeplists"
+
+    echo "Final keep lists"
+    # Unrelateds
+    # +kingunrelated.txt
+    # -genetic_outliers.txt
+
+    cat ${genotype_processed_dir}/kingunrelated.txt | \
+        grep -vw -f ${genotype_processed_dir}/genetic_outliers.txt > \
+        ${genotype_processed_dir}/unrelated_keep.txt
+
+    nunrelated=$(cat ${genotype_processed_dir}/unrelated_keep.txt | wc -l)
+
+    echo "N Unrelated: ${nunrelated}"
+
+    # Relateds
+    # +fam file (everyone)
+    # -genetic_outliers.txt
+
+    if [ "${env_family_data}" = "true" ]
+    then
+        awk '{ print $1"\t"$2 }' ${genotype_processed_dir}/scratch/indep.fam | \
+        grep -vw -f ${genotype_processed_dir}/genetic_outliers.txt > \
+        ${genotype_processed_dir}/related_keep.txt
+    fi
+
+    nrelated=$(cat ${genotype_processed_dir}/related_keep.txt | wc -l)
+
+    echo "N Related: ${nrelated}"
+
 fi
-
-nrelated=$(cat ${genotype_processed_dir}/related_keep.txt | wc -l)
-
-echo "N Related: ${nrelated}"
 
 echo "Successfully generated PCs etc!"
