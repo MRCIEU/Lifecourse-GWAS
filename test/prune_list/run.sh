@@ -12,7 +12,10 @@ bzip2 -d hapmap3_r1_b36_fwd_consensus.qc.poly.recode.map.bz2
 awk '{ print $2 }' hapmap3_r1_b36_fwd_consensus.qc.poly.recode.map > hapmap3_r1_b36_fwd_consensus.qc.poly.recode.snp
 
 # prune hm3 using 1kg data
-plink2 --bfile data_maf0.01_rs_ref --extract hapmap3_r1_b36_fwd_consensus.qc.poly.recode.snp --indep-pairwise 3000 50 0.8 --out indep
+plink2 --bfile data_maf0.01_rs_ref --exclude range excl_hg19.txt --out indep --make-bed
+
+plink2 --bfile indep --extract hapmap3_r1_b36_fwd_consensus.qc.poly.recode.snp --indep-pairwise 2000 50 0.1 --out indep
+
 wc -l indep.prune.in
 plink2 --bfile data_maf0.01_rs_ref --extract indep.prune.in --out data_maf0.01_rs_ref_pruned --make-just-bim
 
@@ -33,10 +36,10 @@ zcat ALL.chrX.phase3_shapeit2_mvncall_integrated_v1c.20130502.genotypes.vcf.gz |
 wc -l vcf_idlist
 
 # Get hm3 positions etc from chromosome X
-grep -wf hapmap3_r1_b36_fwd_consensus.qc.poly.recode.snp /local-scratch/data/ukb/genetic/variants/arrays/imputed/released/2018-09-18/data/snp-stats/data.chrX.snp-stats | awk '{ print $3, $4, $4, $2 }' > hm3_x.bed
+grep -wf hapmap3_r1_b36_fwd_consensus.qc.poly.recode.snp data.chrX.snp-stats | awk '{ print $3, $4, $4, $2 }' > hm3_x.bed
 
 # Extract from vcf and prune
-plink2 --vcf ALL.chrX.phase3_shapeit2_mvncall_integrated_v1c.20130502.genotypes.vcf.gz --psam 1kg_chrX.psam --extract range hm3_x.bed --set-all-var-ids @:#:[b37]\$r,\$a --new-id-max-allele-len 161 --max-alleles 2 --indep-pairwise 3000 50 0.8 --out indep_x --split-par hg19
+plink2 --vcf ALL.chrX.phase3_shapeit2_mvncall_integrated_v1c.20130502.genotypes.vcf.gz --psam 1kg_chrX.psam --extract range hm3_x.bed --set-all-var-ids @:#:[b37]\$r,\$a --new-id-max-allele-len 161 --max-alleles 2 --indep-pairwise 2000 50 0.1 --out indep_x --split-par hg19
 
 # Make bed
 cut -d ":" -f 2 indep_x.prune.in > hm3_x_prune_pos
@@ -61,7 +64,7 @@ cut -d " " -f 1 hm3_prune_th_b37.bed | sort | uniq -c
 # Liftover to hg38
 wget http://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64/liftOver
 wget https://hgdownload.cse.ucsc.edu/goldenpath/hg19/liftOver/hg19ToHg38.over.chain.gz
-
+chmod 755 liftOver
 gunzip hg19ToHg38.over.chain.gz
 
 ./liftOver hm3_prune_th_b37.bed hg19ToHg38.over.chain hm3_prune_th_b38.bed unmapped
