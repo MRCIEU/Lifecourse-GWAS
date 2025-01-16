@@ -149,8 +149,7 @@ organise_phenotype("bmiz", phenotypes, df, gen_covs, covdat, agebins, pl=TRUE)
 Get git version
 
 ```{r version}
-g <- git2r::revparse_single(here(), "HEAD")
-g
+try(git2r::revparse_single(here(), "HEAD"), silent=TRUE)
 ```
 
 Session info

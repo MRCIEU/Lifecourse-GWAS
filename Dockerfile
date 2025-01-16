@@ -44,3 +44,4 @@ RUN R -e 'options( \
     renv::restore(repos = c(CRAN = "https://packagemanager.posit.co/cran/__linux__/jammy/latest"))'
 
 COPY . .
+COPY .git/ ./.git/

@@ -2,4 +2,5 @@ library(here)
 library(rmarkdown)
 
 args <- commandArgs(T)
-rmarkdown::render(args[1], output_dir=args[2])
+print(args)
+rmarkdown::render(args[1], intermediates_dir=args[2], knit_root_dir=args[2], output_dir=args[2])
