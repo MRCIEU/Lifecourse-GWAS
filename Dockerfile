@@ -17,6 +17,7 @@ RUN apt-get update && \
         git \
         libgit2-dev \
         libfribidi-dev \
+        pandoc \
         wget && \
         wget https://launchpad.net/ubuntu/+source/icu/70.1-2/+build/23145450/+files/libicu70_70.1-2_amd64.deb && \
         dpkg -i libicu70_70.1-2_amd64.deb && \
