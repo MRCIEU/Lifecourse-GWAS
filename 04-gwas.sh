@@ -9,8 +9,10 @@ source config.env
 # create results directory
 mkdir -p ${results_dir}/04
 
+
+index=$1
 # log everything from this script to a logfile in the results director
-exec &> >(tee ${results_dir}/04/logfile_step1)
+exec &> >(tee ${results_dir}/04/logfile_${index})
 
 # Inputs:
 
@@ -27,13 +29,13 @@ exec &> >(tee ${results_dir}/04/logfile_step1)
 # Output:
 
 # - GWAS summary stats per phen x age x ancestry
-#     - results/04/phen_<phencode>_<ancestry>_<age>.*
+#     - results/04/phen_<phencode>_<ancestry>_<age>.fastGWA.gz
+#     - results/04/phen_<phencode>_<ancestry>_<age>.fastGWA.summary.rds
 
 phenolist=( $(cat ${phenotype_processed_dir}/phenolist) )
 
 # Allow specific analysis to be run
 # Can take any number between 1:ngwas where ngwas is the number of rows in ${phenotype_processed_dir}/phenolist
-index=$1
 nphen=`cat ${phenotype_processed_dir}/phenolist | wc -l`
 
 if [ -z $index ]

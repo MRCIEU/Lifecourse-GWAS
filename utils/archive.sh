@@ -41,11 +41,12 @@ fi
 if [ $step -eq "04" ]; then
   
 	nphen=`cat ${phenotype_processed_dir}/phenolist | wc -l`
-	nsuccess=`tail -n 1 ${results_dir}/04/logfile* | grep -i "Success" | wc -l`
-	if [ "${nphen}" = "${nsuccess}" ]; then
+	nsuccess1=`ls -1 ${results_dir}/04/*fastGWA.gz | wc -l`
+    nsuccess2=`ls -1 ${results_dir}/04/*fastGWA.summary.rds | wc -l`
+	if [ "${nphen}" = "${nsuccess1}" ] && [ "${nphen}" = "${nsuccess2}" ]; then
 		echo "GWAS completed successfully for all ${nphen} phenotypes"
 	else
-		echo "Problem: only ${nsuccess} of ${nphen} expected phenotypes completed. Please check logs in ${results_dir}/04"
+		echo "Problem: only ${nsuccess1} GWAS results and ${nsuccess2} summaries of ${nphen} expected phenotypes completed. Please check logs in ${results_dir}/04"
 		exit 1
 	fi
 fi
