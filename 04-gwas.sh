@@ -62,8 +62,6 @@ fi
 
 echo $index
 
-## TODO
-# copy bim files over to results/04
 # Do GWAS for each phenotype
 i=1
 samplefile=$(head -n 1 ${genotype_input_list} | awk '{print $2}')

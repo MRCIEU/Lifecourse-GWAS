@@ -85,7 +85,6 @@ process_gwas <- function(fn, a) {
     return(s)
 }
 
-# fn <- "/local-scratch/projects/Lifecourse-GWAS/gib/alspac/results/03/bmi_10-11.fastGWA"
 fn <- commandArgs(T)[1]
 ref <- commandArgs(T)[2]
 nthreads <- as.numeric(Sys.getenv("env_threads"))
