@@ -58,7 +58,7 @@ main <- function()
     facet_wrap(PC1~PCy ,ncol=4) +
     theme(strip.text.x = element_text(size=6),strip.text.y = element_text(size=6)) +
     theme(axis.text = element_text(size = 6)) 
-    ggsave(plot=pcaplot,filename=pcaplotfile,height=6,width=6)
+    ggsave(plot=pcaplot,filename=pcaplotfile,height=10,width=10)
 
 }
 
