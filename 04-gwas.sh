@@ -101,11 +101,10 @@ do
                 ./bin/gcta-1.94.1 \
                     --mbgen ${genotype_input_list} \
                     --sample ${samplefile} \
-                    --fastGWA-mlm \
-                    --grm-sparse ${genotype_processed_dir}/sparsegrm \
-                    --extract ${genotype_processed_dir}/variant_inclusion.txt \
-                    --keep ${genotype_processed_dir}/sample_inclusion.txt \
+                    --fastGWA-lr \
                     --pheno ${phen} \
+                    --extract ${genotype_processed_dir}/variant_inclusion.txt \
+                    --keep ${genotype_processed_dir}/unrelated_keep.txt \
                     --qcovar ${covs} \
                     --thread-num ${env_threads} \
                     --maf 0 \
