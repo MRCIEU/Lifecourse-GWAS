@@ -646,10 +646,10 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
         cov_ids <- "sex"
       }
       
-      #select these observations from the original data and remove 
+      #select these observations from the original data and remove duplicates
       covs <- analysis_data %>% 
         filter(agebin == age_group) %>%
-        select(all_of(c(names(gen_covs), cov_ids))) %>% 
+        select(all_of(c(names(gen_covs), names(covdat[,!names(covdat) %in% c("deob")]), cov_ids))) %>% 
         filter(IID %in% pheno_out$IID) %>% 
         filter(!duplicated(paste(FID, IID)))
     
@@ -761,7 +761,7 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
       }
       covs <- analysis_data %>% 
         filter(lsbin == age_group) %>%
-        select(all_of(c(names(gen_covs), cov_ids, "age"))) %>% 
+        select(all_of(c(names(gen_covs), names(covdat[,!names(covdat) %in% c("deob")]), cov_ids, "age"))) %>% 
         filter(IID %in% pheno_out$IID) %>% 
         filter(!duplicated(paste(FID, IID)))
       
