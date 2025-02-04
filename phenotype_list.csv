@@ -20,6 +20,6 @@ Adiponectin,adiponectin,cont,ug/ml,0,100,sex,none,yes,ieu-a-1
 Calcium,calcium,cont,mmol/L,0,10,sex:cholesterol_med,none,yes,ebi-a-GCST90013999
 Vitamin D,vitd,cont,nmol/L,0,400,sex,none,yes,ebi-a-GCST90000618
 Estradiol,estradiol,cont,pmol/L,0,15000,sex:hormone_med,none,yes,ebi-a-GCST90012105
-Total testosterone,bioavail_testosterone,cont,nmol/L,0,60,sex:hormone_med,none,yes,ebi-a-GCST90012114
-Bioavailable testosterone,testosterone,cont,nmol/L,0,60,sex:hormone_med,none,yes,ebi-a-GCST90012104
+Total testosterone,testosterone,cont,nmol/L,0,60,sex:hormone_med,none,yes,ebi-a-GCST90012114
+Bioavailable testosterone,bioavail_testosterone,cont,nmol/L,0,60,sex:hormone_med,none,yes,ebi-a-GCST90012104
 Sex hormone binding globulin,shbg,cont,nmol/L,0,300,sex:hormone_med,none,yes,ieu-b-4870
