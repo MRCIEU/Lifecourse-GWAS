@@ -9,11 +9,11 @@ Files needed to input into this:
  - phenotype description (name, id, units, min, max etc..)
  - genetic covariates (id, PC's, sex*)
  - phenotype file (id, age, phenotype value, age varying covariates (medication))
- - covariates file (id, non age varying covariates (year of birth, sex*))
+ - covariates file (id, non age varying covariates (year of birth, sex*) any other fixed adjustments (e.g. genotype batch controls))
  
 Minimum phenotype columns required: 'FID' 'IID' 'age' 'value' then any required covariates**. Value is the value of the trait, column name should be 'value' and the file name the id of the trait (e.g. 'bmi.txt' for body mass index). Phenotypic covariates (and column names) required for each trait are described in "phenotypes_list" csv file. 
 
-*Sex can be input with either the genetic or phenotypic covariates but is assumed to be coded as 1 - male, 2 - female.
+*Sex is assumed to be coded as 1 - male, 2 - female.
 **If observations for either blood pressure or cholesterol medication are missing they should be included as 0. If this information has not been recorded (or is assumed to be 0 for all individuals) please include a column of 0's with the appropriate heading in the phenotypic data. 
  
 Other notes:
@@ -101,9 +101,11 @@ covdat <- read_covariate_data(
 Age distribution
 
 ```{r age_distribution}
+if('yob' %in% cov_list) {
 covdat$deob <- cut(covdat$yob/10, breaks=seq(180,203, by=1))
 os$deob_summary <- table(covdat$deob)
 os$deob_summary
+}
 ```
 
 Sex distribution
@@ -116,6 +118,7 @@ os$sex_table
 Sex x yob
 
 ```{r sex_yob}
+if('yob' %in% cov_list) {
 os$sex_yob <- covdat %>% 
   group_by(sex) %>% 
   summarise(
@@ -123,6 +126,7 @@ os$sex_yob <- covdat %>%
       yob_sd = sd(yob, na.rm=T)
   )
 os$sex_yob
+}
 saveRDS(os, file = file.path(Sys.getenv("results_dir"), "02", "summary.rds"))
 ```
 
@@ -137,11 +141,11 @@ saveRDS(os, file = file.path(Sys.getenv("results_dir"), "02", "summary.rds"))
 ```{r phenotype_processing, echo=FALSE}
 for(i in 1:length(phenotypes)){
   cat("\n### ", phenotypes[i], "\n\n")
-  organise_phenotype(phenotypes[i], phenotypes, df, gen_covs, covdat, agebins, pl=TRUE)
+  organise_phenotype(phenotypes[i], phenotypes, df, gen_covs, cov_list, covdat, agebins, pl=TRUE)
 }
 
-organise_phenotype("pp", phenotypes, df, gen_covs, covdat, agebins, pl=TRUE)
-organise_phenotype("bmiz", phenotypes, df, gen_covs, covdat, agebins, pl=TRUE)
+organise_phenotype("pp", phenotypes, df, gen_covs, cov_list, covdat, agebins, pl=TRUE)
+organise_phenotype("bmiz", phenotypes, df, gen_covs, cov_list, covdat, agebins, pl=TRUE)
 ```
 
 ## Run details

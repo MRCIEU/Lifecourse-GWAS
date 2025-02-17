@@ -1,25 +1,25 @@
 Name,pheno_id,var_type,units,min,max,covs,transformation,standardisation,opengwasid
-Body mass index,bmi,cont,kg/m2,0,60,sex,log,yes,ukb-b-19953
-Height,height,cont,cm,10,250,sex,none,yes,ebi-a-GCST90029008
-Waist circumference,wc,cont,cm,0,250,sex,none,yes,ukb-b-9405
-Waist to hip ratio,whr,cont,ratio,0,20,sex,none,yes,ebi-a-GCST90029009
-Total body bone mineral density,tb-bmd,cont,g/cm2,0,20,sex,none,yes,ebi-a-GCST004772
-Forced expiratory volume in 1 second,fev1,cont,l,0,10,sex,none,yes,ukb-b-19657
-FEV1/FVC ratio,fev1fvc,cont,l,0,10,sex,none,yes,ebi-a-GCST90029026
-Systolic blood pressure,sbp,cont,mmHg,0,250,sex:bp_med,none,yes,ukb-b-20175
-Diastolic blood pressure,dbp,cont,mmHg,0,250,sex:bp_med,none,yes,
-LDL cholesterol,ldl,cont,mmol/L,0,10,sex:cholesterol_med:insulin_med,none,yes,ieu-b-110
-HDL cholesterol,hdl,cont,mmol/L,0,10,sex:cholesterol_med:insulin_med,none,yes,ieu-b-109
-Triglycerides,trig,cont,mmol/L,0,20,sex:cholesterol_med,none,yes,ieu-b-111
-C-reactive protein,crp,cont,mg/L,0,100,sex:cholesterol_med,none,yes,ebi-a-GCST90014002
-Interleukin 6,il6,cont,pg/ml,0,100,sex,none,yes,ebi-a-GCST90012005
-Leptin,leptin,cont,ng/ml,0,100,sex,none,yes,ebi-a-GCST90007307
-Glycated haemoglobin,hba1c,cont,mmol/mol,0,70,sex:insulin_med,none,yes,ebi-a-GCST90014006
-Insulin,insulin,cont,pmol/L,0,200,sex:insulin_med,none,yes,ukb-b-15445
-Adiponectin,adiponectin,cont,ug/ml,0,100,sex,none,yes,ieu-a-1
-Calcium,calcium,cont,mmol/L,0,10,sex:cholesterol_med,none,yes,ebi-a-GCST90013999
-Vitamin D,vitd,cont,nmol/L,0,400,sex,none,yes,ebi-a-GCST90000618
-Estradiol,estradiol,cont,pmol/L,0,15000,sex:hormone_med,none,yes,ebi-a-GCST90012105
-Total testosterone,testosterone,cont,nmol/L,0,60,sex:hormone_med,none,yes,ebi-a-GCST90012114
-Bioavailable testosterone,bioavail_testosterone,cont,nmol/L,0,60,sex:hormone_med,none,yes,ebi-a-GCST90012104
-Sex hormone binding globulin,shbg,cont,nmol/L,0,300,sex:hormone_med,none,yes,ieu-b-4870
+Body mass index,bmi,cont,kg/m2,0,60,,log,yes,ukb-b-19953
+Height,height,cont,cm,10,250,,none,yes,ebi-a-GCST90029008
+Waist circumference,wc,cont,cm,0,250,,none,yes,ukb-b-9405
+Waist to hip ratio,whr,cont,ratio,0,20,,none,yes,ebi-a-GCST90029009
+Total body bone mineral density,tb-bmd,cont,g/cm2,0,20,,none,yes,ebi-a-GCST004772
+Forced expiratory volume in 1 second,fev1,cont,l,0,10,,none,yes,ukb-b-19657
+FEV1/FVC ratio,fev1fvc,cont,l,0,10,,none,yes,ebi-a-GCST90029026
+Systolic blood pressure,sbp,cont,mmHg,0,250,bp_med,none,yes,ukb-b-20175
+Diastolic blood pressure,dbp,cont,mmHg,0,250,bp_med,none,yes,
+LDL cholesterol,ldl,cont,mmol/L,0,10,cholesterol_med:insulin_med,none,yes,ieu-b-110
+HDL cholesterol,hdl,cont,mmol/L,0,10,cholesterol_med:insulin_med,none,yes,ieu-b-109
+Triglycerides,trig,cont,mmol/L,0,20,cholesterol_med,none,yes,ieu-b-111
+C-reactive protein,crp,cont,mg/L,0,100,,none,yes,ebi-a-GCST90014002
+Interleukin 6,il6,cont,pg/ml,0,100,,none,yes,ebi-a-GCST90012005
+Leptin,leptin,cont,ng/ml,0,100,,none,yes,ebi-a-GCST90007307
+Glycated haemoglobin,hba1c,cont,mmol/mol,0,70,insulin_med,none,yes,ebi-a-GCST90014006
+Insulin,insulin,cont,pmol/L,0,200,insulin_med,none,yes,ukb-b-15445
+Adiponectin,adiponectin,cont,ug/ml,0,100,,none,yes,ieu-a-1
+Calcium,calcium,cont,mmol/L,0,10,,none,yes,ebi-a-GCST90013999
+Vitamin D,vitd,cont,nmol/L,0,400,,none,yes,ebi-a-GCST90000618
+Estradiol,estradiol,cont,pmol/L,0,15000,hormone_med,none,yes,ebi-a-GCST90012105
+Total testosterone,testosterone,cont,nmol/L,0,60,hormone_med,none,yes,ebi-a-GCST90012114
+Bioavailable testosterone,bioavail_testosterone,cont,nmol/L,0,60,hormone_med,none,yes,ebi-a-GCST90012104
+Sex hormone binding globulin,shbg,cont,nmol/L,0,300,hormone_med,none,yes,ieu-b-4870

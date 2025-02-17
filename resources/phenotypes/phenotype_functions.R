@@ -71,7 +71,9 @@ read_covariate_data <- function(fn, covariate_list=c("sex", "yob")) {
   }
   dat <- subset(dat, select=c("FID", "IID", covariate_list))
   dat <- subset(dat, !duplicated(paste(FID, IID)))
+  if("yob" %in% covariate_list) {
   dat$deob <- cut(dat$yob/10, breaks=seq(180,203, by=1))
+  }
   if("sex" %in% covariate_list) {
     s <- unique(dat$sex[!is.na(dat$sex)])
     if(!setequal(c(1,2), s)) {
@@ -331,22 +333,16 @@ phenoplot <- function(Yvbl, Xvbl, Quantiles=c(0.25,0.5,0.75), knots=NA, Nknots=0
 ##Pulse pressure and bmiz are generated from other data provided and the outlier removal values and transformations are set in this code. 
 
 
-organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebins, pl=TRUE) {
+organise_phenotype <- function(phecode, phenotypes, df, gen_covs, cov_list, covdat, agebins, pl=TRUE) {
   
-  ##read in the data and any age varying covariates (that are in the same file as the phenotypic data)
+  ##read in the data and any age varying covariates (these should be listed in the phenotype list and be in the phenotypes file)
   
   if(phecode != "pp" & phecode != "bmiz"){
     type <- filter(df, pheno_id == phecode)$var_type
     str(filter(df, pheno_id == phecode))
     cs <- list()
-    adjust_covs <- NULL
-    if(phecode == "ldl"){
-      adjust_covs <- "cholesterol_med"
-    }
-    if(phecode == "sbp" | phecode == "dbp"){
-      adjust_covs <- "bp_med"
-    }
-    phen <- read_phenotype_data(phecode, Sys.getenv("phenotype_input_dir"), agebins, adjust_covs)
+    vary_covs <- unlist(subset(df, pheno_id == phecode)$covs %>% strsplit(., ":"))
+    phen <- read_phenotype_data(phecode, Sys.getenv("phenotype_input_dir"), agebins, vary_covs)
   }
   
   ##read in data for dpb and sbp and generate pulse pressure
@@ -455,19 +451,23 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
   }
   cs$age_summary <- summary(dat$age)
   cs$age_quantile <- dat$age %>% quantile(probs=seq(0, 1, 0.01))
-
-  cs$deob_summary <- table(dat$deob)
-  phecode
-  cs$deob_summary
+ 
+  if('yob' %in% cov_list) {
   
-  if(pl) {
-    hist(dat$yob, breaks=length(unique(round(dat$yob))), main=paste0(phecode, " year of birth distribution"))
+    cs$deob_summary <- table(dat$deob)
+    phecode
+    cs$deob_summary
+  
+    if(pl) {
+      hist(dat$yob, breaks=length(unique(round(dat$yob))), main=paste0(phecode, " year of birth distribution"))
+    }
   }
-
+  
   cs$sex_table <- table(dat$sex)
   phecode
   cs$sex_table
 
+  if('yob' %in% cov_list) {
   cs$sex_yob <- dat %>% 
     group_by(sex) %>% 
     summarise(
@@ -476,6 +476,7 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
     )
   phecode
   cs$sex_yob
+  }
 
 
   #remove outliers and plot the remaining data
@@ -637,19 +638,19 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
 
       #define the covariates that are saved as adjustments for the GWAS
       if(phecode != "pp" & phecode != "bmiz"){
-      cov_ids <- subset(df, pheno_id == phecode)$covs %>% strsplit(., ":") %>% {.[[1]]}
+      cov_ids <- c(unlist(subset(df, pheno_id == phecode)$covs %>% strsplit(., ":")), cov_list)
       }
       if(phecode == "pp"){
-        cov_ids <- c("sex", "bp_med")
+        cov_ids <- c("bp_med", cov_list)
       }
       if(phecode == "bmiz"){
-        cov_ids <- "sex"
+        cov_ids <- cov_list
       }
       
       #select these observations from the original data and remove duplicates
       covs <- analysis_data %>% 
         filter(agebin == age_group) %>%
-        select(all_of(c(names(gen_covs), names(covdat[,!names(covdat) %in% c("deob")]), cov_ids))) %>% 
+        select(all_of(c(names(gen_covs), cov_ids))) %>% 
         filter(IID %in% pheno_out$IID) %>% 
         filter(!duplicated(paste(FID, IID)))
     
@@ -750,18 +751,21 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, covdat, agebin
       ##save the phenotype data for the GWAS
       write.table(subset(pheno_out, select=c("FID", "IID", "value")), file=file.path(Sys.getenv("phenotype_processed_dir"), paste0(phecode, "_", age_group, "_", sex_out, ".phen")), row=FALSE, col=FALSE, qu=FALSE)
 
+      #define the covariates that are saved as adjustments for the GWAS
       if(phecode != "pp" & phecode != "bmiz"){
-      cov_ids <- subset(df, pheno_id == phecode)$covs %>% strsplit(., ":") %>% {.[[1]]}
+        cov_ids <- c(unlist(subset(df, pheno_id == phecode)$covs %>% strsplit(., ":")), cov_list)
       }
       if(phecode == "pp"){
-        cov_ids <- c("sex", "bp_med")
+        cov_ids <- c("bp_med", cov_list)
       }
       if(phecode == "bmiz"){
-        cov_ids <- "sex"
+        cov_ids <- cov_list
       }
+      
+      
       covs <- analysis_data %>% 
         filter(lsbin == age_group) %>%
-        select(all_of(c(names(gen_covs), names(covdat[,!names(covdat) %in% c("deob")]), cov_ids, "age"))) %>% 
+        select(all_of(c(names(gen_covs), cov_ids, "age"))) %>% 
         filter(IID %in% pheno_out$IID) %>% 
         filter(!duplicated(paste(FID, IID)))
       
