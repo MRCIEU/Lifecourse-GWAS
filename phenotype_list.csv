@@ -8,9 +8,9 @@ Forced expiratory volume in 1 second,fev1,cont,l,0,100,,none,yes,ukb-b-19657
 FEV1/FVC ratio,fev1fvc,cont,l,0,100,,none,yes,ebi-a-GCST90029026
 Systolic blood pressure,sbp,cont,mmHg,0,250,bp_med,none,yes,ukb-b-20175
 Diastolic blood pressure,dbp,cont,mmHg,0,250,bp_med,none,yes,ieu-b-39
-LDL cholesterol,ldl,cont,mmol/L,0,10,cholesterol_med,none,yes,ieu-b-110
-HDL cholesterol,hdl,cont,mmol/L,0,10,cholesterol_med,none,yes,ieu-b-109
-Triglycerides,trig,cont,mmol/L,0,20,cholesterol_med,none,yes,ieu-b-111
+LDL cholesterol,ldl,cont,mmol/L,0,50,cholesterol_med,none,yes,ieu-b-110
+HDL cholesterol,hdl,cont,mmol/L,0,50,cholesterol_med,none,yes,ieu-b-109
+Triglycerides,trig,cont,mmol/L,0,50,cholesterol_med,none,yes,ieu-b-111
 C-reactive protein,crp,cont,mg/L,0,100,,none,yes,ebi-a-GCST90014002
 Interleukin 6,il6,cont,pg/ml,0,100,,none,yes,ebi-a-GCST90012005
 Leptin,leptin,cont,ng/ml,0,100,,none,yes,ebi-a-GCST90007307
