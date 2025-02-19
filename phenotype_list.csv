@@ -4,8 +4,8 @@ Height,height,cont,cm,10,250,,none,yes,ebi-a-GCST90029008
 Waist circumference,wc,cont,cm,0,250,,none,yes,ukb-b-9405
 Waist to hip ratio,whr,cont,ratio,0,20,,none,yes,ebi-a-GCST90029009
 Total body bone mineral density,tb-bmd,cont,g/cm2,0,20,,none,yes,ebi-a-GCST004772
-Forced expiratory volume in 1 second,fev1,cont,l,0,10,,none,yes,ukb-b-19657
-FEV1/FVC ratio,fev1fvc,cont,l,0,10,,none,yes,ebi-a-GCST90029026
+Forced expiratory volume in 1 second,fev1,cont,l,0,100,,none,yes,ukb-b-19657
+FEV1/FVC ratio,fev1fvc,cont,l,0,100,,none,yes,ebi-a-GCST90029026
 Systolic blood pressure,sbp,cont,mmHg,0,250,bp_med,none,yes,ukb-b-20175
 Diastolic blood pressure,dbp,cont,mmHg,0,250,bp_med,none,yes,ieu-b-39
 LDL cholesterol,ldl,cont,mmol/L,0,10,cholesterol_med,none,yes,ieu-b-110
