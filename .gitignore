@@ -52,5 +52,3 @@ rsconnect/
 
 config.env
 config.json
-
-bin/liftOver

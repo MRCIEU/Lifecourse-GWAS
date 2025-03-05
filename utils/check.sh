@@ -37,7 +37,6 @@ if cat $tf | grep -q "liftOver"; then
 else
     cat $tf
 fi
-rm bin/liftOver
 
 
 echo "Checking cohort name..."
