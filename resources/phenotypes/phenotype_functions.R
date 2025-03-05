@@ -67,7 +67,7 @@ read_covariate_data <- function(fn, covariate_list=c("sex", "yob")) {
   column_names <- c("FID", "IID", covariate_list)
   if(!all(column_names %in% names(dat))) {
     print(head(dat))
-    stop("expected FID, IID, ", paste(covariate_list, collapse=", "), " in pheno_covariates.txt file")
+    stop("expected FID, IID, ", paste(covariate_list, collapse=", "), " in static_covariates.txt file")
   }
   dat <- subset(dat, select=c("FID", "IID", covariate_list))
   dat <- subset(dat, !duplicated(paste(FID, IID)))

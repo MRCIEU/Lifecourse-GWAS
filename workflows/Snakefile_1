@@ -65,7 +65,7 @@ rule phenotypes:
     input: 
         f"{geno_proc}/{bfile_prefix}pc.txt",
         expand("{phen_input}/{phen}.txt", phen_input=phen_input, phen=phen),
-        f"{phen_input}/pheno_covariates.txt"
+        f"{phen_input}/static_covariates.txt"
     output:
         expand("{resdir}/02/{phen}_summary.rds", resdir=resdir, phen=phen),
         expand("{resdir}/02/summary.rds", resdir=resdir, phen=phen),

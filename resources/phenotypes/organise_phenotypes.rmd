@@ -27,7 +27,6 @@ Other notes:
 ```{r libraries, include=FALSE, message=FALSE}
 library(rms)
 library(quantreg)
-library(git2r)
 library(dplyr)
 library(tidyr)
 library(ggplot2)
@@ -153,7 +152,7 @@ organise_phenotype("bmiz", phenotypes, df, gen_covs, cov_list, covdat, agebins, 
 Get git version
 
 ```{r version}
-try(git2r::revparse_single(here(), "HEAD"), silent=TRUE)
+try(system("git --no-pager log | head -n 3", intern = TRUE)[c(1,3)], silent = TRUE)
 ```
 
 Session info
