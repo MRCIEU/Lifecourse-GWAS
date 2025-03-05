@@ -31,8 +31,6 @@ else
 fi
 
 echo "Checking liftOver..."
-gunzip -c bin/liftOver.gz > bin/liftOver
-chmod 777 bin/liftOver
 ./bin/liftOver > $tf 2>&1
 if cat $tf | grep -q "liftOver"; then
     echo "All good!"

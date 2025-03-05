@@ -11,12 +11,12 @@ source config.env
 # td=$(mktemp -d)
 # cd $td
 
-genotype_input_dir=$(head -n 1 geno_input.txt | awk '{ print $1 }' | xargs -I {} dirname {})
+genotype_input_dir=$(head -n 1 $genotype_input_list | awk '{ print $1 }' | xargs -I {} dirname {})
 
 apptainer run \
     --containall \
     --bind "${PWD}/config.env:/project/config.env" \
-    --bind "${PWD}/geno_input.txt:/project/geno_input.txt" \
+    --bind "${PWD}/${genotype_input_list}:/project/${genotype_input_list}" \
     --bind "${phenotype_input_dir}:${phenotype_input_dir}" \
     --bind "${phenotype_processed_dir}:${phenotype_processed_dir}" \
     --bind "${genotype_input_dir}:${genotype_input_dir}" \

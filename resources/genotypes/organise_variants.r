@@ -112,8 +112,6 @@ get_lambda(selvariants$P, file.path(resdir, "null_qq.png"))
 
 if(Sys.getenv("genome_build") == "hg19") {
   names(selvariants)[names(selvariants) == "POS"] <- "POS19"
-  system("gunzip -c bin/liftOver.gz > bin/liftOver")
-  system("chmod 777 bin/liftOver")
   a <- dplyr::select(selvariants, CHR, POS1=POS19, POS2=POS19, SNP)
 
   # make all instances of Chr* etc to lower case chr*
