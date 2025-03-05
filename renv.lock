@@ -482,18 +482,6 @@
       ],
       "Hash": "44c6a2f8202d5b7e878ea274b1092426"
     },
-    "git2r": {
-      "Package": "git2r",
-      "Version": "0.35.0",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "R",
-        "graphics",
-        "utils"
-      ],
-      "Hash": "8828605664949b92d0bf3f931e7c431b"
-    },
     "glue": {
       "Package": "glue",
       "Version": "1.8.0",
