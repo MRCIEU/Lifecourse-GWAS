@@ -8,6 +8,7 @@ source config.env
 
 # create results directory
 mkdir -p ${results_dir}/00
+mkdir -p ${genotype_processed_dir}/tmp
 
 # log everything from this script to a logfile in the results directory
 exec &> >(tee ${results_dir}/00/logfile_b)
