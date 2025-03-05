@@ -7,7 +7,7 @@ source config.env
 newdir=$1
 
 if [ -z $newdir ]; then
-    echo "Usage: ./bgen_to_pgen.sh <newdir>"
+    echo "Usage: ./update_bgen.sh <newdir>"
     exit 1
 fi
 
@@ -24,7 +24,6 @@ do
     sample=$(awk -v i=$i 'NR==i { print $2 }' ${genotype_input_list})
     bn=$(basename $bgen .bgen)
     dn=$(dirname $bgen)
-
     ./bin/plink2 --bgen ${bgen} ref-first --sample ${sample} --export bgen-1.2 --out ${newdir}/${bn} --threads ${env_threads}
     ./bin/bgenix -g ${newdir}/${bn}.bgen -index -clobber
     echo "${newdir}/${bn}.bgen ${newdir}/${bn}.sample" >> $tf
