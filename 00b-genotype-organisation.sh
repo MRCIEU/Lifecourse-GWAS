@@ -10,7 +10,7 @@ source config.env
 mkdir -p ${results_dir}/00
 
 # log everything from this script to a logfile in the results directory
-exec &> >(tee ${results_dir}/00/logfile)
+exec &> >(tee ${results_dir}/00/logfile_b)
 
 
 echo "Get MAF and INFO scores"

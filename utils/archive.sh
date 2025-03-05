@@ -28,7 +28,25 @@ fi
 
 echo "Checking that the step has completed"
 
-if [ ! $step -eq "04" ]; then
+if [ $step -eq "00" ]; then
+    if $(tail -n 1 ${results_dir}/00/logfile_a | grep -i -q "success") ;
+    then
+        echo "Step 00a has completed successfully"
+    else
+        echo "Sorry, based on the logfile, step 00a has not completed successfully. Please check the logfile or contact the developers for help."
+        exit 1
+    fi
+    if $(tail -n 1 ${results_dir}/00/logfile_b | grep -i -q "success") ;
+    then
+        echo "Step 00b has completed successfully"
+    else
+        echo "Sorry, based on the logfile, step 00b has not completed successfully. Please check the logfile or contact the developers for help."
+        exit 1
+    fi
+fi
+
+# if 01 02 03
+if [ $step -eq "01" ] || [ $step -eq "02" ] || [ $step -eq "03" ]; then
     if $(tail -n 1 ${results_dir}/$step/logfile | grep -i -q "success") ;
     then
         echo "Step $step has completed successfully"

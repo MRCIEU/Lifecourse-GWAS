@@ -52,7 +52,7 @@ fi
 
 
 # check build = hg19 or hg38
-if [[ $build != "hg19" && $build != "hg38" ]]; then
+if [[ $genome_build != "hg19" && $genome_build != "hg38" ]]; then
     echo "Error: build specified in config.env must be 'hg19' or 'hg38'"
     exit 1
 fi
