@@ -30,6 +30,18 @@ else
     cat $tf
 fi
 
+echo "Checking liftOver..."
+gunzip -c bin/liftOver.gz > bin/liftOver
+chmod 777 bin/liftOver
+./bin/liftOver > $tf 2>&1
+if cat $tf | grep -q "liftOver"; then
+    echo "All good!"
+else
+    cat $tf
+fi
+rm bin/liftOver
+
+
 echo "Checking cohort name..."
 if [[ ! $cohort_name =~ ^[a-zA-Z0-9_]+$ ]]; then
     echo "Error: Please check your config.env. The variable cohort_name must be alphanumeric with no spaces. It will be used to generate your results files."
