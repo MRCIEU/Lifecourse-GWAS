@@ -24,7 +24,7 @@ do
     sample=$(awk -v i=$i 'NR==i { print $2 }' ${genotype_input_list})
     bn=$(basename $bgen .bgen)
     dn=$(dirname $bgen)
-    ./bin/plink2 --bgen ${bgen} ref-first --sample ${sample} --export bgen-1.3 --out ${newdir}/${bn} --threads ${env_threads}
+    ./bin/plink2 --bgen ${bgen} ref-first --sample ${sample} --export bgen-1.3 id-paste=iid --out ${newdir}/${bn} --threads ${env_threads}
     ./bin/bgenix -g ${newdir}/${bn}.bgen -index -clobber
     echo "${newdir}/${bn}.bgen ${newdir}/${bn}.sample" >> $tf
 done
