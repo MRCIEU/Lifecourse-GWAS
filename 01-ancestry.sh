@@ -12,6 +12,9 @@ mkdir -p ${results_dir}/01
 # log everything from this script to a logfile in the results director
 exec &> >(tee ${results_dir}/01/logfile)
 
+mkdir -p ${genotype_processed_dir}/tmp
+export TMPDIR=${genotype_processed_dir}/tmp
+
 # Inputs:
 # - Cleaned genotype data
 

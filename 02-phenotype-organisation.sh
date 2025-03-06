@@ -12,6 +12,9 @@ mkdir -p ${results_dir}/02
 # log everything from this script to a logfile in the results director
 exec &> >(tee ${results_dir}/02/logfile)
 
+mkdir -p ${genotype_processed_dir}/tmp
+export TMPDIR=${genotype_processed_dir}/tmp
+
 # Inputs:
 
 # - Phenotype files

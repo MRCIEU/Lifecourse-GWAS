@@ -14,6 +14,7 @@ exec &> >(tee ${results_dir}/00/logfile_a)
 
 mkdir -p ${genotype_processed_dir}/scratch
 mkdir -p ${genotype_processed_dir}/tmp
+export TMPDIR=${genotype_processed_dir}/tmp
 
 echo "Organise samples"
 Rscript resources/genotypes/organise_samples.r ${genotype_input_list} ${genotype_processed_dir}/sample_inclusion.txt ${sample_inclusion_list}
