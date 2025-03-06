@@ -18,6 +18,7 @@ apptainer run \
     --bind "${PWD}/config.env:/project/config.env" \
     --bind "${PWD}/${genotype_input_list}:/project/${genotype_input_list}" \
     --bind "${phenotype_input_dir}:${phenotype_input_dir}" \
+    --bind "${PWD}/${sample_inclusion_list}:/project/${sample_inclusion_list}" \
     --bind "${phenotype_processed_dir}:${phenotype_processed_dir}" \
     --bind "${genotype_input_dir}:${genotype_input_dir}" \
     --bind "${genotype_processed_dir}:${genotype_processed_dir}" \
