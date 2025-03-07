@@ -21,7 +21,7 @@ Rscript resources/genotypes/rand.r ${genotype_processed_dir}/sample_inclusion.tx
 
 samplefile=$(head -n 1 ${genotype_input_list} | awk '{print $2}')
 
-./bin/gcta-1.94.1 \
+./bin/gcta64 \
     --mbgen ${genotype_input_list} \
     --sample ${samplefile} \
     --pheno ${genotype_processed_dir}/scratch/phenrand.txt \

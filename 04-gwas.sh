@@ -82,7 +82,7 @@ do
         then
             echo "family"
             (
-              ./bin/gcta-1.94.1 \
+              ./bin/gcta64 \
                 --mbgen ${genotype_input_list} \
                 --sample ${samplefile} \
                 --fastGWA-mlm \
@@ -100,7 +100,7 @@ do
             echo $flag
             if [ "$flag" -eq "1" ] ; then
                 echo "LMM failed. Trying linear model using unrelateds only"
-                ./bin/gcta-1.94.1 \
+                ./bin/gcta64 \
                     --mbgen ${genotype_input_list} \
                     --sample ${samplefile} \
                     --fastGWA-lr \
@@ -115,7 +115,7 @@ do
             fi
         else
             echo "not family"
-            ./bin/gcta-1.94.1 \
+            ./bin/gcta64 \
                 --mbgen ${genotype_input_list} \
                 --sample ${samplefile} \
                 --fastGWA-lr \

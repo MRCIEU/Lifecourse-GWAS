@@ -13,8 +13,8 @@
 
 # This code generates the sparse GRM the long way - first full grm then making it sparse
 # expect it gives similar answer as the quick version in the code
-bin/gcta-1.94.1 --bfile ${genotype_processed_dir}/scratch/indep --make-grm-bin --out ${genotype_processed_dir}/${bfile_prefix}_test
-bin/gcta-1.94.1 --grm ${genotype_processed_dir}/${bfile_prefix}_test --make-bK-sparse 0.05 --out ${genotype_processed_dir}/${bfile_prefix}_test
+bin/gcta64 --bfile ${genotype_processed_dir}/scratch/indep --make-grm-bin --out ${genotype_processed_dir}/${bfile_prefix}_test
+bin/gcta64 --grm ${genotype_processed_dir}/${bfile_prefix}_test --make-bK-sparse 0.05 --out ${genotype_processed_dir}/${bfile_prefix}_test
 
 # check in R:
 # a <- read.table("/mnt/storage/private/mrcieu/research/scratch/Lifecourse-GWAS/gib/geno_proc/data_chr_test.grm.sp")
