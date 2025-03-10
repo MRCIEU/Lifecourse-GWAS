@@ -92,8 +92,8 @@ do
                 --pheno ${phen} \
                 --qcovar ${covs} \
                 --thread-num ${env_threads} \
-                --maf 0 \
-                --geno 1 \
+                --maf ${env_minmaf} \
+                --geno ${env_miss} \
                 --out ${results_dir}/04/${filename}
             ) || ( echo "1" > ${phen}.flag )
             flag=`cat ${phen}.flag`
@@ -109,8 +109,8 @@ do
                     --keep ${genotype_processed_dir}/unrelated_keep.txt \
                     --qcovar ${covs} \
                     --thread-num ${env_threads} \
-                    --maf 0 \
-                    --geno 1 \
+                    --maf ${env_minmaf} \
+                    --geno ${env_miss} \
                     --out ${results_dir}/04/${filename}
             fi
         else
@@ -124,8 +124,8 @@ do
                 --keep ${genotype_processed_dir}/sample_inclusion.txt \
                 --qcovar ${covs} \
                 --thread-num ${env_threads} \
-                --maf 0 \
-                --geno 1 \
+                --maf ${env_minmaf} \
+                --geno ${env_miss} \
                 --out ${results_dir}/04/${filename}
         fi
 
