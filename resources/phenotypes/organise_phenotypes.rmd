@@ -91,7 +91,7 @@ facet_wrap(~ name, scale="free")
 ```{r static_covariates}
 cov_list <- strsplit(Sys.getenv("static_covariates"), split=" ")[[1]]
 covdat <- read_covariate_data(
-  file.path(Sys.getenv("phenotype_input_dir"), "pheno_covariates.txt"),
+  file.path(Sys.getenv("phenotype_input_dir"), "static_covariates.txt"),
   cov_list
 )
 # SENSITIVE, don't print any data
