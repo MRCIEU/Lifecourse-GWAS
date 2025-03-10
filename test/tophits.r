@@ -17,7 +17,7 @@ traits <- read.csv(here("phenotype_list.csv"))
 traits <- bind_rows(traits, tibble(Name = "Pulse pressure", "pheno_id" = "pp", "opengwasid" = "ebi-a-GCST90018970"))
 i <- 23
 lapply(1:nrow(traits), \(i) {
-    of <- here("resources", "genotypes", "tophits", paste0(traits$pheno_id[i], ".txt"))
+    of <- here("resources", "genotypes", "hg19", "tophits", paste0(traits$pheno_id[i], ".txt"))
     if(traits$pheno_id[i] == "depression") {
         return(NULL)
     }
@@ -33,7 +33,7 @@ lapply(1:nrow(traits), \(i) {
                 write.table(a, file=of, row=F, col=F, qu=F)
             }
             if(traits$pheno_id[i] == "bmi") {
-                of <- here("resources", "genotypes", "tophits", paste0("bmiz.txt"))
+                of <- here("resources", "genotypes", "hg19", "tophits", paste0("bmiz.txt"))
                 write.table(a, file=of, row=F, col=F, qu=F)
             }
         }
