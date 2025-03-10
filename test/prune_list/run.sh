@@ -53,7 +53,7 @@ cat hm3_auto_prune_b37.bed hm3_x_prune.bed > hm3_prune_b37.bed
 
 # Add tophits
 > tophitsnps.txt
-for f in ../../resources/genotypes/tophits/*.txt
+for f in ../../resources/genotypes/tophits/hg19/*.txt
 do
     awk '{ print $1 }' $f | cut -d "_" -f 1 ${prunefile} | tr ":" " " | awk '{ print "chr"$1, $2, $2, $1":"$2 }' >> tophitsnps.txt
 done

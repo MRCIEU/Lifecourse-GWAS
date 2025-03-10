@@ -76,13 +76,13 @@ do
         if [ ! -f ${genotype_processed_dir}/scratch/tophits/${ph}.bed ]; then
             bin/plink2 \
                 --bfile ${genotype_processed_dir}/scratch/indep2 \
-                --score resources/genotypes/tophits/${ph}.txt \
+                --score resources/genotypes/tophits/${genome_build}/${ph}.txt \
                 --threads ${env_threads} \
                 --out ${genotype_processed_dir}/scratch/tophits/${ph}
         fi
 
         if [ ! -f ${genotype_processed_dir}/scratch/tophits/${ph}.hits ]; then
-            awk '{ print $1 }' resources/genotypes/tophits/${ph}.txt > ${genotype_processed_dir}/scratch/tophits/${ph}.hits
+            awk '{ print $1 }' resources/genotypes/tophits/${genome_build}/${ph}.txt > ${genotype_processed_dir}/scratch/tophits/${ph}.hits
         fi
 
         mkdir -p ${genotype_processed_dir}/scratch/ldmats
