@@ -15,7 +15,6 @@ mkdir -p ${newdir}
 
 nchr=$(cat ${genotype_input_list} | grep -c '^')
 dn=$(head -n 1 ${genotype_input_list} | awk '{ print $1 }' | xargs dirname)
-mkdir -p $dn/bgen1.2
 
 tf=$(mktemp)
 for i in $(seq 1 ${nchr})
