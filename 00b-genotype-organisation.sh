@@ -28,8 +28,8 @@ samplefile=$(head -n 1 ${genotype_input_list} | awk '{print $2}')
     --fastGWA-lr \
     --keep ${genotype_processed_dir}/sample_inclusion.txt \
     --thread-num ${env_threads} \
-    --maf 0 \
-    --geno 1 \
+    --maf 0.005 \
+    --geno 0.1 \
     --out ${genotype_processed_dir}/scratch/phenrand
 
 Rscript resources/genotypes/organise_variants.r \
