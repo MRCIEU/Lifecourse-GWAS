@@ -1,0 +1,51 @@
+---
+title: Examining PRS results
+---
+
+```{r}
+library(here)
+library(dotenv)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+load_dot_env(here("config.env"))
+scores <- readRDS(file.path(Sys.getenv("results_dir"), "03", "scores.rds")) %>%
+    mutate(
+        sex = case_when(grepl("_f$", bn) ~ "Female", grepl("_m$", bn) ~ "Male", grepl("_both$", bn) ~ "Both"),
+        fdr = p.adjust(pval, "fdr")
+    )
+agebins <- read.csv(here("resources/phenotypes/agebins.csv")) %>%
+    mutate(categorical=grepl("[a-z]", category))
+table(scores$agebin %in% agebins$category)
+scores <- left_join(scores, agebins, by=c("agebin"="category")) %>%
+    mutate(age=(max + min)/2)
+```
+
+
+```{r}
+scores %>% group_by(phen, categorical) %>% summarise(n=n(), nsig = sum(fdr < 0.05), propsig=nsig/n)
+```
+
+Age results
+
+```{r}
+lapply(unique(scores$phen), \(x) {
+    ggplot(scores %>% filter(phen == x & !categorical), aes(x=age, y=b, colour=sex)) +
+    geom_point() +
+    geom_errorbar(aes(ymin=b-1.96*se, ymax=b+1.96*se), width=0) +
+    geom_hline(yintercept=0) +
+    facet_wrap(~ phen)
+})
+```
+
+Lifestage results
+
+```{r}
+lapply(unique(scores$phen), \(x) {
+    ggplot(scores %>% filter(phen == x & categorical), aes(x=age, y=b, colour=sex)) +
+    geom_point() +
+    geom_errorbar(aes(ymin=b-1.96*se, ymax=b+1.96*se), width=0) +
+    geom_hline(yintercept=0) +
+    facet_wrap(~ phen)
+})
+```
