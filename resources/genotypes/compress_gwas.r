@@ -89,13 +89,13 @@ fn <- commandArgs(T)[1]
 ref <- commandArgs(T)[2]
 nthreads <- as.numeric(Sys.getenv("env_threads"))
 stopifnot(file.exists(fn))
-stopifnot(file.exists(ref))
 
 message("reading gwas")
 a <- data.table::fread(fn, header=TRUE, nThread = nthreads) %>% as_tibble()
 a <- subset(a, !is.na(P) & !is.nan(P) & is.finite(P) & P <= 1 & P >= 0)
 
 if(Sys.getenv("genome_build") == "hg19") {
+    stopifnot(file.exists(ref))
     message("reading reference")
     v <- data.table::fread(ref, header=TRUE, nThread = nthreads) %>% as_tibble()
     names(a)[names(a) == "POS"] <- "POS19"
