@@ -79,7 +79,8 @@ gzip -c hm3_prune_th_b38_nochr.bed > ../../resources/genotypes/hm3_prune_th_hg38
 
 head hm3_prune_th_b38_nochr.bed
 head hm3_prune_th_b37_nochr.bed
-
+wc -l hm3_prune_th_b38_nochr.bed
+wc -l hm3_prune_th_b37_nochr.bed
 
 
 # wget https://ftp.ncbi.nih.gov/snp/organisms/human_9606_b151_GRCh38p7/VCF/00-common_all.vcf.gz

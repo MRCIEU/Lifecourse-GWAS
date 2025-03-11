@@ -6,7 +6,7 @@ Waist to hip ratio,whr,cont,ratio,0,20,,none,yes,ebi-a-GCST90029009
 Total body bone mineral density,tb-bmd,cont,g/cm2,0,20,,none,yes,ebi-a-GCST004772
 Forced expiratory volume in 1 second,fev1,cont,l,0,100,,none,yes,ukb-b-19657
 FEV1/FVC ratio,fev1fvc,cont,l,0,100,,none,yes,ebi-a-GCST90029026
-Systolic blood pressure,sbp,cont,mmHg,0,250,bp_med,none,yes,ukb-b-20175
+Systolic blood pressure,sbp,cont,mmHg,0,250,bp_med,none,yes,ieu-b-38
 Diastolic blood pressure,dbp,cont,mmHg,0,250,bp_med,none,yes,ieu-b-39
 LDL cholesterol,ldl,cont,mmol/L,0,50,cholesterol_med,none,yes,ieu-b-110
 HDL cholesterol,hdl,cont,mmol/L,0,50,cholesterol_med,none,yes,ieu-b-109
