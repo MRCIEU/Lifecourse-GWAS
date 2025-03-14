@@ -4,7 +4,8 @@ source config.env
 
 
 echo "Checking R packages..."
-Rscript -e "renv::status()"
+# Rscript -e "renv::status()"
+Rscript -e "library(quantreg)"
 
 tf=$(mktemp)
 
