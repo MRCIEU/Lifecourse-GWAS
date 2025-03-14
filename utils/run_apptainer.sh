@@ -15,6 +15,7 @@ genotype_input_dir=$(head -n 1 $genotype_input_list | awk '{ print $1 }' | xargs
 
 apptainer run \
     --containall \
+    --fakeroot \
     --bind "${PWD}/config.env:/project/config.env" \
     --bind "${PWD}/${genotype_input_list}:/project/${genotype_input_list}" \
     --bind "${phenotype_input_dir}:${phenotype_input_dir}" \
@@ -23,6 +24,7 @@ apptainer run \
     --bind "${genotype_input_dir}:${genotype_input_dir}" \
     --bind "${genotype_processed_dir}:${genotype_processed_dir}" \
     --bind "${results_dir}:${results_dir}" \
+    --bind "${PWD}/bin:/project/bin" \
     --cwd /project \
     ${PWD}/lifecourse-gwas_latest.sif \
     "$@"
