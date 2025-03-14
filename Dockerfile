@@ -55,3 +55,5 @@ RUN R -e 'options( \
     install.packages(c("data.table", "digest", "dotenv", "dplyr", "ggplot2", "glue", "here", "ieugwasr", "quantreg", "rmarkdown", "rms", "R.utils", "tidyr", "utils", "polspline", "rms"))'
 
 COPY . .
+RUN rm .Rprofile renv.lock
+RUN rm -r renv
