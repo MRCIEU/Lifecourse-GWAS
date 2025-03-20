@@ -4,8 +4,13 @@ source config.env
 
 
 echo "Checking R packages..."
-# Rscript -e "renv::status()"
-Rscript -e "library(quantreg)"
+if [ -f "renv.lock" ]; then
+    # Not in container
+    Rscript -e "renv::status()"
+else
+    # In container
+    Rscript -e "library(quantreg)"
+fi
 
 tf=$(mktemp)
 
