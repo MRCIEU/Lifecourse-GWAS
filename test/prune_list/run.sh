@@ -68,14 +68,29 @@ chmod 755 liftOver
 gunzip hg19ToHg38.over.chain.gz
 
 ./liftOver hm3_prune_th_b37.bed hg19ToHg38.over.chain hm3_prune_th_b38.bed unmapped
+./liftOver hm3_prune_b37.bed hg19ToHg38.over.chain hm3_prune_b38.bed unmapped
+
+cp tophitsnps.txt tophitsnps_b37.bed
+./liftOver tophitsnps_b37.bed hg19ToHg38.over.chain tophitsnps_b38.bed unmapped
 
 wc -l unmapped
 
 sed 's/chr//g' hm3_prune_th_b37.bed > hm3_prune_th_b37_nochr.bed
 sed 's/chr//g' hm3_prune_th_b38.bed > hm3_prune_th_b38_nochr.bed
 
-gzip -c hm3_prune_th_b37_nochr.bed > ../../resources/genotypes/hm3_prune_th_hg19.bed.gz
-gzip -c hm3_prune_th_b38_nochr.bed > ../../resources/genotypes/hm3_prune_th_hg38.bed.gz
+sed 's/chr//g' hm3_prune_b37.bed > hm3_prune_b37_nochr.bed
+sed 's/chr//g' hm3_prune_b38.bed > hm3_prune_b38_nochr.bed
+
+sed 's/chr//g' tophitsnps_b37.bed > tophitsnps_b37_nochr.bed
+sed 's/chr//g' tophitsnps_b38.bed > tophitsnps_b38_nochr.bed
+
+
+gzip -c hm3_prune_b37_nochr.bed > ../../resources/genotypes/hm3_prune_hg19.bed.gz
+gzip -c hm3_prune_b38_nochr.bed > ../../resources/genotypes/hm3_prune_hg38.bed.gz
+
+gzip -c tophitsnps_b37_nochr.bed > ../../resources/genotypes/tophitsnps_hg19.bed.gz
+gzip -c tophitsnps_b38_nochr.bed > ../../resources/genotypes/tophitsnps_hg38.bed.gz
+
 
 head hm3_prune_th_b38_nochr.bed
 head hm3_prune_th_b37_nochr.bed

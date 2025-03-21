@@ -21,12 +21,13 @@ Rscript resources/genotypes/organise_samples.r ${genotype_input_list} ${genotype
 
 
 echo "Get list of pruned SNPs"
-if test -f "resources/genotypes/hm3_prune_th_${genome_build}.bed.gz"; then
+if test -f "resources/genotypes/hm3_prune_${genome_build}.bed.gz"; then
     echo "Found prune file"
     prunefile="${genotype_processed_dir}/scratch/indep.prune.in"
-    gunzip -c resources/genotypes/hm3_prune_th_${genome_build}.bed.gz > ${prunefile}
+    gunzip -c resources/genotypes/hm3_prune_${genome_build}.bed.gz > ${prunefile}
+    gunzip -c resources/genotypes/tophitsnps_${genome_build}.bed.gz >> ${prunefile}
 else
-    echo "Error: Prune file resources/genotypes/hm3_prune_th_${genome_build}.bed.gz not found"
+    echo "Error: Prune file resources/genotypes/hm3_prune_${genome_build}.bed.gz not found"
     exit 1
 fi
 
@@ -91,17 +92,37 @@ do
     Rscript resources/genotypes/dups_bim.r "${genotype_processed_dir}/bgen_extract/$(basename ${bgen} .bgen).bim"
 done
 
-
-
 ./bin/plink2 \
     --threads ${env_threads} \
     --pmerge-list bfile ${genotype_processed_dir}/bgen_extract/mergelist \
     --make-bed \
     --max-alleles 2 \
-    --out ${genotype_processed_dir}/scratch/indep \
+    --out ${genotype_processed_dir}/scratch/indep_th \
     --maf 0.01 \
     --maj-ref
 
+thfile="${genotype_processed_dir}/scratch/th.txt"
+gunzip -c resources/genotypes/tophitsnps_${genome_build}.bed.gz > ${thfile}
+
+./bin/plink2 \
+    --threads ${env_threads} \
+    --bfile ${genotype_processed_dir}/scratch/indep_th \
+    --extract range ${thfile} \
+    --make-bed \
+    --out ${genotype_processed_dir}/scratch/tophits \
+    --maj-ref
+
+./bin/plink2 \
+    --threads ${env_threads} \
+    --bfile ${genotype_processed_dir}/scratch/indep_th \
+    --exclude range ${thfile} \
+    --make-bed \
+    --out ${genotype_processed_dir}/scratch/indep \
+    --maj-ref
+
+rm ${genotype_processed_dir}/scratch/indep_th*
+
 Rscript resources/genotypes/variant_ids_bim.r ${genotype_processed_dir}/scratch/indep
+Rscript resources/genotypes/variant_ids_bim.r ${genotype_processed_dir}/scratch/tophits
 
 echo "Successfully extracted pruned genotypes"
