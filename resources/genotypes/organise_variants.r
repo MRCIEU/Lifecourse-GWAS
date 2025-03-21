@@ -77,12 +77,23 @@ minmaf <- as.numeric(Sys.getenv("env_minmaf"))
 mininfo <- as.numeric(Sys.getenv("env_mininfo"))
 
 args <- commandArgs(T)
-aname <- args[1]
+afreq_dir <- args[1]
 resdir <- args[2]
 inclist <- args[3]
 mapfile <- args[4]
 
-allvariants <- fread(aname, header=TRUE) %>% as_tibble() 
+afreq_files <- list.files(afreq_dir) %>% grep(".afreq$", ., value=TRUE)
+
+allvariants <- lapply(afreq_files, \(fn) {
+  fread(file.path(afreq_dir, fn))
+}) %>% bind_rows()
+
+str(allvariants)
+
+temp <- allvariants
+allvariants <- allvariants %>% dplyr::rename(SNP = "ID", CHR = "#CHROM", INFO = "MACH_R2", AF1 = "ALT_FREQS", A1="ALT", A2="REF")
+
+# allvariants <- fread(aname, header=TRUE) %>% as_tibble() 
 
 # plot info distribution
 # plot af distribution
@@ -93,11 +104,11 @@ allvariants <- fread(aname, header=TRUE) %>% as_tibble()
 
 
 
-png(file.path(resdir, "info_dist.png"))
+png(file.path(resdir, "info_dist_all.png"))
 hist(allvariants$INFO, breaks=100, main=paste(cohort, "INFO", nrow(allvariants), "variants"), xlab="INFO")
 dev.off()
 
-png(file.path(resdir, "af_dist.png"))
+png(file.path(resdir, "af_dist_all.png"))
 hist(allvariants$AF1, breaks=100, main=paste(cohort, "AF", nrow(allvariants), "variants"), xlab="INFO")
 dev.off()
 
@@ -106,9 +117,9 @@ dim(selvariants)
 table(allvariants$CHR) %>% as.data.frame
 table(selvariants$CHR) %>% as.data.frame
 
-min(selvariants$P, na.rm=T)
+# min(selvariants$P, na.rm=T)
 
-get_lambda(selvariants$P, file.path(resdir, "null_qq.png"))
+# get_lambda(selvariants$P, file.path(resdir, "null_qq.png"))
 
 if(Sys.getenv("genome_build") == "hg19") {
   names(selvariants)[names(selvariants) == "POS"] <- "POS19"
@@ -130,6 +141,7 @@ if(Sys.getenv("genome_build") == "hg19") {
   ab <- left_join(b, a, by=c("V4"="SNP"))
   ab$CHR <- gsub("chr", "", ab$CHR)
   ab$CHR[ab$CHR == 23] <- "X"
+  ab
 
   # Remove variants that don't match the same chromosome
   ab <- subset(ab, ab$CHR == ab$V1)
@@ -138,6 +150,15 @@ if(Sys.getenv("genome_build") == "hg19") {
   selvariants <- left_join(ab, selvariants, by="SNP")
   selvariants
 }
+
+png(file.path(resdir, "info_dist.png"))
+hist(selvariants$INFO, breaks=100, main=paste(cohort, "INFO", nrow(selvariants), "variants - selected"), xlab="INFO")
+dev.off()
+
+png(file.path(resdir, "af_dist.png"))
+hist(selvariants$AF1, breaks=100, main=paste(cohort, "AF", nrow(selvariants), "variants - selected"), xlab="INFO")
+dev.off()
+
 
 selvariants <- standardise(selvariants, ea_col="A1", oa_col="A2", beta_col="BETA", eaf_col="AF1", chr_col="CHR", pos_col="POS", vid_col="VID")
 selvariants <- selvariants %>%
