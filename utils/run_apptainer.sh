@@ -14,7 +14,8 @@ source config.env
 genotype_input_dir=$(head -n 1 $genotype_input_list | awk '{ print $1 }' | xargs -I {} dirname {})
 
 apptainer run \
-    --containall \
+    --fakeroot \
+    --env APPTAINER="true" \
     --bind "${PWD}/config.env:/project/config.env" \
     --bind "${PWD}/${genotype_input_list}:/project/${genotype_input_list}" \
     --bind "${phenotype_input_dir}:${phenotype_input_dir}" \

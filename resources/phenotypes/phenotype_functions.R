@@ -613,7 +613,7 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, cov_list, covd
 
       if(phecode != "pp" & phecode != "bmiz"){
       if (filter(df, pheno_id == phecode)$standardisation=="yes") {
-        pheno_out$value <- pheno_out$value/sd(pheno_out$value)
+        pheno_out$value <- (pheno_out$value - mean(pheno_out$value, na.rm = T))/sd(pheno_out$value,  na.rm = T)
       } else if(filter(df, pheno_id == phecode)$standardisation=="no") {
         pheno_out$value <- pheno_out$value
       } 
@@ -714,6 +714,11 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, cov_list, covd
         select(FID, IID, value, age, sex)
       }
       
+      
+      #summarise the pretransformed variable 
+      sumstats <- summarise_phen(pheno_out)
+      
+      
       #apply the required transformation to the data based on the phenotypes info file 
       #pp is standardised below, nothing is done to bmiz as it is already standardised
       if(phecode != "pp" & phecode != "bmiz"){
@@ -729,7 +734,7 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, cov_list, covd
       ## apply standardisation if required for traits other than bmiz and pp
       if(phecode != "pp" & phecode != "bmiz"){
       if (filter(df, pheno_id == phecode)$standardisation=="yes") {
-        pheno_out$value <- pheno_out$value/sd(pheno_out$value)
+        pheno_out$value <- (pheno_out$value - mean(pheno_out$value, na.rm = T))/sd(pheno_out$value,  na.rm = T)
       } else if(filter(df, pheno_id == phecode)$standardisation=="no") {
         pheno_out$value <- pheno_out$value
       }
@@ -772,8 +777,8 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, cov_list, covd
       #save the covariates for the GWAS
       write.table(covs, file=file.path(Sys.getenv("phenotype_processed_dir"), paste0(phecode, "_", age_group, "_", sex_out, ".covs")), row=FALSE, col=FALSE, qu=FALSE)
     
-      sumstats <- summarise_phen(pheno_out)
-      summary_output[[k]] <- cbind(age_group, sex_group, length(outliers$value), sumstats)
+      sumstats_t <- summarise_phen_msd(pheno_out)
+      summary_output[[k]] <- cbind(age_group, sex_group, length(outliers$value), sumstats, sumstats_t)
     }
 
     cs$sums_ls <- bind_rows(summary_output)

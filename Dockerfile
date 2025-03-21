@@ -24,12 +24,24 @@ RUN apt-get update && \
         ln -s /usr/lib/x86_64-linux-gnu/libgit2.so.1.7 /usr/lib/x86_64-linux-gnu/libgit2.so.1.1
 
 WORKDIR /project
-COPY renv.lock renv.lock
+# COPY renv.lock renv.lock
 
-RUN mkdir -p renv
-COPY .Rprofile .Rprofile
-COPY renv/activate.R renv/activate.R
-COPY renv/settings.json renv/settings.json
+# RUN mkdir -p renv
+# COPY .Rprofile .Rprofile
+# COPY renv/activate.R renv/activate.R
+# COPY renv/settings.json renv/settings.json
+
+# RUN R -e 'options( \
+#     repos = c(CRAN = "https://packagemanager.posit.co/cran/__linux__/jammy/latest"), \
+#     HTTPUserAgent = sprintf( \
+#         "R/%s R (%s)", \
+#         getRversion(), \
+#         paste(getRversion(), \
+#           R.version["platform"], \
+#           R.version["arch"], \
+#           R.version["os"]))); \
+#     renv::install(c("stringi", "git2r")); \
+#     renv::restore(repos = c(CRAN = "https://packagemanager.posit.co/cran/__linux__/jammy/latest"))'
 
 RUN R -e 'options( \
     repos = c(CRAN = "https://packagemanager.posit.co/cran/__linux__/jammy/latest"), \
@@ -40,7 +52,8 @@ RUN R -e 'options( \
           R.version["platform"], \
           R.version["arch"], \
           R.version["os"]))); \
-    renv::install(c("stringi", "git2r")); \
-    renv::restore(repos = c(CRAN = "https://packagemanager.posit.co/cran/__linux__/jammy/latest"))'
+    install.packages(c("data.table", "digest", "dotenv", "dplyr", "ggplot2", "glue", "here", "ieugwasr", "quantreg", "rmarkdown", "rms", "R.utils", "tidyr", "utils", "polspline", "rms"))'
 
 COPY . .
+RUN rm .Rprofile renv.lock
+RUN rm -r renv
