@@ -109,7 +109,7 @@ then
     fi
 
     # Create tophits file if it doesn't exist already
-    if test -f "${genotype_processed_dir}/scratch/tophits.bed"; then
+    if ! [ -e "${genotype_processed_dir}/scratch/tophits.bed" ]; then
         echo "Generating tophits file"
         bin/plink2 \
             --threads ${env_threads} \
@@ -117,6 +117,7 @@ then
             --bfile ${genotype_processed_dir}/scratch/indep \
             --make-bed \
             --out ${genotype_processed_dir}/scratch/tophits
+    fi
 
 fi
 
@@ -149,77 +150,71 @@ then
         if [ ! "$arg" = "all" ]; then
             exit 0
         fi
-    fi
-
-    pcs_unrelated () {
-        bin/flashpca \
-            --bfile ${genotype_processed_dir}/scratch/indep_unrelated \
-            --ndim ${env_n_pcs} \
-            --outpc ${genotype_processed_dir}/scratch/fastpca_pcs_unrelated.txt \
-            --outload ${genotype_processed_dir}/scratch/fastpca_loadings.txt \
-            --outmeans ${genotype_processed_dir}/scratch/fastpca_meansd.txt \
-            --numthreads ${env_threads} \
-            --outval ${genotype_processed_dir}/scratch/fastpca_eigenvalues.txt \
-            --outvec ${genotype_processed_dir}/scratch/fastpca_eigenvectors.txt \
-            --outpve ${genotype_processed_dir}/scratch/fastpca_pve.txt
-    }
-
-    pcs_related () {
-        bin/flashpca \
-            --bfile ${genotype_processed_dir}/scratch/indep_related \
-            --project \
-            --inmeansd ${genotype_processed_dir}/scratch/fastpca_meansd.txt \
-            --outproj ${genotype_processed_dir}/scratch/fastpca_pcs_related.txt \
-            --inload ${genotype_processed_dir}/scratch/fastpca_loadings.txt \
-            --numthreads ${env_threads}
-    }
-
-    if [ "${env_family_data}" = "true" ]
-    then
-        pcs_unrelated
-        pcs_related
-        sed -i 1d ${genotype_processed_dir}/scratch/fastpca_pcs_related.txt
-        cat ${genotype_processed_dir}/scratch/fastpca_pcs_unrelated.txt ${genotype_processed_dir}/scratch/fastpca_pcs_related.txt > ${genotype_processed_dir}/pcs.txt
-
     else
-        pcs_unrelated
-        cp ${genotype_processed_dir}/scratch/fastpca_pcs_unrelated.txt ${genotype_processed_dir}/pcs.txt
-    fi
+        pcs_unrelated () {
+            bin/flashpca \
+                --bfile ${genotype_processed_dir}/scratch/indep_unrelated \
+                --ndim ${env_n_pcs} \
+                --outpc ${genotype_processed_dir}/scratch/fastpca_pcs_unrelated.txt \
+                --outload ${genotype_processed_dir}/scratch/fastpca_loadings.txt \
+                --outmeans ${genotype_processed_dir}/scratch/fastpca_meansd.txt \
+                --numthreads ${env_threads} \
+                --outval ${genotype_processed_dir}/scratch/fastpca_eigenvalues.txt \
+                --outvec ${genotype_processed_dir}/scratch/fastpca_eigenvectors.txt \
+                --outpve ${genotype_processed_dir}/scratch/fastpca_pve.txt
+        }
 
-    echo "Check PCs e.g. by plotting them"
-    Rscript resources/genotypes/genetic_outliers.r \
-        ${genotype_processed_dir}/pcs.txt \
-        ${env_pca_sd} \
-        ${env_n_pcs} \
-        ${genotype_processed_dir}/genetic_outliers.txt \
-        ${results_dir}/01/pcaplot.png
+        pcs_related () {
+            bin/flashpca \
+                --bfile ${genotype_processed_dir}/scratch/indep_related \
+                --project \
+                --inmeansd ${genotype_processed_dir}/scratch/fastpca_meansd.txt \
+                --outproj ${genotype_processed_dir}/scratch/fastpca_pcs_related.txt \
+                --inload ${genotype_processed_dir}/scratch/fastpca_loadings.txt \
+                --numthreads ${env_threads}
+        }
 
-    n_outliers=`wc -l ${genotype_processed_dir}/genetic_outliers.txt | awk '{ print $1 }'`
 
-    if [ "${n_outliers}" = "0" ]
-    then
-        echo "No genetic outliers detected"
-    else
-        echo "Remove genetic outliers from data"
-        echo "Found ${n_outliers}. Removing them and recalculating PCs"
-        bin/plink2 \
-            --threads ${env_threads} \
-            --bfile ${genotype_processed_dir}/scratch/indep_unrelated \
-            --remove ${genotype_processed_dir}/genetic_outliers.txt \
-            --make-bed \
-            --out ${genotype_processed_dir}/scratch/indep_unrelated
+
+        # Make sure tophits are removed
+        # Create tophits file if it doesn't exist already
+        if ! [ -e "${genotype_processed_dir}/scratch/tophits.bed" ]; then
+
+            thfile="${genotype_processed_dir}/scratch/th.txt"
+            gunzip -c resources/genotypes/tophitsnps_${genome_build}.bed.gz > ${thfile}
+
+            bin/plink2 \
+                --threads ${env_threads} \
+                --bfile ${genotype_processed_dir}/scratch/indep \
+                --exclude range ${thfile} \
+                --keep ${genotype_processed_dir}/scratch/kingunrelated.txt \
+                --make-bed \
+                --out ${genotype_processed_dir}/scratch/indep_unrelated
+
+            if [ "${env_family_data}" = "true" ]
+            then
+                bin/plink2 \
+                    --threads ${env_threads} \
+                    --exclude range ${thfile} \
+                    --bfile ${genotype_processed_dir}/scratch/indep \
+                    --remove ${genotype_processed_dir}/scratch/kingunrelated.txt \
+                    --make-bed \
+                    --out ${genotype_processed_dir}/scratch/indep_related
+            fi
+
+            echo "Generating tophits file"
+            bin/plink2 \
+                --threads ${env_threads} \
+                --extract range ${thfile} \
+                --bfile ${genotype_processed_dir}/scratch/indep \
+                --make-bed \
+                --out ${genotype_processed_dir}/scratch/tophits
+        fi
 
         if [ "${env_family_data}" = "true" ]
         then
-            bin/plink2 \
-                --threads ${env_threads} \
-                --bfile ${genotype_processed_dir}/scratch/indep_related \
-                --remove ${genotype_processed_dir}/genetic_outliers.txt \
-                --make-bed \
-                --out ${genotype_processed_dir}/scratch/indep_related
-
             pcs_unrelated
-            pcs_related            
+            pcs_related
             sed -i 1d ${genotype_processed_dir}/scratch/fastpca_pcs_related.txt
             cat ${genotype_processed_dir}/scratch/fastpca_pcs_unrelated.txt ${genotype_processed_dir}/scratch/fastpca_pcs_related.txt > ${genotype_processed_dir}/pcs.txt
 
@@ -228,14 +223,57 @@ then
             cp ${genotype_processed_dir}/scratch/fastpca_pcs_unrelated.txt ${genotype_processed_dir}/pcs.txt
         fi
 
-        mv ${results_dir}/01/pcaplot.png ${results_dir}/01/pcaplot_round1.png
-
+        echo "Check PCs e.g. by plotting them"
         Rscript resources/genotypes/genetic_outliers.r \
             ${genotype_processed_dir}/pcs.txt \
             ${env_pca_sd} \
             ${env_n_pcs} \
             ${genotype_processed_dir}/genetic_outliers.txt \
             ${results_dir}/01/pcaplot.png
+
+        n_outliers=`wc -l ${genotype_processed_dir}/genetic_outliers.txt | awk '{ print $1 }'`
+
+        if [ "${n_outliers}" = "0" ]
+        then
+            echo "No genetic outliers detected"
+        else
+            echo "Remove genetic outliers from data"
+            echo "Found ${n_outliers}. Removing them and recalculating PCs"
+            bin/plink2 \
+                --threads ${env_threads} \
+                --bfile ${genotype_processed_dir}/scratch/indep_unrelated \
+                --remove ${genotype_processed_dir}/genetic_outliers.txt \
+                --make-bed \
+                --out ${genotype_processed_dir}/scratch/indep_unrelated
+
+            if [ "${env_family_data}" = "true" ]
+            then
+                bin/plink2 \
+                    --threads ${env_threads} \
+                    --bfile ${genotype_processed_dir}/scratch/indep_related \
+                    --remove ${genotype_processed_dir}/genetic_outliers.txt \
+                    --make-bed \
+                    --out ${genotype_processed_dir}/scratch/indep_related
+
+                pcs_unrelated
+                pcs_related
+                sed -i 1d ${genotype_processed_dir}/scratch/fastpca_pcs_related.txt
+                cat ${genotype_processed_dir}/scratch/fastpca_pcs_unrelated.txt ${genotype_processed_dir}/scratch/fastpca_pcs_related.txt > ${genotype_processed_dir}/pcs.txt
+
+            else
+                pcs_unrelated
+                cp ${genotype_processed_dir}/scratch/fastpca_pcs_unrelated.txt ${genotype_processed_dir}/pcs.txt
+            fi
+
+            mv ${results_dir}/01/pcaplot.png ${results_dir}/01/pcaplot_round1.png
+
+            Rscript resources/genotypes/genetic_outliers.r \
+                ${genotype_processed_dir}/pcs.txt \
+                ${env_pca_sd} \
+                ${env_n_pcs} \
+                ${genotype_processed_dir}/genetic_outliers.txt \
+                ${results_dir}/01/pcaplot.png
+        fi
     fi
 fi
 
