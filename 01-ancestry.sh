@@ -85,9 +85,11 @@ then
 
     cp ${genotype_processed_dir}/scratch/kingunrelated.txt ${genotype_processed_dir}/kingunrelated.txt
 
+    # Make sure tophits are removed
     bin/plink2 \
         --threads ${env_threads} \
         --bfile ${genotype_processed_dir}/scratch/indep \
+        --exclude range ${thfile} \
         --keep ${genotype_processed_dir}/scratch/kingunrelated.txt \
         --make-bed \
         --out ${genotype_processed_dir}/scratch/indep_unrelated
@@ -96,11 +98,22 @@ then
     then
         bin/plink2 \
             --threads ${env_threads} \
+            --exclude range ${thfile} \
             --bfile ${genotype_processed_dir}/scratch/indep \
             --remove ${genotype_processed_dir}/scratch/kingunrelated.txt \
             --make-bed \
             --out ${genotype_processed_dir}/scratch/indep_related
     fi
+
+    # Create tophits file if it doesn't exist already
+    if test -f "${genotype_processed_dir}/scratch/tophits.bed"; then
+        echo "Generating tophits file"
+        bin/plink2 \
+            --threads ${env_threads} \
+            --extract range ${thfile} \
+            --bfile ${genotype_processed_dir}/scratch/indep \
+            --make-bed \
+            --out ${genotype_processed_dir}/scratch/tophits
 
 fi
 
