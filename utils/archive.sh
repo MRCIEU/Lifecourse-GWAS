@@ -84,11 +84,11 @@ then
     cp ${genotype_processed_dir}/scratch/indep.bim ${results_dir}/00
 fi
 
-tar -czvf ${results_dir}/${cohort_name}_$step.tar.gz -C ${results_dir} $step
+tar -czvf ${results_dir}/${cohort_name}_${major_ancestry}_$step.tar.gz -C ${results_dir} $step
 
 d=$(pwd)
 cd ${results_dir}
-md5sum ${cohort_name}_$step.tar.gz > ${cohort_name}_$step.tar.gz.md5
+md5sum ${cohort_name}_${major_ancestry}_$step.tar.gz > ${cohort_name}_${major_ancestry}_$step.tar.gz.md5
 cd $d
 
 echo "Success: Results for step $step have been tarballed and checksummed. Thank you very much for running this step successfully!"

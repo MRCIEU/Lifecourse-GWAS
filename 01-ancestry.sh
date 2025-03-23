@@ -86,6 +86,9 @@ then
     cp ${genotype_processed_dir}/scratch/kingunrelated.txt ${genotype_processed_dir}/kingunrelated.txt
 
     # Make sure tophits are removed
+    thfile="${genotype_processed_dir}/scratch/th.txt"
+    gunzip -c resources/genotypes/tophitsnps_${genome_build}.bed.gz > ${thfile}
+
     bin/plink2 \
         --threads ${env_threads} \
         --bfile ${genotype_processed_dir}/scratch/indep \
