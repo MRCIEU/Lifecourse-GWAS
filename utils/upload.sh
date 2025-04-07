@@ -29,7 +29,7 @@ echo "Checking that the step has completed"
 
 d=$(pwd)
 cd ${results_dir}
-md5sum -c ${cohort_name}_${step}.tar.gz.md5
+md5sum -c ${cohort_name}_${major_ancestry}_${step}.tar.gz.md5
 
 
 ${d}/bin/azcopy copy "${results_dir}/${cohort_name}_${major_ancestry}_${step}.tar.gz" "https://lcgwassftp.blob.core.windows.net/analysts/${sftp_username}/${cohort_name}_${major_ancestry}_${step}.tar.gz?${sas_token}"
