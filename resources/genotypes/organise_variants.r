@@ -84,10 +84,17 @@ mapfile <- args[4]
 
 afreq_files <- list.files(afreq_dir) %>% grep(".afreq$", ., value=TRUE)
 
-allvariants <- lapply(afreq_files, \(fn) {
-  fread(file.path(afreq_dir, fn))
-}) %>% bind_rows()
+if(length(afreq_files) == 0) {
+  stop("No afreq files found in ", afreq_dir)
+}
 
+if(length(afreq_files) == 1) {
+  allvariants <- fread(file.path(afreq_dir, afreq_files))
+} else {
+  allvariants <- lapply(afreq_files, \(fn) {
+    fread(file.path(afreq_dir, fn))
+  }) %>% bind_rows()
+}
 str(allvariants)
 
 temp <- allvariants
