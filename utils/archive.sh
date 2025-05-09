@@ -80,8 +80,10 @@ fi
 if [[ $step = "00" ]];
 then
     cp config.env ${results_dir}/00
-    cp ${genotype_input_list} ${results_dir}/00
     cp ${genotype_processed_dir}/scratch/indep.bim ${results_dir}/00
+    if [ -f ${genotype_input_list} ]; then
+        cp ${genotype_input_list} ${results_dir}/00
+    fi
 fi
 
 tar -czvf ${results_dir}/${cohort_name}_${major_ancestry}_$step.tar.gz -C ${results_dir} $step
