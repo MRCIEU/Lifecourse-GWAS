@@ -66,9 +66,19 @@ fi
 
 echo $index
 
+
+# Determine correct genotype input
+
+if [[ ! -z $pgen_input ]]; then
+    geno_input="--pfile ${pgen_input}"
+else
+    samplefile=$(head -n 1 ${genotype_input_list} | awk '{print $2}')
+    geno_input="--mbgen ${genotype_input_list} --sample ${samplefile}"
+fi
+
 # Do GWAS for each phenotype
 i=1
-samplefile=$(head -n 1 ${genotype_input_list} | awk '{print $2}')
+
 for phen in ${phenolist[@]}
 do
     if [ -z $index ] || [[ "$index" == "$phen" ]] || [[ "$index" == "$i" ]] ; then
@@ -83,8 +93,7 @@ do
             echo "family"
             (
               ./bin/gcta64 \
-                --mbgen ${genotype_input_list} \
-                --sample ${samplefile} \
+                ${geno_input} \
                 --fastGWA-mlm \
                 --grm-sparse ${genotype_processed_dir}/sparsegrm \
                 --extract ${genotype_processed_dir}/variant_inclusion.txt \
@@ -101,8 +110,7 @@ do
             if [ "$flag" -eq "1" ] ; then
                 echo "LMM failed. Trying linear model using unrelateds only"
                 ./bin/gcta64 \
-                    --mbgen ${genotype_input_list} \
-                    --sample ${samplefile} \
+                    ${geno_input} \
                     --fastGWA-lr \
                     --pheno ${phen} \
                     --extract ${genotype_processed_dir}/variant_inclusion.txt \
@@ -116,8 +124,7 @@ do
         else
             echo "not family"
             ./bin/gcta64 \
-                --mbgen ${genotype_input_list} \
-                --sample ${samplefile} \
+                ${geno_input} \
                 --fastGWA-lr \
                 --pheno ${phen} \
                 --extract ${genotype_processed_dir}/variant_inclusion.txt \
