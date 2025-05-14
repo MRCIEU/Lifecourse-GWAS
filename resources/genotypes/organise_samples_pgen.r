@@ -7,7 +7,7 @@ psam_file <- args[1]
 out <- args[2]
 
 all_samples <- fread(psam_file, header=TRUE)
-names(all_samples) <- c("V1", "V2", "sex")
+names(all_samples) <- c("#FID", "IID", "PAT", "MAT", "sex")
 
 message("Unique individuals in sample: ", nrow(all_samples))
 
