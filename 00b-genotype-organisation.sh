@@ -25,7 +25,8 @@ if [[ ! -z $pgen_input ]]; then
         --freq cols=chrom,pos,ref,alt,altfreq,nobs,machr2 \
         --maf ${env_minmaf} \
         --out ${genotype_processed_dir}/info_scores/$(basename ${pgen_input}) \
-        --threads ${env_threads}
+        --threads ${env_threads} \
+        --nonfounders
 else
 
     echo "Checking genotype input list..."
