@@ -99,6 +99,7 @@ str(allvariants)
 
 temp <- allvariants
 allvariants <- allvariants %>% dplyr::rename(SNP = "ID", CHR = "#CHROM", INFO = "MACH_R2", AF1 = "ALT_FREQS", A1="ALT", A2="REF")
+allvariants$AF1 <- as.numeric(allvariants$AF1)
 
 # allvariants <- fread(aname, header=TRUE) %>% as_tibble() 
 
