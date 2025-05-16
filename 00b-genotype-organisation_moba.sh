@@ -6,17 +6,15 @@ set -e
 # get environmental variables
 source config.env
 ./bin/gcta64 \
-  --bed /home/grace.power/work/gpower/data/lifecourse_gwas_data_curation/geno/MoBaPsychGen_v1-ec-eur-batch-basic-qc.bed \
-  --bim /home/grace.power/work/gpower/data/lifecourse_gwas_data_curation/geno/MoBaPsychGen_v1-ec-eur-batch-basic-qc.bim \
-  --fam /home/grace.power/work/gpower/data/lifecourse_gwas_data_curation/geno/MoBaPsychGen_v1-ec-eur-batch-basic-qc.fam \
-  --pheno ${genotype_processed_dir}/scratch/phenrand.txt \
+  --bfile /home/grace.power/work/gpower/data/lifecourse_gwas_data_curation/geno/MoBaPsychGen_v1-ec-eur-batch-basic-qc \
+  --pheno /home/grace.power/work/gpower/analysis/LifecourseGWAS_pipeline_run/genotype_input_dir/scratch/phenrand.txt \
   --fastGWA-lr \
-  --extract ${genotype_processed_dir}/variant_inclusion.txt \
-  --keep ${genotype_processed_dir}/sample_inclusion.txt \
-  --thread-num ${env_threads} \
+  --extract /home/grace.power/work/gpower/analysis/LifecourseGWAS_pipeline_run/genotype_input_dir/variant_inclusion.txt \
+  --keep /home/grace.power/work/gpower/analysis/LifecourseGWAS_pipeline_run/genotype_input_dir/sample_inclusion.txt \
+  --thread-num 15 \
   --geno 0.1 \
-  --maf ${env_minmaf} \
-  --out ${genotype_processed_dir}/scratch/phenrand
+  --maf 0.01 \
+  --out /home/grace.power/work/gpower/analysis/LifecourseGWAS_pipeline_run/genotype_input_dir/scratch/phenrand
 
 # Run null model summary script
 Rscript resources/genotypes/nullgwas.r \
