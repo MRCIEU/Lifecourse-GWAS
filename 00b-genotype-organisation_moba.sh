@@ -9,8 +9,6 @@ source config.env
     --bfile /home/grace.power/archive/moba/geno/MobaPsychgenReleaseMarch23/MoBaPsychGen_v1/MoBaPsychGen_v1-ec-eur-batch-basic-qc \
     --pheno ${genotype_processed_dir}/scratch/phenrand.txt \
     --fastGWA-lr \
-    --extract ${genotype_processed_dir}/variant_inclusion.txt \
-    --keep ${genotype_processed_dir}/sample_inclusion.txt \
     --thread-num ${env_threads} \
     --geno 0.1 \
     --maf ${env_minmaf} \
