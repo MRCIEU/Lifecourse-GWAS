@@ -3,9 +3,6 @@
 # strict stop if there are any errors
 set -e
 
-# get environmental variables
-source config.env
-
 # create results directory
 mkdir -p ${results_dir}/04
 
@@ -69,7 +66,9 @@ echo $index
 
 # Determine correct genotype input
 
+bfile_input="/home/grace.power/work/gpower/data/lifecourse_gwas_data_curation/geno/MoBaPsychGen_v1-ec-eur-batch-basic-qc"
 geno_input="--bfile ${bfile_input}"
+
 
 # Do GWAS for each phenotype
 i=1
