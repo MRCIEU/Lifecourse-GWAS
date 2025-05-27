@@ -3,6 +3,9 @@
 # strict stop if there are any errors
 set -e
 
+# get environmental variables
+source config.env
+
 # create results directory
 mkdir -p ${results_dir}/04
 
