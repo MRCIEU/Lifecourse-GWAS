@@ -63,9 +63,6 @@ echo "Null GWAS"
 
 Rscript resources/genotypes/rand.r ${genotype_processed_dir}/sample_inclusion.txt ${genotype_processed_dir}/scratch/phenrand.txt
 
-samplefile=$(head -n 1 ${genotype_input_list} | awk '{print $2}')
-
-
 if [[ ! -z $pgen_input ]]; then
     ./bin/gcta64 \
         --pfile ${pgen_input} \
@@ -78,6 +75,7 @@ if [[ ! -z $pgen_input ]]; then
         --maf ${env_minmaf} \
         --out ${genotype_processed_dir}/scratch/phenrand
 else
+    samplefile=$(head -n 1 ${genotype_input_list} | awk '{print $2}')
     ./bin/gcta64 \
         --mbgen ${genotype_input_list} \
         --sample ${samplefile} \
