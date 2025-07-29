@@ -30,7 +30,9 @@ Age results
 
 ```{r}
 lapply(unique(scores$phen), \(x) {
-    ggplot(scores %>% filter(phen == x & !categorical), aes(x=age, y=b, colour=sex)) +
+    s <- scores %>% filter(phen == x & !categorical)
+    if(nrow(s) == 0) return(NULL)
+    ggplot(s, aes(x=age, y=b, colour=sex)) +
     geom_point() +
     geom_errorbar(aes(ymin=b-1.96*se, ymax=b+1.96*se), width=0) +
     geom_hline(yintercept=0) +
@@ -42,7 +44,9 @@ Lifestage results
 
 ```{r}
 lapply(unique(scores$phen), \(x) {
-    ggplot(scores %>% filter(phen == x & categorical), aes(x=age, y=b, colour=sex)) +
+    s <- scores %>% filter(phen == x & categorical)
+    if(nrow(s) == 0) return(NULL)
+    ggplot(s, aes(x=age, y=b, colour=sex)) +
     geom_point() +
     geom_errorbar(aes(ymin=b-1.96*se, ymax=b+1.96*se), width=0) +
     geom_hline(yintercept=0) +
