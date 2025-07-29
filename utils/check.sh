@@ -4,14 +4,13 @@ source config.env
 
 
 echo "Checking R packages..."
-if [ -f "renv.lock" ]; then
-    # Not in container
-    Rscript -e "renv::status()"
-else
-    # In container
+if [[ $APPTAINER == "true" ]]; then
+    echo "Running in Apptainer container..."
     Rscript -e "library(quantreg)"
+else
+    echo "Running outside of Apptainer container..."
+    Rscript -e "renv::status()"
 fi
-
 tf=$(mktemp)
 
 echo "Checking plink..."
