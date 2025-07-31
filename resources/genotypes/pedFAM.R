@@ -119,3 +119,35 @@ write.table(FAM_sp[,c("order.x", "order.y", "coef")], file=paste0(output_file, "
 message("Sparse FAM generated: ", output_file, ".")
 
 ####  Done
+
+# Greedy remove related individuals
+
+message("Generating list of unrelated individuals...")
+
+t1 <- Sys.time()
+r <- subset(rel, coef > 0.05)
+relids <- unique(c(r$IID_1, r$IID_2))
+
+i <- 1
+n <- nrow(r)
+while(nrow(r) > 0) {
+    # message(nrow(r)/n)
+    if((nrow(r) / n) <= ((10-i) / 10)) {
+        message("Progress: ", round(i / 10 * 100, 2), "%")
+        i <- i + 1
+    }
+    a <- table(c(r$IID_1, r$IID_2))
+    id <- names(a)[which.max(a)][1]
+    relids <- relids[relids != id]
+    r <- subset(r, !(IID_1 %in% id | IID_2 %in% id))
+}
+Sys.time() - t1
+
+allrels <- unique(c(rel$IID_1, rel$IID_2))
+to_remove <- allrels[!allrels %in% relids]
+
+message("Individuals to remove: ", length(to_remove))
+fam_file_unrelated <- subset(fam_file, !(IID %in% to_remove))
+message("Unrelated individuals: ", nrow(fam_file_unrelated))
+
+write.table(fam_file_unrelated[,1:2], file=paste0(output_file, ".unrelated"), quote=F, row.names = F, col.names = F)
