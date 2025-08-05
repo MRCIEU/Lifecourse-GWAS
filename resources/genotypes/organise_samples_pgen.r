@@ -1,13 +1,14 @@
 library(data.table)
 library(dplyr)
+library(here)
+source(here("resources", "genotypes", "read_psam.r"))
 
 args <- commandArgs(T)
 
 psam_file <- args[1]
 out <- args[2]
 
-all_samples <- fread(psam_file, header=TRUE)
-names(all_samples) <- c("#FID", "IID", "sex")
+all_samples <- read_psam(psam_file)
 
 message("Unique individuals in sample: ", nrow(all_samples))
 
