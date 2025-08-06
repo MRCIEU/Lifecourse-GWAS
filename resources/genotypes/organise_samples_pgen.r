@@ -13,9 +13,9 @@ all_samples <- read_psam(psam_file)
 message("Unique individuals in sample: ", nrow(all_samples))
 
 if(length(args) == 3) {
-    inclusions <- fread(args[3], header=FALSE)
+    inclusions <- fread(args[3], header=FALSE, keepLeadingZeros=TRUE)
     message("Individuals in inclusion file: ", nrow(inclusions))
-    all_samples <- dplyr::filter(all_samples, paste(V1, V2) %in% paste(inclusions$V1, inclusions$V2))
+    all_samples <- dplyr::filter(all_samples, paste(FAM, IID) %in% paste(inclusions$V1, inclusions$V2))
 } else {
     message("No inclusion file provided, using all individuals")
 }

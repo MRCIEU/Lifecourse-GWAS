@@ -13,7 +13,7 @@ read_phenotype_data <- function(phecode, input_dir, agebins, covlist=NULL) {
   }
   
   # Read in phenotype
-  phen <- data.table::fread(filename, nThread = nthreads)
+  phen <- data.table::fread(filename, nThread = nthreads, keepLeadingZeros=TRUE)
   
   # Check columns are there as expected
   column_names <- c("FID", "IID", "age", "value")
@@ -50,7 +50,7 @@ read_phenotype_data <- function(phecode, input_dir, agebins, covlist=NULL) {
 
 
 read_gen_covs <- function(file, npcs) {
-  dat <- fread(file, nThread = nthreads)
+  dat <- fread(file, nThread = nthreads, keepLeadingZeros=TRUE)
   if(!all(c("FID", "IID", paste0("PC", 1:npcs)) %in% names(dat))) {
     stop("expected FID, IID, PC1, ..., PC", npcs, " in ", file)
   }
@@ -63,7 +63,7 @@ read_gen_covs <- function(file, npcs) {
 
 
 read_covariate_data <- function(fn, covariate_list=c("sex", "yob")) {
-  dat <- data.table::fread(fn, nThread = nthreads) %>% as_tibble()
+  dat <- data.table::fread(fn, nThread = nthreads, keepLeadingZeros=TRUE) %>% as_tibble()
   column_names <- c("FID", "IID", covariate_list)
   if(!all(column_names %in% names(dat))) {
     print(head(dat))
@@ -404,7 +404,7 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, cov_list, covd
     phen$Month <- round(phen$age*12)
     
     filename <- here("resources", "phenotypes", "bmi-z-who-2007.csv")
-    z_dat <- data.table::fread(filename, nThread = nthreads)
+    z_dat <- data.table::fread(filename, nThread = nthreads, keepLeadingZeros=TRUE)
 
     phen <- inner_join(phen, covdat, by = join_by(FID, IID))
     

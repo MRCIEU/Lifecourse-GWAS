@@ -2,7 +2,7 @@ library(dplyr)
 library(data.table)
 
 
-pl <- fread("phenotype_list.csv") %>% as_tibble()
+pl <- fread("phenotype_list.csv", keepLeadingZeros=TRUE) %>% as_tibble()
 
 pl %>% as.data.frame
 
