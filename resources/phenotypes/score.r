@@ -25,13 +25,13 @@ dat <- tibble(
 )
 
 for(i in 1:nrow(dat)) {
-    a <- fread(dat$fn[i], nThread = nthreads)
+    a <- fread(dat$fn[i], nThread = nthreads, keepLeadingZeros=TRUE)
     a <- a[,1:3]
     names(a)[1:3] <- c("FID", "IID", "value")
     cf <- gsub(".phen$", ".covs", dat$fn[i])
-    covs <- fread(cf, nThread = nthreads)
+    covs <- fread(cf, nThread = nthreads, keepLeadingZeros=TRUE)
     a <- inner_join(a, covs, by=c("FID"="V1", "IID"="V2"))
-    b <- fread(file.path(score_dir, paste0(dat$phen[i], ".sscore")), nThread = nthreads)
+    b <- fread(file.path(score_dir, paste0(dat$phen[i], ".sscore")), nThread = nthreads, keepLeadingZeros=TRUE)
     ab <- inner_join(a, b, by=c("FID"="#FID", "IID"="IID"))
     f <- paste0("value ~ SCORE1_AVG + ", paste(names(covs)[-c(1:2)], collapse = " + "))
     r <- cor(ab$value, ab$SCORE1_AVG)
