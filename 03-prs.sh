@@ -19,6 +19,17 @@ exec &> >(tee ${results_dir}/03/logfile)
 echo "Updating plink file to have aligned effect alleles"
 Rscript resources/genotypes/variant_ids.r ${genotype_processed_dir}/scratch/tophits ${genotype_processed_dir}/scratch/tophits2 bin/plink2 ${env_threads}
 
+echo "Checking and removing duplicate variants from tophits2"
+bin/plink2 \
+  --bfile ${genotype_processed_dir}/scratch/tophits2 \
+  --rm-dup force-first \
+  --make-bed \
+  --out ${genotype_processed_dir}/scratch/tophits2_nodups
+
+mv ${genotype_processed_dir}/scratch/tophits2_nodups.bed ${genotype_processed_dir}/scratch/tophits2.bed
+mv ${genotype_processed_dir}/scratch/tophits2_nodups.bim ${genotype_processed_dir}/scratch/tophits2.bim
+mv ${genotype_processed_dir}/scratch/tophits2_nodups.fam ${genotype_processed_dir}/scratch/tophits2.fam
+
 phenolist=( $(cat ${phenotype_processed_dir}/phenolist) )
 
 # Allow specific analysis to be run
