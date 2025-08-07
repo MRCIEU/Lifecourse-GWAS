@@ -5,7 +5,7 @@ nthreads <- as.numeric(Sys.getenv("env_threads"))
 
 # Added safe_hist function
 safe_hist <- function(x, main="Histogram") {
-  if(length(x) > 0 & sum(!is.na(x)) > 0 & length(unique(round(x))) > 1) {
+  if(length(x) > 0 && sum(!is.na(x)) > 0 && length(unique(round(x))) > 1) {
     hist(x, breaks=length(unique(round(x))), main=main)
   } else {
     message("Skipping histogram: insufficient data for ", main)
