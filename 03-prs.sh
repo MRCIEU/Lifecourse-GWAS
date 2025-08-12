@@ -82,6 +82,9 @@ do
         echo $filename
         # Get rsids to keep
         ph=$(echo $filename | cut -d "_" -f 1)
+        if [[ "$ph" == "bioavail" ]]; then
+            ph="bioavail_testosterone"
+        fi
         echo $ph
 
         if [ ! -f ${genotype_processed_dir}/scratch/tophits/${ph}.bed ]; then
