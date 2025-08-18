@@ -61,6 +61,44 @@ section_message () {
 
 }
 
+# Cap threads for memory safety unless user explicitly overrides with KING_CPUS
+KING_CPUS="${KING_CPUS:-${env_threads:-1}}"
+if [[ "${KING_CPUS}" -gt 4 ]]; then
+  echo "Capping KING threads from ${KING_CPUS} to 4 to reduce RAM pressure."
+  KING_CPUS=4
+fi
+
+# Ensure inputs exist early
+for ext in bed bim fam; do
+  if [[ ! -s "${genotype_processed_dir}/scratch/indep.${ext}" ]]; then
+    echo "ERROR: Missing ${genotype_processed_dir}/scratch/indep.${ext}"
+    exit 2
+  fi
+done
+
+# Helper: run KING unrelated with graceful fallback to plink2 --king-cutoff on OOM
+run_king_unrelated() {
+  local bed="${genotype_processed_dir}/scratch/indep.bed"
+  local prefix="${genotype_processed_dir}/scratch/king"
+  echo "Running KING (unrelated, degree 3) with ${KING_CPUS} threads..."
+  set +e
+  /usr/bin/time -v bin/king -b "${bed}" --unrelated --degree 3 --cpus "${KING_CPUS}" --prefix "${prefix}"
+  rc=$?
+  set -e
+  if [[ $rc -eq 0 && -s "${prefix}unrelated.txt" ]]; then
+    echo "KING unrelated completed."
+    return 0
+  fi
+  echo "WARNING: KING failed (rc=${rc}), falling back to plink2 --king-cutoff"
+  bin/plink2 \
+    --threads "${env_threads:-1}" \
+    --bfile "${genotype_processed_dir}/scratch/indep" \
+    --king-cutoff 0.0884 \
+    --out "${genotype_processed_dir}/scratch/p2_king"
+  cp "${genotype_processed_dir}/scratch/p2_king.king.cutoff.in.id" "${prefix}unrelated.txt"
+}
+
+
 # If family data
 ## get list of relateds and list of unrelateds
 ## generate pcs in unrelateds and project to relateds
@@ -76,12 +114,8 @@ then
     section_message "relateds"
     echo "Get relateds and unrelateds"
 
-    bin/king \
-        -b ${genotype_processed_dir}/scratch/indep.bed \
-        --unrelated \
-        --degree 3 \
-        --cpus ${env_threads} \
-        --prefix ${genotype_processed_dir}/scratch/king
+    # Use the robust helper (KING with fallback to plink2 --king-cutoff)
+    run_king_unrelated
 
     cp ${genotype_processed_dir}/scratch/kingunrelated.txt ${genotype_processed_dir}/kingunrelated.txt
 
@@ -118,8 +152,8 @@ then
             --make-bed \
             --out ${genotype_processed_dir}/scratch/tophits
     fi
-
 fi
+
 
 if [ "$arg" = "pcs" ] || [ "$arg" = "all" ]
 then
@@ -289,7 +323,7 @@ echo "Generate sparse GRM"
             -b ${genotype_processed_dir}/scratch/indep.bed \
             --related \
             --degree 3 \
-            --cpus ${env_threads} \
+            --cpus ${KING_CPUS} \
             --prefix ${genotype_processed_dir}/scratch/king
 
         awk '{ print $1, $3, $14 }' ${genotype_processed_dir}/scratch/king.kin0 | grep -v "4th" | sed 1d > ${genotype_processed_dir}/scratch/king.kin0.formatted
@@ -300,6 +334,7 @@ echo "Generate sparse GRM"
             ${genotype_processed_dir}/sparsegrm
     fi
 fi
+
 
 if [ "$arg" = "keeplists" ] || [ "$arg" = "all" ]
 then
