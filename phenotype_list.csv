@@ -1,5 +1,5 @@
 Name,pheno_id,var_type,units,min,max,covs,transformation,standardisation,opengwasid
-Body mass index,bmi,cont,kg/m2,0,60,,log,yes,ukb-b-19953
+Body mass index,bmi,cont,kg/m2,0,80,,log,yes,ukb-b-19953
 Height,height,cont,cm,10,250,,none,yes,ebi-a-GCST90029008
 Waist circumference,wc,cont,cm,0,250,,none,yes,ukb-b-9405
 Waist to hip ratio,whr,cont,ratio,0,20,,none,yes,ebi-a-GCST90029009
@@ -23,3 +23,4 @@ Estradiol,estradiol,cont,pmol/L,0,15000,hormone_med,none,yes,ebi-a-GCST90012105
 Total testosterone,testosterone,cont,nmol/L,0,60,hormone_med,none,yes,ebi-a-GCST90012114
 Bioavailable testosterone,bioavail_testosterone,cont,nmol/L,0,60,hormone_med,none,yes,ebi-a-GCST90012104
 Sex hormone binding globulin,shbg,cont,nmol/L,0,300,hormone_med,none,yes,ieu-b-4870
+
