@@ -341,33 +341,36 @@ then
     section_message "keeplists"
 
     echo "Final keep lists"
-    # Unrelateds
-    # +kingunrelated.txt
-    # -genetic_outliers.txt
 
-    cat ${genotype_processed_dir}/kingunrelated.txt | \
-        grep -vw -f ${genotype_processed_dir}/genetic_outliers.txt > \
-        ${genotype_processed_dir}/unrelated_keep.txt
+    # Make sure genetic_outliers.txt exists (empty if none)
+    : > "${genotype_processed_dir}/genetic_outliers.txt"
 
-    nunrelated=$(cat ${genotype_processed_dir}/unrelated_keep.txt | wc -l)
-
-    echo "N Unrelated: ${nunrelated}"
-
-    # Relateds
-    # +fam file (everyone)
-    # -genetic_outliers.txt
-
-    if [ "${env_family_data}" = "true" ]
-    then
-        awk '{ print $1"\t"$2 }' ${genotype_processed_dir}/scratch/indep.fam | \
-        grep -vw -f ${genotype_processed_dir}/genetic_outliers.txt > \
-        ${genotype_processed_dir}/related_keep.txt
+    # Unrelateds = kingunrelated minus outliers (if any)
+    if [ -s "${genotype_processed_dir}/genetic_outliers.txt" ]; then
+        grep -vw -f "${genotype_processed_dir}/genetic_outliers.txt" \
+            "${genotype_processed_dir}/kingunrelated.txt" \
+            > "${genotype_processed_dir}/unrelated_keep.txt"
+    else
+        cp "${genotype_processed_dir}/kingunrelated.txt" \
+           "${genotype_processed_dir}/unrelated_keep.txt"
     fi
 
-    nrelated=$(cat ${genotype_processed_dir}/related_keep.txt | wc -l)
+    nunrelated=$(wc -l < "${genotype_processed_dir}/unrelated_keep.txt")
+    echo "N Unrelated: ${nunrelated}"
 
-    echo "N Related: ${nrelated}"
+    # Relateds only if family data
+    if [ "${env_family_data}" = "true" ]; then
+        awk '{ print $1"\t"$2 }' "${genotype_processed_dir}/scratch/indep.fam" | \
+        ( [ -s "${genotype_processed_dir}/genetic_outliers.txt" ] \
+          && grep -vw -f "${genotype_processed_dir}/genetic_outliers.txt" || cat ) \
+        > "${genotype_processed_dir}/related_keep.txt"
 
+        nrelated=$(wc -l < "${genotype_processed_dir}/related_keep.txt")
+        echo "N Related: ${nrelated}"
+    else
+        echo "Family data = false; skipping related_keep.txt"
+    fi
 fi
+
 
 echo "Successfully generated PCs etc!"
