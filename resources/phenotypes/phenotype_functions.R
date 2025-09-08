@@ -3,6 +3,15 @@
 #set up packages
 nthreads <- as.numeric(Sys.getenv("env_threads"))
 
+# Added safe_hist function
+safe_hist <- function(x, main="Histogram") {
+  if(length(x) > 0 && sum(!is.na(x)) > 0 && length(unique(round(x))) > 1) {
+    hist(x, breaks=length(unique(round(x))), main=main)
+  } else {
+    message("Skipping histogram: insufficient data for ", main)
+  }
+}
+
 
 read_phenotype_data <- function(phecode, input_dir, agebins, covlist=NULL) {
   # Check if phenotype is present
@@ -13,7 +22,7 @@ read_phenotype_data <- function(phecode, input_dir, agebins, covlist=NULL) {
   }
   
   # Read in phenotype
-  phen <- data.table::fread(filename, nThread = nthreads)
+  phen <- data.table::fread(filename, nThread = nthreads, keepLeadingZeros=TRUE)
   
   # Check columns are there as expected
   column_names <- c("FID", "IID", "age", "value")
@@ -50,7 +59,7 @@ read_phenotype_data <- function(phecode, input_dir, agebins, covlist=NULL) {
 
 
 read_gen_covs <- function(file, npcs) {
-  dat <- fread(file, nThread = nthreads)
+  dat <- fread(file, nThread = nthreads, keepLeadingZeros=TRUE)
   if(!all(c("FID", "IID", paste0("PC", 1:npcs)) %in% names(dat))) {
     stop("expected FID, IID, PC1, ..., PC", npcs, " in ", file)
   }
@@ -63,7 +72,7 @@ read_gen_covs <- function(file, npcs) {
 
 
 read_covariate_data <- function(fn, covariate_list=c("sex", "yob")) {
-  dat <- data.table::fread(fn, nThread = nthreads) %>% as_tibble()
+  dat <- data.table::fread(fn, nThread = nthreads, keepLeadingZeros=TRUE) %>% as_tibble()
   column_names <- c("FID", "IID", covariate_list)
   if(!all(column_names %in% names(dat))) {
     print(head(dat))
@@ -404,7 +413,7 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, cov_list, covd
     phen$Month <- round(phen$age*12)
     
     filename <- here("resources", "phenotypes", "bmi-z-who-2007.csv")
-    z_dat <- data.table::fread(filename, nThread = nthreads)
+    z_dat <- data.table::fread(filename, nThread = nthreads, keepLeadingZeros=TRUE)
 
     phen <- inner_join(phen, covdat, by = join_by(FID, IID))
     
@@ -447,19 +456,18 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, cov_list, covd
 
   # Age and ancestry distribution
   if(pl) {
-    hist(dat$age, breaks=length(unique(round(dat$age))), main=paste0(phecode, " age distribution"))
+    safe_hist(dat$age, paste0(phecode, " age distribution"))
   }
   cs$age_summary <- summary(dat$age)
   cs$age_quantile <- dat$age %>% quantile(probs=seq(0, 1, 0.01))
  
   if('yob' %in% cov_list) {
-  
     cs$deob_summary <- table(dat$deob)
     phecode
     cs$deob_summary
-  
+
     if(pl) {
-      hist(dat$yob, breaks=length(unique(round(dat$yob))), main=paste0(phecode, " year of birth distribution"))
+      safe_hist(dat$yob, paste0(phecode, " year of birth distribution"))
     }
   }
   
@@ -497,7 +505,8 @@ organise_phenotype <- function(phecode, phenotypes, df, gen_covs, cov_list, covd
   #e.g. incorrectly defined outliers, phenotype values entered in the wrong units etc. 
   
   if(length(analysis_data$value) == 0){
-    stop(paste(phecode,"All observations removed as outliers"))
+    message(paste(phecode,"All observations removed as outliers, skipping."))
+    return(NULL)
   }
 
   #generate the plot 
