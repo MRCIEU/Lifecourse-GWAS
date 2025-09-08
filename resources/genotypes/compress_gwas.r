@@ -67,6 +67,7 @@ get_lambda <- function(pvector) {
 
 process_gwas <- function(fn, a) {
     fn2 <- basename(fn) %>% gsub(".fastGWA", "", .)
+    fn2 <- gsub("bioavail_testosterone", "bioavail-testosterone", fn2)
     nom <- fn2 %>% strsplit("_") %>% unlist
     
     s <- tibble(
@@ -82,6 +83,7 @@ process_gwas <- function(fn, a) {
         min_n = min(a$N, na.rm=TRUE),
         mean_n = mean(a$N, na.rm=TRUE)
     )
+    s$phen <- gsub("bioavail-testosterone", "bioavail_testosterone", s$phen)
     return(s)
 }
 
