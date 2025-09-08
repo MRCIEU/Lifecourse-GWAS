@@ -76,25 +76,30 @@ echo "Generate sparse GRM"
 
     section_message "grm"
 
-    bin/king \
-        -b ${genotype_processed_dir}/scratch/indep.bed \
-        --related \
-        --degree 3 \
-        --cpus ${env_threads} \
-        --prefix ${genotype_processed_dir}/scratch/king
+    # bin/king \
+    #     -b ${genotype_processed_dir}/scratch/indep.bed \
+    #     --related \
+    #     --degree 3 \
+    #     --cpus ${env_threads} \
+    #     --prefix ${genotype_processed_dir}/scratch/king
+    bin/plink2 \
+        --bfile ${genotype_processed_dir}/scratch/indep \
+        --make-king-table --king-table-filter 0.05 \
+        --out ${genotype_processed_dir}/indep \
+        --threads ${env_threads}
 
-    awk '{ print $1, $3, $14 }' ${genotype_processed_dir}/scratch/king.kin0 | grep -v "4th" | sed 1d > ${genotype_processed_dir}/scratch/king.kin0.formatted
-
-    if [ ! -s ${genotype_processed_dir}/scratch/king.kin0.formatted ]
+    if [ ! -s ${genotype_processed_dir}/scratch/indep.kin0 ]
     then
         echo "No related individuals found, skipping GRM generation"
         awk '{ print $1, $2}' ${genotype_processed_dir}/scratch/indep.fam > ${genotype_processed_dir}/sparsegrm.unrelated
     else
-        Rscript resources/genotypes/pedFAM.R \
-            ${genotype_processed_dir}/scratch/indep.fam \
-            ${genotype_processed_dir}/scratch/king.kin0.formatted \
-            ${genotype_processed_dir}/sparsegrm
+        bin/plink2 --bfile ${genotype_processed_dir}/scratch/indep \
+            --king-cutoff-table ${genotype_processed_dir}/scratch/indep.kin0 0.05 \
+            --out ${genotype_processed_dir}/sparsegrm32 \
+            --threads ${env_threads}
+        cp ${genotype_processed_dir}/sparsegrm32.king.cutoff.in.id ${genotype_processed_dir}/sparsegrm.unrelated
     fi
+
     cp ${genotype_processed_dir}/sparsegrm.unrelated ${genotype_processed_dir}/kingunrelated.txt
 fi
 
@@ -102,15 +107,6 @@ if [ "$arg" = "relateds" ] || [ "$arg" = "all" ]
 then
     section_message "relateds"
     # echo "Get relateds and unrelateds"
-
-    # bin/king \
-    #     -b ${genotype_processed_dir}/scratch/indep.bed \
-    #     --unrelated \
-    #     --degree 3 \
-    #     --cpus ${env_threads} \
-    #     --prefix ${genotype_processed_dir}/scratch/king
-
-    # cp ${genotype_processed_dir}/scratch/kingunrelated.txt ${genotype_processed_dir}/kingunrelated.txt
 
     # Make sure tophits are removed
     thfile="${genotype_processed_dir}/scratch/th.txt"
