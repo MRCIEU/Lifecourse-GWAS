@@ -75,9 +75,6 @@ else
     samplefile=$(head -n 1 ${genotype_input_list} | awk '{print $2}')
     geno_input="--mbgen ${genotype_input_list} --sample ${samplefile}"
 fi
-head -n 5 ${genotype_input_list} > temp_input_list
-samplefile=$(head -n 1 ${genotype_input_list} | awk '{print $2}')
-geno_input="--mbgen temp_input_list --sample ${samplefile}"
 
 # Do GWAS for each phenotype
 i=1
