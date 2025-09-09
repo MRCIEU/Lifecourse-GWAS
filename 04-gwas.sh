@@ -98,6 +98,7 @@ do
                 --grm-sparse ${genotype_processed_dir}/sparsegrm \
                 --extract ${genotype_processed_dir}/variant_inclusion.txt \
                 --keep ${genotype_processed_dir}/sample_inclusion.txt \
+                --est-vg HE \
                 --pheno ${phen} \
                 --qcovar ${covs} \
                 --thread-num ${env_threads} \
