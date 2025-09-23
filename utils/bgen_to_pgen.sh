@@ -5,9 +5,10 @@ set -e
 source config.env
 
 pgendir=$1
+inclusion_file=$2
 
 if [ -z $pgendir ]; then
-    echo "Usage: ./bgen_to_pgen.sh <pgendir>"
+    echo "Usage: ./bgen_to_pgen.sh <pgendir>" <sample inclusion file>
     exit 1
 fi
 
@@ -25,14 +26,22 @@ do
     bn=$(basename $bgen .bgen)
     dn=$(dirname $bgen)
 
-    ./bin/plink2 --bgen ${bgen} ref-first --sample ${sample} --make-pgen --out ${pgendir}/${bn} --threads ${env_threads}
+    ./bin/plink2 --bgen ${bgen} ref-first --sample ${sample} --make-pgen --out ${pgendir}/${bn} --threads ${env_threads} --maf ${env_maf} --keep ${inclusion_file}
     echo "${pgendir}/${bn}" >> $tf
 done
 
-cp ${genotype_input_list} ${genotype_input_list}.original
-mv ${tf} ${genotype_input_list}
+echo "Merging chromosomes"
 
-echo "Original bgen files are now listed in ${genotype_input_list}.original"
-echo "New pgen files are now listed in ${genotype_input_list}"
+./bin/plink2 --pfile ${pgendir}/chr1 --merge-list $tf --make-pgen --out ${pgendir}/allchr --threads ${env_threads}
 
+echo "Removing per-chromosome pgen files"
+
+for i in $(seq 1 ${nchr})
+do
+    rm ${pgendir}/${bn}.pgen
+    rm ${pgendir}/${bn}.pvar
+    rm ${pgendir}/${bn}.psam
+done
+
+echo "New pgen dataset: ${pgendir}/allchr.pgen, ${pgendir}/allchr.pvar, ${pgendir}/allchr.psam"
 echo "Successfully converted to bgen files to pgen"
