@@ -100,7 +100,7 @@ echo "Generate sparse GRM"
         cp ${genotype_processed_dir}/sparsegrm32.king.cutoff.in.id ${genotype_processed_dir}/sparsegrm.unrelated
     fi
 
-    cp ${genotype_processed_dir}/sparsegrm.unrelated ${genotype_processed_dir}/kingunrelated.txt
+    cp ${genotype_processed_dir}/sparsegrm.unrelated ${genotype_processed_dir}/scratch/kingunrelated.txt
 fi
 
 if [ "$arg" = "relateds" ] || [ "$arg" = "all" ]
@@ -309,7 +309,7 @@ then
     # +kingunrelated.txt
     # -genetic_outliers.txt
 
-    cat ${genotype_processed_dir}/kingunrelated.txt | \
+    cat ${genotype_processed_dir}/scratch/kingunrelated.txt | \
         grep -vw -f ${genotype_processed_dir}/genetic_outliers.txt > \
         ${genotype_processed_dir}/unrelated_keep.txt
 
