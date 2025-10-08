@@ -85,7 +85,7 @@ echo "Generate sparse GRM"
     bin/plink2 \
         --bfile ${genotype_processed_dir}/scratch/indep \
         --make-king-table --king-table-filter 0.05 \
-        --out ${genotype_processed_dir}/indep \
+        --out ${genotype_processed_dir}/scratch/indep \
         --threads ${env_threads}
 
     if [ ! -s ${genotype_processed_dir}/scratch/indep.kin0 ]
