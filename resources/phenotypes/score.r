@@ -40,6 +40,8 @@ for(i in 1:nrow(dat)) {
     covs <- fread(cf, nThread = nthreads, keepLeadingZeros=TRUE)
     a <- inner_join(a, covs, by=c("FID"="V1", "IID"="V2"))
     b <- fread(file.path(score_dir, paste0(dat$phen[i], ".sscore")), nThread = nthreads, keepLeadingZeros=TRUE)
+    a$FID <- as.character(a$FID)
+    b$`#FID` <- as.character(b$`#FID`)
     ab <- inner_join(a, b, by=c("FID"="#FID", "IID"="IID"))
     f <- paste0("value ~ SCORE1_AVG + ", paste(names(covs)[-c(1:2)], collapse = " + "))
     r <- cor(ab$value, ab$SCORE1_AVG)
