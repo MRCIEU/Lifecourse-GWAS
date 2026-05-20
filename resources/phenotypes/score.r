@@ -44,9 +44,9 @@ for(i in 1:nrow(dat)) {
     b$`#FID` <- as.character(b$`#FID`)
     a$IID <- as.character(a$IID)
     b$`#IID` <- as.character(b$`#IID`)
-    if("IID" %in% names(b)) {
-        b$IID <- as.character(b$IID)
-    }
+    b$IID <- as.character(b$IID)
+    print(str(a))
+    print(str(b))
     ab <- inner_join(a, b, by=c("FID"="#FID", "IID"="IID"))
     f <- paste0("value ~ SCORE1_AVG + ", paste(names(covs)[-c(1:2)], collapse = " + "))
     r <- cor(ab$value, ab$SCORE1_AVG)
