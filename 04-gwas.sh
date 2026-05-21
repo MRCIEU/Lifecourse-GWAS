@@ -127,7 +127,7 @@ do
                 ${geno_input} \
                 --fastGWA-lr \
                 --pheno ${phen} \
-                # --extract ${genotype_processed_dir}/variant_inclusion.txt \
+                --extract ${genotype_processed_dir}/variant_inclusion.txt \
                 --keep ${genotype_processed_dir}/sample_inclusion.txt \
                 --qcovar ${covs} \
                 --thread-num ${env_threads} \
@@ -135,12 +135,11 @@ do
                 --geno ${env_miss} \
                 --out ${results_dir}/04/${filename}
         fi
-head ${results_dir}/04/${filename}.fastGWA
         # compress GWAS
         # keep only b, se because all other info is constant across GWASs
         echo "Compressing output..."
         Rscript resources/genotypes/compress_gwas.r ${results_dir}/04/${filename}.fastGWA ${genotype_processed_dir}/build_mapping.txt
-        # rm ${results_dir}/04/${filename}.fastGWA
+        rm ${results_dir}/04/${filename}.fastGWA
     fi
     i=$((i+1))
 done
